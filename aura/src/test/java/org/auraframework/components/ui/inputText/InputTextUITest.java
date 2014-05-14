@@ -63,7 +63,7 @@ public class InputTextUITest extends WebDriverTestCase {
 
     @UnAdaptableTest
     @ExcludeBrowsers({ BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.SAFARI5,
-            BrowserType.SAFARI, BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.SAFARI, BrowserType.IPHONE })
     // Change event not picked up on IOS devices
     public void testUpdateOnAttributeForNonIosAndroidDevice() throws Exception {
         doTestUpdateOnAttributeForNonIosAndroidDevice(TEST_CMP);
@@ -71,7 +71,7 @@ public class InputTextUITest extends WebDriverTestCase {
 
     @UnAdaptableTest
     @ExcludeBrowsers({ BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.SAFARI5,
-            BrowserType.SAFARI, BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.SAFARI, BrowserType.IPHONE })
     // Change event not picked up on IOS devices
     public void testUpdateOnAttributeWithLabelsForNonIosAndroidDevice() throws Exception {
         doTestUpdateOnAttributeForNonIosAndroidDevice(TEST_CMP_WITH_LABELS);
@@ -334,8 +334,7 @@ public class InputTextUITest extends WebDriverTestCase {
 
     // W-1625895: Safari WebDriver bug- cannot right click because interactions API not implemented
     @ExcludeBrowsers({ BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI5, BrowserType.SAFARI,
-            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD_IOS_DRIVER,
-            BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET })
     public void testBaseMouseClickEventValue() throws Exception {
         open(TEST_CMP);
         WebElement input = findDomElement(By.cssSelector(".keyup2"));

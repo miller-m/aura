@@ -30,9 +30,7 @@ public class LocalizationAppUITest extends WebDriverTestCase {
 
     // Excluded on mobile browsers for lack of tab support
     @ExcludeBrowsers({ BrowserType.IE9, BrowserType.IE10, BrowserType.SAFARI5, BrowserType.SAFARI,
-            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.IPHONE,
-            BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
-    // Checking functionality of the inputDate/outputDate components
+            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.IPHONE })
     public void testDateComponents() throws Exception {
         open(URL);
 

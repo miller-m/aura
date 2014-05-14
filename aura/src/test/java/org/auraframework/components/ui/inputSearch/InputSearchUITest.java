@@ -33,7 +33,6 @@ public class InputSearchUITest extends WebDriverTestCase {
 
     // W-1551076: Webdriver not firing search event in Safari, IPAD and IPHONE
     @ExcludeBrowsers({ BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.IPHONE,
-            BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER,
             BrowserType.SAFARI5, BrowserType.SAFARI })
     public void testSearch() throws Exception {
         String valueExpression = auraUITestingUtil.getValueFromRootExpr("v.searched");
@@ -55,7 +54,6 @@ public class InputSearchUITest extends WebDriverTestCase {
     // W-1551076: Webdriver not firing search event in Safari
     // W-1410946: "x" not displayed on IE7/IE8
     @ExcludeBrowsers({ BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.IPHONE,
-            BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER,
             BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IE7, BrowserType.IE8 })
     public void testClearSelection() throws Exception {
         String valueExpression = auraUITestingUtil.getValueFromRootExpr("v.searched");

@@ -126,7 +126,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Opening cached app will only query server for the manifest and the component load.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testNoChanges() throws Exception {
         List<Request> logs = loadMonitorAndValidateApp(TOKEN, TOKEN, "", TOKEN);
         assertRequests(getExpectedInitialRequests(), logs);
@@ -144,7 +144,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Opening cached app that had a prior cache error will reload the app.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testCacheError() throws Exception {
         List<Request> logs = loadMonitorAndValidateApp(TOKEN, TOKEN, "", TOKEN);
         assertRequests(getExpectedInitialRequests(), logs);
@@ -163,6 +163,9 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
             expectedChange.add(new Request(3, "/auraResource", null, null, "manifest", 200));
             expectedChange.add(new Request(2, "/aura", namespace + ":" + appName, null, "HTML", 200));
             break;
+        case SAFARI:
+        case IPAD:
+        case IPHONE:
         default:
             expectedChange.add(new Request("/auraResource", null, null, "manifest", 200));
             expectedChange.add(new Request("/aura", namespace + ":" + appName, null, "HTML", 200));
@@ -180,7 +183,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Opening uncached app that had a prior cache error will have limited caching.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testCacheErrorWithEmptyCache() throws Exception {
         openNoAura("/aura/application.app"); // just need a domain page to set cookie from
 
@@ -205,7 +208,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Manifest request limit exceeded for the time period should result in reset.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testManifestRequestLimitExceeded() throws Exception {
         List<Request> logs = loadMonitorAndValidateApp(TOKEN, TOKEN, "", TOKEN);
         assertRequests(getExpectedInitialRequests(), logs);
@@ -226,6 +229,9 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
             expectedChange.add(new Request(3, "/auraResource", null, null, "manifest", 200));
             expectedChange.add(new Request(2, "/aura", namespace + ":" + appName, null, "HTML", 200));
             break;
+        case SAFARI:
+        case IPAD:
+        case IPHONE:
         default:
             expectedChange.add(new Request("/auraResource", null, null, "manifest", 200));
             expectedChange.add(new Request("/aura", namespace + ":" + appName, null, "HTML", 200));
@@ -241,7 +247,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      */
     @ThreadHostileTest("NamespaceDef modification affects namespace")
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testComponentCssChange() throws Exception {
         createDef(NamespaceDef.class, String.format("%s://%s", DefDescriptor.MARKUP_PREFIX, namespace),
                 "<aura:namespace></aura:namespace>");
@@ -272,7 +278,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Opening cached app after namespace controller change will trigger cache update.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testComponentJsChange() throws Exception {
         List<Request> logs = loadMonitorAndValidateApp(TOKEN, TOKEN, "", TOKEN);
         assertRequests(getExpectedInitialRequests(), logs);
@@ -300,7 +306,7 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
      * Opening cached app after component markup change will trigger cache update.
      */
     @TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI5, BrowserType.SAFARI, BrowserType.IPAD,
-            BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPHONE })
     public void testComponentMarkupChange() throws Exception {
         List<Request> logs = loadMonitorAndValidateApp(TOKEN, TOKEN, "", TOKEN);
         assertRequests(getExpectedInitialRequests(), logs);
@@ -525,6 +531,9 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
                     new Request(2, "/aura", namespace + ":" + appName, null, "HTML", 200), // rest are cache updates
                     new Request(2, "/auraResource", null, null, "css", 200),
                     new Request(2, "/auraResource", null, null, "js", 200));
+        case SAFARI:
+        case IPHONE:
+        case IPAD:
         default:
             /*
              * For iOS Get the set of expected requests on change. These are the requests that we expect for filling the
@@ -562,6 +571,9 @@ public class AppCacheResourcesUITest extends WebDriverTestCase {
             return ImmutableList.of(new Request(2, "/aura", namespace + ":" + appName, null, "HTML", 200), new Request(
                     2, "/auraResource", null, null, "manifest", 200), new Request("/auraResource", null, null, "css",
                     200), new Request(2, "/auraResource", null, null, "js", 200));
+        case SAFARI:
+        case IPHONE:
+        case IPAD:
         default:
             /*
              * For iOS Get the set of expected requests on change. These are the requests that we expect for filling the

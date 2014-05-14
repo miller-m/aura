@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 ({
-    // This component was created as a replacement for inputDate specifically for mobile browsers, but ended up only
-    // working on iOS.
-    browsers:["IPAD", "IPHONE", "IPAD_IOS_DRIVER", "IPHONE_IOS_DRIVER"], 
-    
      /**
       * Test class value. 
       */
       testClass: {
+	browsers:["IPAD", "IPHONE"], 
         attributes : {"class" : "Hello"},
         test : function(component){
             $A.test.assertEquals("Hello", component.get("v.class"), "class does not equal expected");
@@ -31,6 +28,7 @@
       * Test required value. 
       */
       testRequired: {
+	  browsers:["IPAD", "IPHONE"],    
         attributes : {required : "true"},
         test : function(component){
             $A.test.assertEquals(true, component.get("v.required"), "required does not equal expected");
@@ -40,6 +38,7 @@
      * Test step. 
      */
     testStep: {
+	browsers:["IPAD", "IPHONE"],
         attributes : {step : 3},
         test : function(component){
             $A.test.assertEquals(3, component.get("v.step"), "step does not equal expected");
@@ -50,6 +49,7 @@
      * Test disabled. 
      */
     testDisabled: {
+	browsers:["IPAD", "IPHONE"],  
         attributes : {disabled : true},
         test : function(component){
             $A.test.assertTrue(component.get("v.disabled"), "disable should be true");
@@ -60,6 +60,7 @@
      * Test value. 
      */
     testValue: {
+	browsers:["IPAD", "IPHONE"],  
         attributes : {value : "2013-07-24T23:20:50.52"},
         test : function(component){
             $A.test.assertEquals("2013-07-24T23:20:50.52", component.get("v.value"), "value does not equal expected");
@@ -71,6 +72,7 @@
      * Test max value. 
      */
     _testMax: {
+	browsers:["IPAD", "IPHONE"],  
         attributes : {max : "2016-07-24T23:20:50.52"},
         test : function(component){
             $A.test.assertTrue($A.test.contains(component.get("v.max"),"2016-07-24"), 'Expected max {"2016-07-24"} is not contained with actual{"'+component.get("v.max")+'"}');
@@ -81,6 +83,7 @@
      * Test min value.
      */
     _testMin: {
+	browsers:["IPAD", "IPHONE"],  
         attributes : {min : "2011-07-24T12:20:50"},
         test : function(component){
             $A.test.assertTrue($A.test.contains(component.get("v.min"),"2011-07-24"), 'Expected max {"2011-07-24"} is not contained with actual{"'+component.get("v.min")+'"}');

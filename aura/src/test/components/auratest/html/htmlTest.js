@@ -205,7 +205,7 @@
      * Automation for W-1564377
      */
     testTouchEndHandlerUsedWhenPresent:{
-	browsers:["IPAD", "IPAD_IOS_DRIVER"],
+	browsers:["IPAD"],
 	labels : ["UnAdaptableTest"],
 	test: [
 	  //Both click handler and touch end handler defined

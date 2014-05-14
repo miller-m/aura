@@ -499,8 +499,7 @@
      * Test that simulating a DOM-level click event on the table results in a call to helper-fireEvents()
      */
     testClickEventFired: {
-        // iOS doesn't like the click event, touch events are what we care about
-    	browsers : ["-IPHONE", "-IPAD", "-IPHONE_IOS_DRIVER", "-IPAD_IOS_DRIVER"],
+    	browsers : ["-IPHONE", "-IPAD"],
         test: function(app) {
             this.verifyDomEventFiresListViewEvents(app.find("test-list-generated-columns"), "click",
                     "DOM event firing did not result in call to helper->fireEvents");
