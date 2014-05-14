@@ -92,12 +92,7 @@
         <dependency>
             <groupId>com.salesforce</groupId>
             <artifactId>omakase</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.uiautomation</groupId>
-            <artifactId>ios-client</artifactId>
-            <scope>test</scope>
-        </dependency>
+        </dependency>              
     </dependencies>
     <properties>
         <aura.home>${basedir}/..</aura.home>
