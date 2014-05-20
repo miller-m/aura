@@ -53,10 +53,9 @@ public class CarouselUITest extends WebDriverTestCase {
     /**
      * Able to tab into a page on the carousel.
      */
-    /* Excluding Safari, iOS because driver has issues with element.sendkeys(Keys.TAB) */
+    /* Excluding safari because safari driver has issues with element.sendkeys(Keys.TAB) */
     @ExcludeBrowsers({ BrowserType.IE7, BrowserType.IE8, BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET,
-            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI, BrowserType.IPAD_IOS_DRIVER,
-            BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI })
     public void testTabIntoCarouselPage() throws Exception {
         open(URL);
         WebDriver driver = getDriver();
@@ -126,10 +125,9 @@ public class CarouselUITest extends WebDriverTestCase {
     /**
      * Tabing on the last element on a carousel page tabs you out of the carousel.
      */
-    /* Excluding Safari, iOS because driver has issues with element.sendkeys(Keys.TAB) */
+    /* Excluding safari because safari driver has issues with element.sendkeys(Keys.TAB) */
     @ExcludeBrowsers({ BrowserType.IE7, BrowserType.IE8, BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET,
-            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI, BrowserType.IPAD_IOS_DRIVER,
-            BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI })
     public void testTabOutOfCarousel() throws Exception {
         open(URL);
         WebDriver driver = getDriver();
@@ -151,10 +149,9 @@ public class CarouselUITest extends WebDriverTestCase {
     /**
      * Tabing out of carousel from the first element on carousel.
      */
-    /* Excluding Safari, iOS because driver has issues with element.sendkeys(Keys.TAB) */
+    /* Excluding safari because safari driver has issues with element.sendkeys(Keys.TAB) */
     @ExcludeBrowsers({ BrowserType.IE7, BrowserType.IE8, BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET,
-            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI, BrowserType.IPAD_IOS_DRIVER,
-            BrowserType.IPHONE_IOS_DRIVER })
+            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.SAFARI })
     public void testShiftTabOutOfCarousel() throws Exception {
         open(URL);
         WebDriver driver = getDriver();
