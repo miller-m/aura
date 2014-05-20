@@ -24,7 +24,10 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 
-@UnAdaptableTest("Issue with sfdc environments with sendkeys in iframes. See W-2009411.")
+/* UnAdaptable because issue with sfdc environments with sendkeys in iframes
+ * see W-1985839 and W-2009411
+ */
+@UnAdaptableTest
 public class InputRichTextUITest extends WebDriverTestCase {
     private final String URL = "/uitest/inputRichText_Test.cmp";
     private final String LINKBEFORE_LOCATOR = ".linkbefore";
@@ -41,8 +44,8 @@ public class InputRichTextUITest extends WebDriverTestCase {
      * Able to tab into inputRichText Component.
      */
     /* Excluding ipad and safari because safari driver has issues with element.sendkeys(Keys.TAB) */
-    @ExcludeBrowsers({ BrowserType.SAFARI, BrowserType.SAFARI5, BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET,
-            BrowserType.IPAD, BrowserType.IPHONE, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+    @ExcludeBrowsers({ BrowserType.SAFARI, BrowserType.SAFARI5,
+            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD })
     public void testRichTextTabbing() throws Exception {
         open(URL);
         WebElement beforeLink = auraUITestingUtil.waitForElement(By.cssSelector(LINKBEFORE_LOCATOR));
@@ -72,8 +75,9 @@ public class InputRichTextUITest extends WebDriverTestCase {
      */
     // Issue with sendKeys in Safari https://code.google.com/p/selenium/issues/detail?id=4467.
     // ios-driver fails to send the '/' key
-    @ExcludeBrowsers({ BrowserType.SAFARI, BrowserType.SAFARI5, BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET,
-            BrowserType.IPAD, BrowserType.IPAD_IOS_DRIVER, BrowserType.IPHONE_IOS_DRIVER })
+    @ExcludeBrowsers({ BrowserType.SAFARI, BrowserType.SAFARI5,
+            BrowserType.ANDROID_PHONE, BrowserType.ANDROID_TABLET, BrowserType.IPAD, BrowserType.IPAD_IOS_DRIVER,
+            BrowserType.IPHONE_IOS_DRIVER })
     @ThreadHostileTest("testHtmlContentEscaped is not thread-safe")
     public void testHtmlContentEscaped() throws Exception {
         open(URL);

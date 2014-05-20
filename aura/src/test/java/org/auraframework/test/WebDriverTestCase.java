@@ -791,7 +791,7 @@ public abstract class WebDriverTestCase extends IntegrationTestCase {
             public Boolean apply(WebDriver d) {
                 return isPresent == text.equals(e.getText());
             }
-        }, timeout);
+        }, timeoutInSecs);
     }
 
     protected void waitForElementAbsent(String msg, final WebElement e) {
