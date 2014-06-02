@@ -843,7 +843,7 @@
                 </plugin>
                 <plugin>
         <groupId>com.github.tntim96</groupId>
-        <artifactId>jscover-file-maven-plugin</artifactId>
+        <artifactId>jscover-server-maven-plugin</artifactId>
         <version>1.0.4-SNAPSHOT</version>
         <configuration>
             <testDirectory>./aura-impl/src/test</testDirectory>
