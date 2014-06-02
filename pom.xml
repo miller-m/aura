@@ -847,12 +847,13 @@
         <version>1.0.4-SNAPSHOT</version>
         <configuration>
             <testDirectory>./aura-impl/src/test</testDirectory>
-            
+            <testIncludes>qunit-*.html</testIncludes>
             <testType>QUnit</testType>
             <!--
             <testType>JasmineHtmlReporter</testType>
             <testType>JasmineTrivialReporter</testType>
             -->
+            <lineCoverageMinimum>20</lineCoverageMinimum>
             <instrumentPathArgs>
                 <arg>--no-instrument=target</arg>
             </instrumentPathArgs>
