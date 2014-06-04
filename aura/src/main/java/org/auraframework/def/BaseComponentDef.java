@@ -38,9 +38,10 @@ public interface BaseComponentDef extends RootDefinition {
     /**
      * Get the set of dependencies declared on this component.
      * 
-     * These dependencies must be loaded for the component to be functional, either at the initial load time or before
-     * rendering. These dependencies are in the form of DescriptorFilters which can then be used to match the actual
-     * descriptors.
+     * These dependencies must be loaded for the component to be functional,
+     * either at the initial load time or before rendering. These dependencies
+     * are in the form of DescriptorFilters which can then be used to match the
+     * actual descriptors.
      * 
      * @return the list of declared dependencies for the component.
      */
@@ -84,8 +85,6 @@ public interface BaseComponentDef extends RootDefinition {
 
     DefDescriptor<ComponentDef> getTemplateDefDescriptor();
 
-    public List<ClientLibraryDef> getClientLibraries();
-    
     public static enum RenderType {
         SERVER, CLIENT, AUTO
     };
@@ -99,30 +98,16 @@ public interface BaseComponentDef extends RootDefinition {
     boolean hasLocalDependencies() throws QuickFixException;
 
     public static enum WhitespaceBehavior {
-        /**
-         * < keep or eliminate insignificant whitespace as the framework determines is best
+        OPTIMIZE, /**
+         * < keep or eliminate insignificant whitespace as the
+         * framework determines is best
          */
-        OPTIMIZE,
-        /** < treat all whitespace as significant, hence preserving it */
         PRESERVE
+        /** < treat all whitespace as significant, hence preserving it */
     };
 
     public static final WhitespaceBehavior DefaultWhitespaceBehavior = WhitespaceBehavior.OPTIMIZE;
 
     WhitespaceBehavior getWhitespaceBehavior();
 
-    DefDescriptor<? extends BaseComponentDef> getDefaultExtendsDescriptor();
-
-    /**
-     * Adds specified client libraries to definition
-     * @param clientLibs list of client libraries
-     */
-    void addClientLibs(List<ClientLibraryDef> clientLibs);
-
-    Set<ResourceDef> getResourceDefs() throws QuickFixException;
-
-    /**
-     * Gets the {@link ThemeDef} that's part of the component bundle, e.g., the local theme.
-     */
-    DefDescriptor<ThemeDef> getLocalThemeDescriptor();
 }

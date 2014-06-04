@@ -212,7 +212,7 @@
             };
 
             helper.CollapseVisitor.prototype.accept = function(node) {
-                node.set("v.expanded", false);
+                node.getAttributes().setValue("expanded", false);
             };
 
             helper.CollapseVisitor.prototype.endVisit = function(node) {

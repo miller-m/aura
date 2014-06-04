@@ -25,10 +25,8 @@ import org.auraframework.def.ComponentDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.ProviderDef;
 import org.auraframework.def.TestSuiteDef;
-import org.auraframework.impl.javascript.provider.JavascriptProviderDef.Builder;
 import org.auraframework.instance.ComponentConfig;
 import org.auraframework.system.Source;
-import org.auraframework.test.Resettable;
 import org.auraframework.test.mock.Answer;
 import org.auraframework.test.mock.DelegatingStubHandler;
 import org.auraframework.test.mock.Invocation;
@@ -50,7 +48,7 @@ public class JavascriptMockProviderHandler extends JavascriptMockHandler<Provide
         ProviderDef baseDef = getBaseDefinition((String) map.get("descriptor"), ProviderDef.class);
         List<Stub<?>> stubs = getStubs(map.get("stubs"));
         return (ProviderDef) Proxy.newProxyInstance(this.getClass()
-                .getClassLoader(), new Class<?>[] { ProviderDef.class, Resettable.class },
+                .getClassLoader(), new Class<?>[] { ProviderDef.class },
                 new DelegatingStubHandler(baseDef, stubs));
     }
 
@@ -132,13 +130,6 @@ public class JavascriptMockProviderHandler extends JavascriptMockHandler<Provide
     @Override
     protected Invocation getDefaultInvocation() throws QuickFixException {
         return new Invocation("provide", null, ComponentConfig.class);
-    }
-
-    @Override
-    protected ProviderDef createDefinition(Throwable error) {
-        Builder builder = new Builder();
-        builder.setParseError(error);
-        return builder.build();
     }
 
 }

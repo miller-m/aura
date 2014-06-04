@@ -21,13 +21,8 @@ import org.auraframework.Aura;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.Definition;
 import org.auraframework.def.Definition.Visibility;
-import org.auraframework.def.DefinitionAccess;
-import org.auraframework.impl.DefinitionAccessImpl;
 import org.auraframework.impl.system.DefinitionImpl.RefBuilderImpl;
 import org.auraframework.system.AuraContext;
-import org.auraframework.system.AuraContext.Authentication;
-import org.auraframework.system.AuraContext.Format;
-import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.system.Location;
 import org.auraframework.system.SubDefDescriptor;
 import org.auraframework.test.UnitTestCase;
@@ -49,7 +44,6 @@ public abstract class DefinitionImplUnitTest<I extends DefinitionImpl<D>, D exte
     protected Map<SubDefDescriptor<?, D>, Definition> subDefs;
     protected String description;
     protected Visibility visibility = Visibility.PUBLIC;
-    protected DefinitionAccess access = null; 
     @Mock
     protected Hash sourceHash;
     protected String ownHash;
@@ -142,27 +136,8 @@ public abstract class DefinitionImplUnitTest<I extends DefinitionImpl<D>, D exte
         Visibility actual = buildDefinition().getVisibility();
         assertEquals(visibility, actual);
     }
-    
-    public void testAccessGlobal() throws Exception {
-    	this.access = new DefinitionAccessImpl(null, "global");
-    	DefinitionAccess actual = buildDefinition().getAccess();
-    	assertTrue(actual.isGlobal());
-    }
 
-    public void testAccessGlobalDynamic() throws Exception {
-    	this.access = new DefinitionAccessImpl(null, "org.auraframework.test.TestAccessMethods.allowGlobal");
-    	DefinitionAccess actual = buildDefinition().getAccess();
-    	assertTrue(actual.isGlobal());
-    }
-    
-    public void testAccessDefault() throws Exception {
-    	this.access = DefinitionAccessImpl.defaultAccess(null);
-    	DefinitionAccess actual = buildDefinition().getAccess();
-    	assertTrue(actual.isPublic());
-    }
-    
-
-   public void testIsValid() throws Exception {
+    public void testIsValid() throws Exception {
         boolean actual = buildDefinition().isValid();
         assertFalse(actual);
     }
@@ -200,12 +175,6 @@ public abstract class DefinitionImplUnitTest<I extends DefinitionImpl<D>, D exte
 
     // used to setup references to be validated by subclasses
     public void testValidateReferences() throws Exception {
-        if (testAuraContext != null) {
-            Aura.getContextService().endContext();
-        }
-        
-        testAuraContext = Aura.getContextService().startContext(Mode.PROD, Format.JS, Authentication.AUTHENTICATED);
-    	
         setupValidateReferences();
         buildDefinition().validateReferences();
     }
@@ -243,7 +212,6 @@ public abstract class DefinitionImplUnitTest<I extends DefinitionImpl<D>, D exte
         builder.setVisibility(this.visibility);
         builder.hash = this.sourceHash;
         builder.ownHash = this.ownHash;
-        builder.setAccess(this.access);
         return builder.build();
     }
 }

@@ -20,21 +20,30 @@
           "att1":{
             "serId":4,
             "value":{
-              "name":"att1",
-              "type":"aura://String"
+              "descriptor":"att1",
+              "typeDefDescriptor":"aura://String",
+              "required":false,
+              "visibility":"PUBLIC"
             }
           },
           "att2":{
             "serId":5,
             "value":{
-              "name":"att2",
-              "type":"aura://Boolean",
-              "required":true
+              "descriptor":"att2",
+              "typeDefDescriptor":"aura://Boolean",
+              "required":true,
+              "visibility":"PUBLIC"
             }
           }
         }
       }
     },
-    "action":"{!c.foo}"
+    "action":{
+      "exprType":"PROPERTY",
+      "path":[
+        "c",
+        "foo"
+      ]
+    }
   }
 }

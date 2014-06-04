@@ -26,8 +26,8 @@ $A.ns.LabelValueProvider = function() {
 /**
  * Checks value is not defined or SimpleValue is not defined
  *
- * @param {Object} value - checks whether value is undefined or SimpleValue with undefined value
- * @return {Boolean}
+ * @param value
+ * @return {boolean}
  * @private
  */
 $A.ns.LabelValueProvider.prototype.isUndefinedSimpleValue = function(value) {
@@ -38,10 +38,10 @@ $A.ns.LabelValueProvider.prototype.isUndefinedSimpleValue = function(value) {
  * Performs LabelController.getLabel action to get specified section and name.
  * Sets up label queue so that server action for the same label is only requested once
  *
- * @param {String} section - label section
- * @param {String} name - label section
- * @param {Component} [component] - owner component
- * @param {Function} [callback] - callback
+ * @param section
+ * @param name
+ * @param [component] component owner
+ * @param [callback]
  * @return {SimpleValue}
  * @private
  */
@@ -98,7 +98,7 @@ $A.ns.LabelValueProvider.prototype.requestServerLabel = function(section, name, 
 
         if (!isComponent) {
             // forces immediate lookup if not data-bound to component
-        	$A.run(function() {}, "LabelValueProvider.requestServerLabel");
+            $A.eventService.finishFiring();
         }
 
         queue.setRequested();
@@ -111,9 +111,9 @@ $A.ns.LabelValueProvider.prototype.requestServerLabel = function(section, name, 
 /**
  * Gets queue for specified label
  *
- * @param {String} section - label section
- * @param {String} name - label name
- * @return {LabelQueue} queue for given label
+ * @param section
+ * @param name
+ * @return {LabelQueue}
  */
 $A.ns.LabelValueProvider.prototype.getQueue = function(section, name) {
     var exp = this.getQueueKey(section, name);
@@ -125,8 +125,8 @@ $A.ns.LabelValueProvider.prototype.getQueue = function(section, name) {
 
 /**
  * Removes label queue
- * @param {String} section - label section
- * @param {String} name - label name
+ * @param section
+ * @param name
  */
 $A.ns.LabelValueProvider.prototype.removeQueue = function(section, name) {
     var exp = this.getQueueKey(section, name);
@@ -135,23 +135,23 @@ $A.ns.LabelValueProvider.prototype.removeQueue = function(section, name) {
 
 /**
  * Gets label key in queue
- * @param {String} section - label section
- * @param {String} name - label name
+ * @param section
+ * @param name
  */
 $A.ns.LabelValueProvider.prototype.getQueueKey = function(section, name) {
     return section + "." + name;
 };
 
 /**
- * Set $Label values
- * @param {Object} values - set values of all labels
+ * Setter $Label values
+ * @param values
  */
 $A.ns.LabelValueProvider.prototype.setValues = function(values) {
     this.values = values;
 };
 
 /**
- * Get $Label values
+ * Getter $Label values
  * @return {Object} Label values
  */
 $A.ns.LabelValueProvider.prototype.getValues = function() {
@@ -161,9 +161,9 @@ $A.ns.LabelValueProvider.prototype.getValues = function() {
 /**
  * Loops through existing values to find value. If no value found, send request to server
  *
- * @param {String} expression - expression
- * @param {Component} [component] - component
- * @param {Function} [callback] - callback
+ * @param expression
+ * @param [component]
+ * @param [callback]
  * @return {SimpleValue}
  */
 $A.ns.LabelValueProvider.prototype.getValue = function(expression, component, callback) {

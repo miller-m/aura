@@ -199,7 +199,6 @@ $A.ns.ActionCollector.prototype.collectAction = function(action, response) {
         // If this is a chained action, the execution will be via another path, and we won't be able
         // to guarantee correct sequencing or refreshing of chained events... so don't do that.
         //
-        action.callAllAboardCallback();
         if (!action.isChained()) {
             this.actionsToSend.push(action);
         }

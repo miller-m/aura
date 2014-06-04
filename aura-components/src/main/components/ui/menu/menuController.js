@@ -19,14 +19,14 @@
         for (var i = 0; i < body.getLength(); i++) {
             var c = body.getValue(i);
             if (c.getDef().getAttributeDefs().getDef("parent")) {
-                c.set("v.parent", [component]);
+                c.setValue("v.parent", [component]);
             }
         }
     },
     
     trigger: function(component, event, helper) {
         var index = event.getParam("focusItemIndex");
-        helper.toggleMenuVisible(component, index, event);
+        helper.toggleMenuVisible(component, index);
     },
     
     handleMenuExpand: function(component, event, helper) {

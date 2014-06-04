@@ -15,6 +15,11 @@
  */
  
 ({
+	setUp:function(){
+		// TODO: I would really like to know a better way of doing this.
+		this.sizeEstimator = new $A.storageService.createAdapter("memory", "test", 4096).getSizeEstimator();
+	},
+	
 	testSizeNumber:{
 		test:function(cmp) {
 			$A.test.assertEquals(8, this.estimateSize(100));
@@ -37,8 +42,8 @@
 	testSizeArray:{
 		test:function(cmp) {
 			// there are 4 array elements with a total of 22 characters
-			// 4*(8+8) + 22*2
-			$A.test.assertEquals(108, this.estimateSize(["AAAAA", "BBBBB", "CCCCCCC", "DDDDD"]));
+			// 4*(8+2) + 22*2
+			$A.test.assertEquals(84, this.estimateSize(["Brian", "Kevin", "Matthew", "Dave0"]));
 		}
 	},
 
@@ -59,16 +64,16 @@
 		test:function(cmp) {
 			var team = new Object();
 			team.size=8;
-			team.locations = ["AAA", "BBB", "ccc"];
-			team.devs = {"Key1": "AAAAA", "Key2": "BBBBB", "Key3": "CCCCC"};
+			team.locations = ["SFO", "YVR", "NYC"];
+			team.devs = {"Dev1": "Brian", "Dev2": "Kevin", "Dev3": "DaveO"};
 			
 			// 6 nested keys + 3 nested array elements + 1 number + 53 explicit string characters 
-			// 6*8 + 3*(8+8) + 1*8 + 2*53 
-			$A.test.assertEquals(210, this.estimateSize(team));
+			// 6*8 + 3*(8+2) + 1*8 + 2*53 
+			$A.test.assertEquals(192, this.estimateSize(team));
 		}
 	},
 	
 	estimateSize:function(value){
-		return $A.util.estimateSize(value);
+		return this.sizeEstimator.estimateSize(value);
 	}
 })

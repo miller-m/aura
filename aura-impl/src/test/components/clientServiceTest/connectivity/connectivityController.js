@@ -13,33 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
+{
     setHost : function(component, event, helper) {
         $A.clientService.initHost(component.get("v.host"));
     },
 
     setConnectedFalse : function( component, event, helper) {
-        $A.clientService.setConnected(false);
-    },
-
-    setConnectedTrue : function( component, event, helper) {
-        $A.clientService.setConnected(true);
+        $A.clientService.setConnectedFalse();
     },
 
     testConnection: function(component, event, helper) {
-        component.set("v.actionStatus", "");
-        component.set("v.actionValue", "");
+        component.getValue("v.actionStatus").setValue("");
+        component.getValue("v.actionValue").setValue("");
         var a = component.get("c.getInt");
         a.setParams({ param : 66 });
         a.setCallback(this, function(action){
-            component.set("v.actionStatus", action.getState());
-            component.set("v.actionValue", action.getReturnValue());
+            component.getValue("v.actionStatus").setValue(action.getState());
+            component.getValue("v.actionValue").setValue(action.getReturnValue());
         });
         $A.enqueueAction(a);
     },
 
     logEvent: function(component, event, helper) {
-        var oldVal = component.get("v.eventsFired");
-        component.set("v.eventsFired", oldVal + (oldVal == "" ? "" : " ") + event.getDef().getDescriptor().getName());
+        var val = component.getValue("v.eventsFired");
+        var oldVal = val.getValue();
+        val.setValue(oldVal + (oldVal == "" ? "" : " ") + event.getDef().getDescriptor().getName());
     }
-})
+}

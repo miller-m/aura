@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 /*jslint sub: true */
-
-// //#exportSymbols $A.ns.AuraHistoryService
-$A.ns.AuraHistoryService.prototype["set"] = $A.ns.AuraHistoryService.prototype.set;
-$A.ns.AuraHistoryService.prototype["get"] = $A.ns.AuraHistoryService.prototype.get;
-$A.ns.AuraHistoryService.prototype["back"] = $A.ns.AuraHistoryService.prototype.back;
-$A.ns.AuraHistoryService.prototype["setTitle"] = $A.ns.AuraHistoryService.prototype.setTitle;
-$A.ns.AuraHistoryService.prototype["forward"] = $A.ns.AuraHistoryService.prototype.forward;
-$A.ns.AuraHistoryService.prototype["reset"] = $A.ns.AuraHistoryService.prototype.reset;
-
+var p = historyService;
+exp(p,
+    "set", p.set,
+    "get", p.get,
+    "back", p.back,
+    "setTitle", p.setTitle,
+    "forward", p.forward
+);

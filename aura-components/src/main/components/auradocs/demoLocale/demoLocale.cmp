@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<aura:component access="global">
+<aura:component>
 <pre>
 [language={!$Locale.language}]
 [timezone={!$Locale.timezone}]
-[numberformat={!$Locale.numberFormat}]
-[currencyformat={!$Locale.currencyFormat}]
+[numberformat={!$Locale.numberformat}]
+[currencyformat={!$Locale.currencyformat}]
 </pre>
 </aura:component>

@@ -4,14 +4,18 @@
     "descriptor":"markup://fake:component",
     "superDef":{
       "serId":2,
-      "value":"markup://aura:component"
+      "value":{
+        "descriptor":"markup://aura:component"
+      }
     },
     "attributeDefs":[
       {
         "serId":3,
         "value":{
-          "name":"body",
-          "type":"aura://Aura.Component[]"
+          "descriptor":"body",
+          "typeDefDescriptor":"aura://Aura.Component[]",
+          "required":false,
+          "visibility":"PUBLIC"
         }
       }
     ]

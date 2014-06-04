@@ -73,14 +73,14 @@
     
     
     checkResponseForEventsWithoutHandler : function(cmp, expectedState, eventName){
-    	$A.test.assertUndefinedOrNull($A.eventService.getEventDef(eventName),
-			"Test setup failure, eventdef known before hand.");
+	$A.test.assertUndefinedOrNull($A.eventService.getEventDef(eventName),
+		"Test setup failure, eventdef known before hand.");
         cmp.find("trigger").get("e.press").fire();
         //Wait till action's call back is invoked
         $A.test.runAfterIf(
             function(){ return cmp.get("v.response"); }, //v.response is set only if action's call back is invoked
             function(){
-            	var action = cmp.get("v.response");
+        	var action = cmp.get("v.response");
                 $A.test.assertEquals(expectedState, action.state, "Unexpected state: ");
                 $A.test.assertDefined($A.eventService.getEventDef(eventName), 
                 	"Failed to add new event def from action response.");
@@ -88,13 +88,13 @@
         );
     },
     testApplicationEventWithNoHandler: {
-    	attributes : { eventName:"test:applicationEvent"},
+	attributes : { eventName:"test:applicationEvent"},
         test: function(cmp){
             this.checkResponseForEventsWithoutHandler(cmp, "ERROR", "markup://test:applicationEvent");
         }    
     },
     testComponentEventWithNoHandler: {
-    	attributes : { eventName:"test:anevent"},
+	attributes : { eventName:"test:anevent"},
         test: function(cmp){
             this.checkResponseForEventsWithoutHandler(cmp, "ERROR", "markup://test:anevent");
         } 
@@ -104,24 +104,16 @@
                        eventParamName:"msg",
                        eventParamValue:"foo!" },
         test: function(cmp){
-        	//Override aura.error() with custom verification because the error messages are different depending on ExceptionAdapter.
-        	$A.test.overrideFunction($A, "error", 
-        			function(dispMsg) {
-        				$A.test.assertTrue(
-        						dispMsg.indexOf("An internal server error has occurred")===0 || 
-        						dispMsg.indexOf("Unable to process your request")===0);
-        				$A.message(dispMsg);
-        			});
-        	cmp.find("trigger").get("e.press").fire();
+            $A.test.expectAuraError("org.auraframework.throwable.quickfix.DefinitionNotFoundException");
+            cmp.find("trigger").get("e.press").fire();
             $A.test.addWaitFor(
-                    false,
-                    $A.test.isActionPending,
+                    true,
+                    $A.test.allActionsComplete,
                     function () {
-                    	$A.test.assertTrue(
-	                		$A.test.getAuraErrorMessage().
-	                		indexOf("org.auraframework.throwable.AuraRuntimeException: "+
-                				"org.auraframework.throwable.quickfix.DefinitionNotFoundException: " +
-                				"No EVENT named markup://test:testActionEventEventNonExistant found")!=-1, "Failed to see quick fix exception message");
+                	$A.test.assertTrue(
+                		$A.test.getAuraErrorMessage().
+                		indexOf("org.auraframework.throwable.quickfix.DefinitionNotFoundException: " +
+                				"No EVENT named markup://test:testActionEventEventNonExistant found")==0, "Failed to see quick fix exception message");
                     }
                 );
         }

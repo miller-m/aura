@@ -20,16 +20,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.auraframework.Aura;
-import org.auraframework.cache.Cache;
-import org.auraframework.def.*;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.Definition;
+import org.auraframework.def.TypeDef;
 import org.auraframework.impl.type.AuraStaticTypeDefRegistry;
 import org.auraframework.impl.util.AuraUtil;
-import org.auraframework.service.CachingService;
 import org.auraframework.service.LoggingService;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.json.Json;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 /**
  */
@@ -45,20 +48,50 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
 
     private final int hashCode;
 
+    private static final class DescriptorKey {
+        private final String name;
+        private final Class<? extends Definition> clazz;
 
+        public DescriptorKey(String name, Class<? extends Definition> clazz) {
+            // FIXME: this case flattening would remove the extra copies of
+            // definitions.
+            // If we go case sensitive, we won't want it though.
+            // this.qualifiedName = qualifiedName.toLowerCase();
+            this.name = name;
+            this.clazz = clazz;
+        }
 
+        @Override
+        public int hashCode() {
+            return this.name.hashCode() + this.clazz.hashCode();
+        }
 
-    private static CachingService cSrv = Aura.getCachingService();
-    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof DescriptorKey)) {
+                return false;
+            }
+            DescriptorKey dk = (DescriptorKey) obj;
+            return dk.clazz.equals(this.clazz) && dk.name.equals(this.name);
+        }
+    }
+
+    private static final Cache<DescriptorKey, DefDescriptor<? extends Definition>> cache = CacheBuilder.newBuilder()
+            .concurrencyLevel(20).initialCapacity(512).maximumSize(1024 * 10).build();
+
     /**
-     * Pattern for tag descriptors : foo:bar Group 0 = QName = foo:bar Group 1 = prefix Group 2 = namespace = foo Group
-     * 3 = name = bar prefix = null
+     * Pattern for tag descriptors : foo:bar Group 0 = QName = foo:bar Group 1 =
+     * prefix Group 2 = namespace = foo Group 3 = name = bar prefix = null
      */
     private static final Pattern TAG_PATTERN = Pattern.compile("(?:([\\w\\*]+)://)?(?:([\\w\\*]+):)?([\\w\\$\\*]+)");
 
     /**
-     * Pattern for class descriptors: java://foo.bar.baz Group 0 = QName = java://foo.bar.baz Group 1 = prefix = java
-     * Group 2 = namespace = foo.bar Group 3 = name = baz
+     * Pattern for class descriptors: java://foo.bar.baz Group 0 = QName =
+     * java://foo.bar.baz Group 1 = prefix = java Group 2 = namespace = foo.bar
+     * Group 3 = name = baz
      */
     private static final Pattern CLASS_PATTERN = Pattern
             .compile("\\A(?:([\\w\\*]+)://)?((?:[\\w\\*]|\\.)*?)?\\.?+([\\w,$\\*]*?(?:\\[\\])?)(<[\\w.,(<[\\w.,]+>)]+>)?\\z");
@@ -119,8 +152,8 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
             case RENDERER:
             case HELPER:
             case STYLE:
-            case RESOURCE:
             case TYPE:
+            case SECURITY_PROVIDER:
             case PROVIDER:
                 Matcher matcher = CLASS_PATTERN.matcher(qualifiedName);
                 if (matcher.matches()) {
@@ -142,17 +175,14 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
                 }
 
                 break;
-                // subtypes
             case ACTION:
-            case DESCRIPTION:
+                // subtype?
                 throw new AuraRuntimeException(
-                        String.format("%s descriptor must be a subdef: %s", defType.name(), qualifiedName));
+                        String.format("ActionDef descriptor must be a subdef: %s", qualifiedName));
             case ATTRIBUTE:
             case LAYOUT:
             case LAYOUT_ITEM:
             case TESTCASE:
-            case VAR:
-            case THEME_DEF_REF:
                 name = qualifiedName;
                 break;
             case APPLICATION:
@@ -160,10 +190,8 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
             case INTERFACE:
             case EVENT:
             case DOCUMENTATION:
-            case EXAMPLE:
             case LAYOUTS:
             case NAMESPACE:
-            case THEME:
                 Matcher tagMatcher = TAG_PATTERN.matcher(qualifiedName);
                 if (tagMatcher.matches()) {
                     prefix = tagMatcher.group(1);
@@ -293,40 +321,36 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
                 return result;
             }
         }
-        
         return new DefDescriptorImpl<E>(qualifiedName, defClass);
     }
 
     /**
-     * FIXME: this method is ambiguous about wanting a qualified, simple, or descriptor name.
+     * FIXME: this method is ambiguous about wanting a qualified, simple, or
+     * descriptor name.
      * 
-     * @param name The simple String representation of the instance requested ("foo:bar" or "java://foo.Bar")
-     * @param defClass The Interface's Class for the DefDescriptor being requested.
+     * @param name The simple String representation of the instance requested
+     *            ("foo:bar" or "java://foo.Bar")
+     * @param defClass The Interface's Class for the DefDescriptor being
+     *            requested.
      * @return An instance of a AuraDescriptor for the provided tag
      */
     public static <E extends Definition> DefDescriptor<E> getInstance(String name, Class<E> defClass) {
         if (name == null || defClass == null) {
             throw new AuraRuntimeException("descriptor is null");
         }
-        
         DescriptorKey dk = new DescriptorKey(name, defClass);
-        
-        Cache<DescriptorKey, DefDescriptor<? extends Definition>> cache = 
-                cSrv.getDefDescriptorByNameCache();
-
-        
         @SuppressWarnings("unchecked")
         DefDescriptor<E> result = (DefDescriptor<E>) cache.getIfPresent(dk);
         if (result == null) {
             result = buildInstance(name, defClass);
-            
             // Our input names may not be qualified, but we should ensure that
-            // the fully-qualified is properly cached to the same object.
-            // I'd like an unqualified name to either throw or be resolved first,
-            // but that's breaking or non-performant respectively.
-            if (!dk.getName().equals(result.getQualifiedName())) {
+            // the fully-qualified
+            // is properly cached to the same object. I'd like an unqualified
+            // name to either
+            // throw or be resolved first, but that's breaking or non-performant
+            // respectively.
+            if (!dk.name.equals(result.getQualifiedName())) {
                 DescriptorKey fullDK = new DescriptorKey(result.getQualifiedName(), defClass);
-                
                 @SuppressWarnings("unchecked")
                 DefDescriptor<E> fullResult = (DefDescriptor<E>) cache.getIfPresent(fullDK);
                 if (fullResult == null) {
@@ -336,10 +360,8 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
                     result = fullResult;
                 }
             }
-            
             cache.put(dk, result);
         }
-        
         return result;
     }
 
@@ -368,8 +390,9 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
     }
 
     /**
-     * Compares one {@link DefDescriptor} to another. Sorting uses (only) the qualified name, case insensitively. Per
-     * {@link Comparable}'s spec, throws {@link ClassCastException} if {@code arg} is not a {@code DefDescriptor}.
+     * Compares one {@link DefDescriptor} to another. Sorting uses (only) the
+     * qualified name, case insensitively. Per {@link Comparable}'s spec, throws
+     * {@link ClassCastException} if {@code arg} is not a {@code DefDescriptor}.
      */
     @Override
     public int compareTo(DefDescriptor<?> other) {
@@ -377,9 +400,10 @@ public class DefDescriptorImpl<T extends Definition> implements DefDescriptor<T>
     }
 
     /**
-     * Helper method for various {@link DefDescriptor} subclasses to implement {@link #compareTo(DefDescriptor)}, since
-     * interfaces aren't allowed to have static methods, and since {@code DefDescriptor} is an interface rather than an
-     * abstract class.
+     * Helper method for various {@link DefDescriptor} subclasses to implement
+     * {@link #compareTo(DefDescriptor)}, since interfaces aren't allowed to
+     * have static methods, and since {@code DefDescriptor} is an interface
+     * rather than an abstract class.
      */
     public static int compare(DefDescriptor<?> dd1, DefDescriptor<?> dd2) {
         int value;

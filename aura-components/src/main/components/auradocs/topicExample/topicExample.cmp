@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<aura:component model="java://org.auraframework.docs.TopicExampleModel" extensible="true">
+<aura:component model="java://org.auraframework.docs.TopicExampleModel">
     <aura:attribute name="descriptor" type="String" required="true"/>
     <aura:attribute name="defType" type="String" default="Component"/>
 

@@ -63,9 +63,4 @@ public interface ActionDef extends Definition {
      * @return ordered list of parameters
      */
     List<ValueDef> getParameters();
-
-    /**
-     * get the parameters that can be logged.
-     */
-    List<String> getLoggableParams();
 }

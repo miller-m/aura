@@ -18,6 +18,5 @@
         cmp.get("e.activated")
             .setParams({component : cmp})
             .fire();
-        
     }
 })

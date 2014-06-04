@@ -25,7 +25,9 @@ import javax.annotation.concurrent.ThreadSafe;
 
 import org.auraframework.Aura;
 import org.auraframework.def.ActionDef;
+import org.auraframework.def.ComponentDef;
 import org.auraframework.instance.Action;
+import org.auraframework.instance.Event;
 import org.auraframework.system.AuraContext;
 import org.auraframework.system.Message;
 import org.auraframework.throwable.quickfix.QuickFixException;
@@ -37,8 +39,9 @@ import com.google.common.collect.Lists;
 /**
  */
 @ThreadSafe
-public class MessageJSONFormatAdapter extends JSONFormatAdapter<Message> {
+public class MessageJSONFormatAdapter extends JSONFormatAdapter<Message<?>> {
 
+    @SuppressWarnings("rawtypes")
     @Override
     public Class<Message> getType() {
         return Message.class;
@@ -46,7 +49,7 @@ public class MessageJSONFormatAdapter extends JSONFormatAdapter<Message> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Message read(Reader in) throws IOException, QuickFixException {
+    public Message<?> read(Reader in) throws IOException, QuickFixException {
         Map<?, ?> message = (Map<?, ?>) new JsonReader().read(in);
 
         List<?> actions = (List<?>) message.get("actions");
@@ -66,12 +69,12 @@ public class MessageJSONFormatAdapter extends JSONFormatAdapter<Message> {
             }
         }
 
-        return new Message(actionList);
+        return new Message<ComponentDef>(actionList);
     }
 
     @Override
     public void write(Object value, Map<String, Object> attributes, Appendable out) throws IOException {
-        Message message = (Message) value;
+        Message<?> message = (Message<?>) value;
         AuraContext c = Aura.getContextService().getCurrentContext();
         Map<String, Object> m = new HashMap<String, Object>();
         if (attributes != null) {
@@ -80,6 +83,12 @@ public class MessageJSONFormatAdapter extends JSONFormatAdapter<Message> {
 
         m.put("actions", message.getActions());
         m.put("context", c);
+        List<Event> clientEvents = message.getClientEvents();
+        if (clientEvents != null && !clientEvents.isEmpty()) {
+            m.put("events", clientEvents);
+        }
+
         Json.serialize(m, out, c.getJsonSerializationContext());
     }
+
 }

@@ -16,8 +16,12 @@
 package org.auraframework.impl;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Currency;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -28,11 +32,6 @@ import org.auraframework.util.AuraLocale;
 import org.auraframework.util.date.DateService;
 import org.auraframework.util.date.DateServiceImpl;
 import org.auraframework.util.number.AuraNumberFormat;
-
-import com.ibm.icu.text.DateFormat;
-import com.ibm.icu.text.DecimalFormat;
-import com.ibm.icu.text.NumberFormat;
-import com.ibm.icu.util.Currency;
 
 /**
  * Default implementation for the Localization Service
@@ -372,11 +371,9 @@ public class LocalizationServiceImpl implements LocalizationService {
             currency = Currency.getInstance(locale);
         }
         DecimalFormat df = (DecimalFormat) NumberFormat.getCurrencyInstance(locale);
-        // setCurrency will set fraction digits based on locale so that statement needs to happen before if we
-        // want to set fraction digits ourselves
-        df.setCurrency(currency);
         df.setMinimumFractionDigits(minFractionDigits);
         df.setMaximumFractionDigits(maxFractionDigits);
+        df.setCurrency(currency);
         return df.format(value);
     }
 
@@ -416,9 +413,9 @@ public class LocalizationServiceImpl implements LocalizationService {
         }
         DecimalFormat df = (DecimalFormat) NumberFormat.getCurrencyInstance(locale);
         df.setParseBigDecimal(true);
-        df.setCurrency(currency);
         df.setMinimumFractionDigits(minFractionDigits);
         df.setMaximumFractionDigits(maxFractionDigits);
+        df.setCurrency(currency);
         return df.format(value);
     }
 
@@ -697,8 +694,7 @@ public class LocalizationServiceImpl implements LocalizationService {
         }
         DecimalFormat df = (DecimalFormat) NumberFormat.getCurrencyInstance(locale);
         df.setParseBigDecimal(true);
-        // TODO: use parseStrict when ICU4J is updated >= 51.2
-        return ((com.ibm.icu.math.BigDecimal) AuraNumberFormat.parse(currency, df, false)).toBigDecimal();
+        return (BigDecimal) AuraNumberFormat.parseStrict(currency, df);
     }
 
     @Override
@@ -752,8 +748,7 @@ public class LocalizationServiceImpl implements LocalizationService {
         }
         DecimalFormat df = (DecimalFormat) NumberFormat.getInstance(locale);
         df.setParseBigDecimal(true);
-        // icu BigDecimal to java BigDecimal
-        return ((com.ibm.icu.math.BigDecimal) AuraNumberFormat.parseStrict(number, df)).toBigDecimal();
+        return new BigDecimal(AuraNumberFormat.parseStrict(number, df).toString());
     }
 
     @Override

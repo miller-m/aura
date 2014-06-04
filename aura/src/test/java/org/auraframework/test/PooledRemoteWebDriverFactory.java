@@ -18,15 +18,22 @@ package org.auraframework.test;
 import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 import javax.annotation.concurrent.GuardedBy;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -41,7 +48,7 @@ public class PooledRemoteWebDriverFactory extends RemoteWebDriverFactory {
         super(serverUrl);
     }
 
-    public class PooledRemoteWebDriver extends AdaptiveWebElementDriver {
+    public class PooledRemoteWebDriver extends RemoteWebDriver {
         /**
          * The pool containing this web driver instance.
          */
@@ -52,6 +59,37 @@ public class PooledRemoteWebDriverFactory extends RemoteWebDriverFactory {
                 DesiredCapabilities capabilities) {
             super(serverUrl, capabilities);
             this.pool = pool;
+        }
+
+        // append a query param to avoid possible browser caching of pages
+        @Override
+        public void get(String url) {
+            // save any fragment
+            int hashLoc = url.indexOf('#');
+            String hash = "";
+            if (hashLoc >= 0) {
+                hash = url.substring(hashLoc);
+                url = url.substring(0, hashLoc);
+            }
+
+            // strip query string
+            int qLoc = url.indexOf('?');
+            String qs = "";
+            if (qLoc >= 0) {
+                qs = url.substring(qLoc + 1);
+                url = url.substring(0, qLoc);
+            }
+
+            List<NameValuePair> newParams = Lists.newArrayList();
+            URLEncodedUtils.parse(newParams, new Scanner(qs), "UTF-8");
+
+            // update query with a nonce
+
+            newParams.add(new BasicNameValuePair("browser.nonce", String.valueOf(System.currentTimeMillis())));
+
+            url = url + "?" + URLEncodedUtils.format(newParams, "UTF-8") + hash;
+
+            super.get(url);
         }
 
         @Override
@@ -77,7 +115,7 @@ public class PooledRemoteWebDriverFactory extends RemoteWebDriverFactory {
         public void quit() {
             dismissAlerts();
             // close up to 10 windows, except the final window
-            for (int i = 0; (getWindowHandles().size() > 1) && (i < 10); i++) {
+            for (int i = 0; (getWindowHandles().size() > 1) && (i < 10); i--) {
                 super.close();
                 dismissAlerts();
             }

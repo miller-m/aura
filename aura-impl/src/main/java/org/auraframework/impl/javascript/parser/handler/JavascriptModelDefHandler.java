@@ -41,11 +41,4 @@ public class JavascriptModelDefHandler extends JavascriptHandler<ModelDef, Model
         return builder.build();
     }
 
-    @Override
-    protected ModelDef createDefinition(Throwable error) {
-        setDefBuilderFields(builder);
-        builder.setParseError(error);
-        return builder.build();
-    }
-
 }

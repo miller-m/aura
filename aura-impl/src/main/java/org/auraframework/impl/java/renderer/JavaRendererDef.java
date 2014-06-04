@@ -35,8 +35,9 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
     private final Renderer renderer;
 
     /**
-     * Consumers of this class should use a builder to build the instance. If this were to be extended, the builder
-     * should also be extended, and the build() method would need to be overridden.
+     * Consumers of this class should use a builder to build the instance. If
+     * this were to be extended, the builder should also be extended, and the
+     * build() method would need to be overridden.
      * 
      * @param builder the builder that is building this class.
      */
@@ -48,14 +49,15 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
     /**
      * Validate our definition.
      * 
-     * Most of the validation actually occurs in the builder, but we do ensure that the renderer is not null. It would
-     * be cleaner to throw all errors here, but we would need to store the error message in the constructor which is a
-     * bit funky.
+     * Most of the validation actually occurs in the builder, but we do ensure
+     * that the renderer is not null. It would be cleaner to throw all errors
+     * here, but we would need to store the error message in the constructor
+     * which is a bit funky.
      */
     @Override
     public void validateDefinition() throws QuickFixException {
         super.validateDefinition();
-        if (renderer == null) {
+        if (this.renderer == null) {
             throw new InvalidDefinitionException("Renderer must implement the Renderer interface.", location);
         }
     }
@@ -74,7 +76,7 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
             renderer.render(component, out);
             loggingService.incrementNum("JavaCallCount");
         } catch (Exception e) {
-            throw AuraExceptionUtil.wrapExecutionException(e, this.location);
+            AuraExceptionUtil.wrapExecutionException(e, this.location);
         } finally {
             loggingService.stopTimer("java");
             loggingService.startTimer(LoggingService.TIMER_AURA);
@@ -88,7 +90,8 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
     /**
      * A builder for JavaRendererDef.
      * 
-     * This builder extends the basic Definition builder by adding the class of the renderer.
+     * This builder extends the basic Definition builder by adding the class of
+     * the renderer.
      */
     public static class Builder extends DefinitionImpl.BuilderImpl<RendererDef> {
         private Class<?> rendererClass;
@@ -97,28 +100,26 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
         /**
          * A function to actually build the renderer class.
          * 
-         * This class is currently a bit over complicated, as it handles the old static case for render methods.
+         * This class is currently a bit over complicated, as it handles the old
+         * static case for render methods.
          */
-        protected void buildRenderer() {
-            if (rendererClass == null) {
+        protected void buildRenderer() throws QuickFixException {
+            if (this.rendererClass == null) {
                 return;
             }
 
-            List<Class<? extends Renderer>> interfaces = AuraUtil.findInterfaces(rendererClass, Renderer.class);
+            List<Class<? extends Renderer>> interfaces = AuraUtil.findInterfaces(this.rendererClass, Renderer.class);
             if (!interfaces.isEmpty()) {
                 try {
-                    rendererInstance = (Renderer) rendererClass.newInstance();
+                    this.rendererInstance = (Renderer) rendererClass.newInstance();
                 } catch (InstantiationException ie) {
-                    setParseError(new InvalidDefinitionException("Cannot instantiate " + getLocation(), getLocation()));
+                    throw new InvalidDefinitionException("Cannot instantiate " + getLocation(), getLocation());
                 } catch (IllegalAccessException iae) {
-                    setParseError(new InvalidDefinitionException("Constructor is inaccessible for " + getLocation(),
-                            getLocation()));
-                } catch (RuntimeException e) {
-                    setParseError(new InvalidDefinitionException("Cannot instantiate " + getLocation(), getLocation(),
-                            e));
+                    throw new InvalidDefinitionException("Constructor is inaccessible for " + getLocation(),
+                            getLocation());
                 }
             } else {
-                rendererInstance = null;
+                this.rendererInstance = null;
             }
         }
 
@@ -132,7 +133,7 @@ public class JavaRendererDef extends DefinitionImpl<RendererDef> implements Rend
         }
 
         @Override
-        public JavaRendererDef build() {
+        public JavaRendererDef build() throws QuickFixException {
             this.buildRenderer();
             return new JavaRendererDef(this);
         }

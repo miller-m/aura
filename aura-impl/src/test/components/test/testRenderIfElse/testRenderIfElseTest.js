@@ -50,7 +50,7 @@
 
         test: function(component){
             this.whatItIs(component, "Testing rerender: true", true);
-            component.set("v.thang", false);
+            component.getAttributes().setValue("thang", false);
             $A.rerender(component);
             this.whatItIs(component, "Testing rerender: false", false);
         }

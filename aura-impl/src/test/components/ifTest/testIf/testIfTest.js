@@ -31,7 +31,7 @@
                 }
             );
             $A.eventService.finishFiring();
-            $A.test.addWaitFor(false, $A.test.isActionPending, function(){
+            $A.test.addWaitFor(true, $A.test.allActionsComplete, function(){
                 var reg = /:c/; 
                 $A.test.assertNotNull(newCmp.getGlobalId().match(reg), "GlobalId for clientSide cmp should end with "
                         + "'c' but it is" + newCmp.getGlobalId());
@@ -75,7 +75,7 @@
         
         test: function(component){
             this.whatItIs(component, "Testing Renrender: true", true);
-            component.set("v.thang", false);
+            component.getAttributes().setValue("thang", false);
             $A.rerender(component);
             this.whatItIs(component, "Testing Rerender: false", false);
         }

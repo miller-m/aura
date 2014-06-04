@@ -21,21 +21,21 @@ import java.util.Calendar;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.message.BasicHeader;
-import org.auraframework.def.ComponentDef;
 import org.auraframework.system.AuraContext.Format;
-import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.test.AuraHttpTestCase;
 import org.auraframework.test.annotation.TestLabels;
 import org.auraframework.test.annotation.UnAdaptableTest;
 import org.auraframework.util.AuraTextUtil;
 
 /**
- * Automation to verify the functioning of AuraResourceServlet. AuraResourceServlet is used to preload definitions of
- * components in a given namespace. It is also used to load CSS
+ * Automation to verify the functioning of AuraResourceServlet.
+ * AuraResourceServlet is used to preload definitions of components in a given
+ * namespace. It is also used to load CSS
  * 
  * 
  * 
@@ -47,58 +47,9 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
     }
 
     /**
-     * Verify style def ordering for components included as facets.
-     * Create a chain of components as facet and verify the order of css(Style Defs)
-     * @throws Exception
-     */
-    @TestLabels("auraSanity")
-    public void testCSSOrdering_AcrossFacets() throws Exception {
-        String modeAndContext = getAuraTestingUtil().getContext(Mode.DEV, Format.CSS,
-                "auratest:test_css_a", ComponentDef.class, false);
-        String url = "/l/" + AuraTextUtil.urlencode(modeAndContext) + "/app.css";
-        HttpGet get = obtainGetMethod(url);
-        HttpResponse httpResponse = perform(get);
-        int statusCode = getStatusCode(httpResponse);
-        String response = getResponseBody(httpResponse);
-        get.releaseConnection();
-
-        assertEquals(HttpStatus.SC_OK, statusCode);
-
-        int idx_a, idx_b, idx_c, idx_d;
-
-        idx_a = response.indexOf("div.auratestTest_css_a");
-        idx_b = response.indexOf("div.auratestTest_css_b");
-        idx_c = response.indexOf("div.auratestTest_css_c");
-        idx_d = response.indexOf("div.auratestTest_css_d");
-        assertTrue("_d must come before _c in: "+response, idx_d < idx_c);
-        assertTrue("_c must come before _b in: "+response, idx_c < idx_b);
-        assertTrue("_b must come before _a in: "+response, idx_b < idx_a);
-    }
-
-    @TestLabels("auraSanity")
-    public void testCSSOrdering_AcrossInheritance() throws Exception {
-        String modeAndContext = getAuraTestingUtil().getContext(Mode.DEV, Format.CSS, "auratest:test_css_child", ComponentDef.class, false);
-        String url = "/l/" + AuraTextUtil.urlencode(modeAndContext) + "/app.css";
-        HttpGet get = obtainGetMethod(url);
-        HttpResponse httpResponse = perform(get);
-        int statusCode = getStatusCode(httpResponse);
-        String response = getResponseBody(httpResponse);
-        get.releaseConnection();
-
-        assertEquals(HttpStatus.SC_OK, statusCode);
-
-        int idx_child, idx_parent, idx_grandParent;
-
-        idx_child = response.indexOf("div.auratestTest_css_child");
-        idx_parent = response.indexOf("div.auratestTest_css_parent");
-        idx_grandParent = response.indexOf("div.auratestTest_css_grandParent");
-        assertTrue("_grandParent must come before _parent in: "+response, idx_grandParent < idx_parent);
-        assertTrue("_parent must come before _child in: "+response, idx_parent < idx_child);
-    }
-
-    /**
-     * Verify that special characters in CSS file are serialized down to the client. To make sure they are not replaced
-     * with a '?' Automation for W-1071128
+     * Verify that special characters in CSS file are serialized down to the
+     * client. To make sure they are not replaced with a '?' Automation for
+     * W-1071128
      * 
      * @throws Exception
      */
@@ -115,16 +66,21 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
 
         assertEquals(HttpStatus.SC_OK, statusCode);
 
-        String expected = Arrays.toString("•".getBytes());
-        String token = "content:'";
+        char expected = '•';
+        String token = "content: '";
         int start = response.indexOf(token) + token.length();
-        String actual = Arrays.toString(response.substring(start, response.indexOf('\'', start)).getBytes());
+
+        // Google closure-stylesheets now encodes unicode characters with the
+        // CSS unicode syntax '\FFFFFF'
+        // as a result, this character is now converted to '\2022' so to verify
+        // it's present, convert it to a char and compare
+        char actual = (char) Integer.parseInt(response.substring(start + 1, response.indexOf('\'', start)), 16);
         assertEquals(String.format("Failed to see the special character in the CSS file (%s)", url), expected, actual);
     }
 
     /**
-     * Verify that special characters in component mark up are serialized as part of component definition. Automation
-     * for W-1071128
+     * Verify that special characters in component mark up are serialized as
+     * part of component definition. Automation for W-1071128
      * 
      * @throws Exception
      */
@@ -160,7 +116,7 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
         Calendar stamp = Calendar.getInstance();
         stamp.add(Calendar.HOUR, -1);
 
-        Header[] headers = new Header[] { new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
+        Header[] headers = new Header[]{ new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
                 new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").format(stamp.getTime())) };
 
         HttpGet get = obtainGetMethod(url, headers);
@@ -184,7 +140,7 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
         Calendar stamp = Calendar.getInstance();
         stamp.add(Calendar.HOUR, -1);
 
-        Header[] headers = new Header[] { new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
+        Header[] headers = new Header[]{ new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
                 new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").format(stamp.getTime())) };
 
         HttpGet get = obtainGetMethod(url, headers);
@@ -198,7 +154,8 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
     }
 
     /**
-     * GET with If-Modified-Since header 45 days from now, will return 304 with empty body.
+     * GET with If-Modified-Since header 45 days from now, will return 304 with
+     * empty body.
      */
     @TestLabels("auraSanity")
     public void testGetWithIfModifiedSinceNew() throws Exception {
@@ -206,7 +163,7 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
         Calendar stamp = Calendar.getInstance();
         stamp.add(Calendar.DAY_OF_YEAR, 45);
 
-        Header[] headers = new Header[] { new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
+        Header[] headers = new Header[]{ new BasicHeader(HttpHeaders.IF_MODIFIED_SINCE,
                 new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").format(stamp.getTime())) };
 
         HttpGet get = obtainGetMethod(url, headers);
@@ -220,7 +177,8 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
     }
 
     /**
-     * GET without If-Modified-Since header from an hour ago, will return the expected resource.
+     * GET without If-Modified-Since header from an hour ago, will return the
+     * expected resource.
      */
     @TestLabels("auraSanity")
     public void testGetWithoutIfModifiedSince() throws Exception {
@@ -235,5 +193,33 @@ public class AuraResourceServletHttpTest extends AuraHttpTestCase {
 
         assertEquals(HttpStatus.SC_OK, statusCode);
         assertNotNull(response);
+    }
+
+    /**
+     * Verify super CSS is before CSS of components extending it.
+     * ui:input before ui:inputText before ui:inputNumber before ui:inputPercent
+     *
+     * This test needs to be refactored if/when empty CSS declarations are removed.
+     *
+     * @throws Exception
+     */
+    public void testCSSOrder() throws Exception {
+        String modeAndContext = getSimpleContext(Format.CSS, false);
+        String url = "/l/" + AuraTextUtil.urlencode(modeAndContext) + "/app.css";
+
+        HttpGet get = obtainGetMethod(url);
+        HttpResponse httpResponse = perform(get);
+        int statusCode = getStatusCode(httpResponse);
+        String response = getResponseBody(httpResponse);
+        get.releaseConnection();
+
+        assertEquals(HttpStatus.SC_OK, statusCode);
+
+        assertTrue("ui:input CSS should be before ui:inputText",
+                response.indexOf(".uiInput") < response.indexOf(".uiInputText"));
+        assertTrue("ui:inputText CSS should be before ui:inputNumber",
+                response.indexOf(".uiInputText") < response.indexOf(".uiInputNumber"));
+        assertTrue("ui:inputNumber CSS should be before ui:inputPercent",
+                response.indexOf(".uiInputNumber") < response.indexOf(".uiInputPercent"));
     }
 }

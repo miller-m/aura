@@ -33,39 +33,17 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 public final class SauceUtil {
 
-    /**
-     * Utility to parse strings (i.e. system properties) into ints, with support for defaults as ints. This just saves a
-     * bunch of conversions between Integer and String, relative to getProperty with a String default.
-     */
-    private static int parseIntegerWithDefault(String str, int defVal) {
-        if (str != null) {
-            return Integer.parseInt(str);
-        }
-        return defVal;
-    }
-
     private static final boolean TUNNEL_SELENIUM_COMMANDS_THROUGH_SAUCE_CONNECT = false;
     static final String SAUCELABS_SERVER_URL = "saucelabs.com";
-    private static final String SAUCE_USERNAME = System.getProperty("sauce.username", "[saunce.username undefined]");
+    private static final String SAUCE_USERNAME = System.getProperty("sauce.username", "lumen");
     private static final String SAUCE_ACCESS_KEY = System.getProperty("sauce.access.key",
-            "[sauce.access.key undefined]");
+            "4df61bdf-1696-4f73-b869-ead4c7603dca");
     private static final String SAUCE_WEB_DRIVER_URL = "http://" + SAUCE_USERNAME + ':' + SAUCE_ACCESS_KEY
             + "@saucelabs.com:4444/wd/hub";
-    private static final String SAUCE_CONNECT_HOST = System.getProperty("sauce.connect.host",
-            "[sauce.connect.host undefined]");
-    private static final String SAUCE_CONNECT_URL = "http://" + SAUCE_USERNAME + ':' + SAUCE_ACCESS_KEY + "@"
-            + SAUCE_CONNECT_HOST + "/wd/hub";
+    private static final String SAUCE_CONNECT_URL = "http://" + SAUCE_USERNAME + ':' + SAUCE_ACCESS_KEY
+            + "@rsalvador-wsl.internal.salesforce.com:4445/wd/hub";
     static final String SAUCE_ONDEMAND_HOST = "ondemand.saucelabs.com";
     static final int SAUCE_ONDEMAND_PORT = 80;
-
-    // Allow properties for sauce timeouts. By default, the "command" timeout is used to derive the
-    // others. We set to 60s command, 60s idle, 300s max duration; defaults were originally 5min, 90s,
-    // 30min respectively.
-    static final int SAUCE_CMD_TIMEOUT = parseIntegerWithDefault(System.getProperty("sauce.timeout"), 60);
-    static final int SAUCE_IDLE_TIMEOUT = parseIntegerWithDefault(System.getProperty("sauce.timeout.idle"),
-            SAUCE_CMD_TIMEOUT);
-    static final int SAUCE_MAX_TIMEOUT = parseIntegerWithDefault(System.getProperty("sauce.timeout.duration"),
-            5 * SAUCE_CMD_TIMEOUT);
 
     public static boolean areTestsRunningOnSauce() {
         return "saucelabs.com".equals(System.getProperty(WebDriverProvider.WEBDRIVER_SERVER_PROPERTY));
@@ -78,8 +56,8 @@ public final class SauceUtil {
 
     /**
      * @param test
-     * @param browserType String identifying browser and version (same String as the one used by
-     *            SeleniumTest.BrowserType)
+     * @param browserType String identifying browser and version (same String as
+     *            the one used by SeleniumTest.BrowserType)
      * @return Capabilities for the browserType as required by SauceLabs
      */
     public static DesiredCapabilities getCapabilities(BrowserType browserType, TestCase test) {
@@ -101,9 +79,12 @@ public final class SauceUtil {
         // adding timeouts to prevent jobs to run for too long when problems
         // occur:
         // see http://saucelabs.com/docs/ondemand/additional-config#timeouts
-        capabilities.setCapability("max-duration", SAUCE_MAX_TIMEOUT);
-        capabilities.setCapability("command-timeout", SAUCE_CMD_TIMEOUT);
-        capabilities.setCapability("idle-timeout", SAUCE_IDLE_TIMEOUT);
+        capabilities.setCapability("max-duration", 300); // 5min, default was
+                                                         // 30mins
+        capabilities.setCapability("command-timeout", 60); // 1min, default was
+                                                           // 5mins
+        capabilities.setCapability("idle-timeout", 60); // 1min, default was
+                                                        // 90secs
 
         capabilities.setCapability("record-video", System.getProperty("sauce.record.video", "false"));
         capabilities.setCapability("record-screenshots", System.getProperty("sauce.record.screenshots", "false"));
@@ -136,7 +117,8 @@ public final class SauceUtil {
     }
 
     /**
-     * @return link to public (no login required) job in SauceLabs or null if it cannot be calculated
+     * @return link to public (no login required) job in SauceLabs or null if it
+     *         cannot be calculated
      */
     public static String getLinkToPublicJobInSauce(WebDriver driver) {
         if (!(driver instanceof RemoteWebDriver)) {

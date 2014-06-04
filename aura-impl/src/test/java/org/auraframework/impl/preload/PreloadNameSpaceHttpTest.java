@@ -16,16 +16,12 @@
 package org.auraframework.impl.preload;
 
 import java.util.ArrayList;
-
-import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.auraframework.def.ApplicationDef;
+import org.apache.http.client.methods.HttpGet;
 import org.auraframework.http.AuraBaseServlet;
-import org.auraframework.system.AuraContext.Format;
 import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.test.AuraHttpTestCase;
 import org.auraframework.test.annotation.TestLabels;
@@ -54,24 +50,21 @@ public class PreloadNameSpaceHttpTest extends AuraHttpTestCase {
 
         // Obtain a component which uses preloading namespaces
         String componentInJson = response.substring(AuraBaseServlet.CSRF_PROTECT.length());
-        Map<String, Object> outerMap;
-        try {
-            outerMap = (Map<String, Object>) new JsonReader().read(componentInJson);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse: "+componentInJson, e);
-        }
-        List<Object> actions = (List<Object>) outerMap.get("actions");
-        Map<String, Object> action = (Map<String, Object>) actions.get(0);
-        Map<String, Object> returnValue = (Map<String, Object>) action.get("returnValue");
-        Map<String, Object> value = (Map<String, Object>) returnValue.get("value");
-        String componentDef = (String)value.get("componentDef");
+        Map<String, Object> outerMap = (Map<String, Object>) new JsonReader().read(componentInJson);
+        Map<String, Object> component = (Map<String, Object>) outerMap.get("component");
+        Map<String, Object> value = (Map<String, Object>) component.get("value");
+        Map<String, Object> componentDef = (Map<String, Object>) value.get("componentDef");
+        componentDef = (Map<String, Object>) componentDef.get("value");
 
         // Verify that Descriptor was the only value sent back as part of the componentDef
-        assertEquals(componentDef, "markup://preloadTest:test_Preload_Cmp_SameNameSpace");
+        assertTrue(componentDef.size() == 1);
+        assertTrue(componentDef.containsKey("descriptor"));
+        assertEquals(componentDef.get("descriptor"), "markup://preloadTest:test_Preload_Cmp_SameNameSpace");
     }
 
     /**
-     * Test there are no more preloaded namespaces.
+     * Verify preload namespaces are properly attached to the Context, including the preloads explicitly declared on the
+     * component using the preload='<namespace>' tag.
      */
     @SuppressWarnings("unchecked")
     public void testPreloadsOnContext() throws Exception {
@@ -79,28 +72,27 @@ public class PreloadNameSpaceHttpTest extends AuraHttpTestCase {
 
         // Grab the preloads attached to the context
         String componentInJson = response.substring(AuraBaseServlet.CSRF_PROTECT.length());
-        Map<String, Object> outerMap;
-        try {
-            outerMap = (Map<String, Object>) new JsonReader().read(componentInJson);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse: "+componentInJson, e);
-        }
+        Map<String, Object> outerMap = (Map<String, Object>) new JsonReader().read(componentInJson);
         Map<String, Object> context = (Map<String, Object>) outerMap.get("context");
         ArrayList<String> preloads = (ArrayList<String>) context.get("preloads");
 
-        assertNotNull("Preloads not found in the Context", preloads);
+        assertNotNull("No preloads found in the Context", preloads);
+        assertTrue("Preloads array on Context is empty", !preloads.isEmpty());
+        assertTrue("'aura' preloaded namespace not found on Context", preloads.contains("aura"));
+        assertTrue("'ui' preloaded namespace not found on Context", preloads.contains("ui"));
+        assertTrue("Preloads explicitly declared on component using the preload='' tag should be present on Context",
+                preloads.contains("preloadTest"));
     }
 
     private String obtainResponseCheckStatus() throws Exception {
-        String app = "preloadTest:test_Preload_Cmp_SameNameSpace";
-        HttpPost post = new ServerAction("aura://ComponentController/ACTION$getApplication", null)
-            .putParam("name", app)
-            .setContext(getAuraTestingUtil().getContext(Mode.DEV, Format.JSON, app, ApplicationDef.class, false))
-            .getPostMethod();
-        HttpResponse httpResponse = perform(post);
+        String url = String
+                .format("/aura?aura.tag=preloadTest:test_Preload_Cmp_SameNameSpace&aura.format=JSON&aura.mode=FTEST&aura.lastmod=%s&aura.deftype=APPLICATION",
+                        getLastMod(Mode.FTEST, "preloadTest"));
+        HttpGet get = obtainGetMethod(url);
+        HttpResponse httpResponse = perform(get);
         int statusCode = getStatusCode(httpResponse);
         String response = getResponseBody(httpResponse);
-        post.releaseConnection();
+        get.releaseConnection();
         assertTrue("Failed to reach aura servlet", statusCode == HttpStatus.SC_OK);
 
         return response;

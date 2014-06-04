@@ -28,7 +28,6 @@ import java.lang.annotation.Target;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,7 +42,6 @@ import javax.annotation.Nonnull;
 import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.UncloseableOutputStream;
 import org.auraframework.util.json.Json.Serialization.ReferenceType;
-import org.auraframework.util.json.Json.Serialization.ReferenceScope;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -156,8 +154,8 @@ public class Json {
     }
 
     private final JsonSerializationContext serializationContext;
-    private final Map<Object, Integer> actionMap;
-    private final Map<Object, Integer> requestMap;
+    private final Map<Object, Integer> equalityMap;
+    private final Map<Object, Integer> identityMap;
     private int lastRefId = 0;
     private final Appendable out;
     private final ArrayDeque<IndentEntry> indentStack = new ArrayDeque<IndentEntry>();
@@ -186,11 +184,11 @@ public class Json {
 
         // No need to create the maps if we're not doing the ref stuff
         if (this.serializationContext.refSupport()) {
-            actionMap = new IdentityHashMap<Object, Integer>();
-            requestMap = new IdentityHashMap<Object, Integer>();
+            equalityMap = new HashMap<Object, Integer>();
+            identityMap = new IdentityHashMap<Object, Integer>();
         } else {
-            actionMap = null;
-            requestMap = null;
+            equalityMap = null;
+            identityMap = null;
         }
 
         // Set binaryOutput to a DataOutputStream if applicable; otherwise, null
@@ -213,6 +211,12 @@ public class Json {
             NONE,
 
             /**
+             * If a.equals(b), just output serRefId=<the refId of the object>
+             * after the first time it's output
+             */
+            EQUALITY,
+
+            /**
              * If a == b, just output serRefId=<the refId of the object> after
              * the first time it's output
              */
@@ -220,20 +224,6 @@ public class Json {
         }
 
         ReferenceType referenceType() default ReferenceType.NONE;
-
-        public enum ReferenceScope {
-            /**
-             * the reference is available for the entire request.
-             */
-            REQUEST,
-
-            /**
-             * The reference is only internal tothe current action.
-             */
-            ACTION
-        }
-
-        ReferenceScope referenceScope() default ReferenceScope.ACTION;
     }
 
     /**
@@ -249,9 +239,12 @@ public class Json {
     /**
      * @param obj The thing to serialize
      * @param out The destination for the serialized form
-     * @param format true if output should be indented and multiline for human readability (default = false)
-     * @param refSupport true if @Serialization annotations should be honored (default = false)
-     * @throws JsonSerializationException if there's an issue during serialization
+     * @param format true if output should be indented and multiline for human
+     *            readability (default = false)
+     * @param refSupport true if @Serialization annotations should be honored
+     *            (default = false)
+     * @throws JsonSerializationException if there's an issue during
+     *             serialization
      */
     public static void serialize(Object obj, Appendable out, boolean format, boolean refSupport) {
         try {
@@ -338,7 +331,7 @@ public class Json {
         return createJsonStream(out, new DefaultJsonSerializationContext(format, refSupport, nullValues));
     }
 
-    /*
+    /**
      * Creates a Json instance that is suitable for output streaming, one
      * element at a time. This can help avoid building up an entire JavaScript
      * AST all in memory before it gets serialized, which can help cut down
@@ -362,20 +355,6 @@ public class Json {
         return new Json(writer, out, context);
     }
 
-    /*
-     * Creates a Json instance that is suitable for output streaming, one
-     * element at a time. This can help avoid building up an entire JavaScript
-     * AST all in memory before it gets serialized, which can help cut down
-     * memory use.<br>
-     *
-     * @param out The Appendable to which to write the serialized objects. This must not be null.
-     * @param context The JSON serialization context to use for output
-     * @return A new Json instance that you can use for streaming to the given appendable
-     */
-    public static Json createJsonStream(@Nonnull Appendable out, JsonSerializationContext context) {
-        return new Json(out, null, context);
-    }
-
     /**
      * This method is essentially here to provide type-checking for the
      * outermost map.
@@ -392,42 +371,31 @@ public class Json {
     /**
      * If refSupport is on, track the object for later equality/identity checks
      * 
-     * @param rs the reference scope for the object.
-     * @param value the value for which we are storing a reference.
+     * @param value
      * @return
      */
-    private Integer addReference(ReferenceScope rs, Object value) {
+    private Integer addReference(ReferenceType rt, Object value) {
         int ret = ++lastRefId;
-        Map<Object, Integer> m = (rs == ReferenceScope.ACTION) ? actionMap : requestMap;
+        Map<Object, Integer> m = rt == ReferenceType.IDENTITY ? identityMap : equalityMap;
         m.put(value, ret);
         return ret;
     }
 
     /**
-     * If refSupport is on, clear a set of objects from the references.
-     * 
-     * @param values the values to remove.
+     * @param value
+     * @return The refId previously assigned to the value, or null if none has
+     *         been assigned yet.
      */
-    public void clearReferences() {
-        if (!serializationContext.refSupport()) {
-            return;
+    protected Integer getRefId(ReferenceType rt, Object value) {
+        switch (rt) {
+        case EQUALITY:
+            return equalityMap.get(value);
+        case IDENTITY:
+            return identityMap.get(value);
+        case NONE:
+        default:
+            return null;
         }
-        actionMap.clear();
-    }
-
-    /**
-     * @param rs the scope for the reference
-     * @param value the value for which we want a reference.
-     * @return The refId previously assigned to the value, or null if none has been assigned yet.
-     */
-    protected Integer getRefId(ReferenceScope rs, Object value) {
-        switch (rs) {
-        case ACTION:
-            return actionMap.get(value);
-        case REQUEST:
-            return requestMap.get(value);
-        }
-        return null;
     }
 
     /**
@@ -649,13 +617,13 @@ public class Json {
         ReferenceType rt = serializationContext.refSupport() ? serializer.getReferenceType(value) : ReferenceType.NONE;
         if (rt != ReferenceType.NONE) {
             Integer refId;
-            if ((refId = getRefId(serializer.getReferenceScope(value), value)) != null) {
+            if ((refId = getRefId(rt, value)) != null) {
                 // Output a simple reference
                 writeMapBegin();
                 writeMapEntry(REF_INDICATOR, refId);
                 writeMapEnd();
             } else {
-                refId = addReference(serializer.getReferenceScope(value), value);
+                refId = addReference(rt, value);
                 // Now manually output this 2-element map to avoid loop
                 writeMapBegin();
                 writeMapEntry(ID_INDICATOR, refId);
@@ -780,32 +748,6 @@ public class Json {
      * @throws IOException
      */
     public void writeMapEntry(Object key, Object value) throws IOException {
-        writeMapEntry(key, value, null);
-    }
-
-    /**
-     * Write a value into the current Map, and add leading commas and formatting
-     * as appropriate.  This version will consult its {@code type} parameter to
-     * decide how to serialize null maps and arrays.
-     * 
-     * @param key
-     * @param value
-     * @param type
-     * @throws IOException
-     */
-    public void writeMapEntry(Object key, Object value, String type) throws IOException {
-        if (value == null && type != null) {
-            try {
-                Class<?> valueClass = Json.class.getClassLoader().loadClass(type.substring("java://".length()));
-                if (Iterable.class.isAssignableFrom(valueClass)) {
-                    value = new ArrayList<Boolean>(0);
-                } else if (Map.class.isAssignableFrom(valueClass)) {
-                    value = new HashMap<String,String>(0);
-                }
-            } catch (ClassNotFoundException e) {
-                // Nevermind; treat "we don't know" as a non-list, non-map
-            }
-        }
         if (value != null || serializationContext.isNullValueEnabled()) {
             writeMapKey(key);
             writeValue(value);
@@ -818,15 +760,11 @@ public class Json {
      * 
      * @param key
      * @throws IOException
-     * @throws JsonSerializerNotFoundException if a serializer is not found for the key
      */
     public void writeMapKey(Object key) throws IOException {
         writeComma();
         writeIndent();
         JsonSerializer<Object> serializer = serializationContext.getSerializer(key);
-        if (serializer == null) {
-            throw new JsonSerializerNotFoundException(key);
-        }
         serializer.serialize(this, key);
         writeMapSeparator();
     }
@@ -850,7 +788,8 @@ public class Json {
      * OutputStream returned by this method. After you do that, call
      * {@link #writeBinaryStreamEnd()}.
      * 
-     * @param streamLength The number of bytes that will exist in the output before the ending backtick
+     * @param streamLength The number of bytes that will exist in the output
+     *            before the ending backtick
      * @return The OutputStream that the caller can write its output to
      */
     public OutputStream writeBinaryStreamBegin(long streamLength) throws IOException {
@@ -863,12 +802,14 @@ public class Json {
         // Signal our binary stream's beginning
         validateBinaryStreamEnabledAndWriteBacktick();
 
-        // Flush the output stream writer to push all pending characters onto the OutputStream
+        // Flush the output stream writer to push all pending characters onto
+        // the OutputStream
         if (out instanceof Writer) {
             ((Writer) out).flush();
         }
 
-        // A JSON+binary stream begins with the length as a big endian 64-bit long
+        // A JSON+binary stream begins with the length as a big endian 64-bit
+        // long
         binaryOutput.writeLong(streamLength);
         currentBinaryStreamLength = streamLength;
 

@@ -23,7 +23,7 @@
             if (c.isInstanceOf("ui:menuItem")) {
                 children.push(c);
                 if (c.getDef().getAttributeDefs().getDef("parent")) {
-                    c.set("v.parent", [component]);
+                    c.setValue("v.parent", [component]);
                 }
             } else if (c.isInstanceOf("aura:iteration")) { // support external iteration
                 var iters = c.getValue("v.realbody");
@@ -32,7 +32,7 @@
                     if (iter.isInstanceOf("ui:menuItem")) {
                         children.push(iter);
                         if (iter.getDef().getAttributeDefs().getDef("parent")) {
-                            iter.set("v.parent", [component]);
+                            iter.setValue("v.parent", [component]);
                         }
                     }
                 }
@@ -47,11 +47,11 @@
                     children.push(item);
                 }
                 if (item.getDef().getAttributeDefs().getDef("parent")) {
-                    item.set("v.parent", [component]);
+                    item.setValue("v.parent", [component]);
                 }
             }
         }
-        component.set("v.childMenuItems", children);
+        component.setValue("v.childMenuItems", children);
     },
     
     visibleChange: function(component, event, helper) {

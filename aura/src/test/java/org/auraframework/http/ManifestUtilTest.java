@@ -18,6 +18,7 @@ package org.auraframework.http;
 import java.util.List;
 
 import org.auraframework.test.UnitTestCase;
+
 import org.auraframework.util.AuraTextUtil;
 
 public class ManifestUtilTest extends UnitTestCase {

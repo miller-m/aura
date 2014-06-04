@@ -18,7 +18,7 @@ package org.auraframework.component.ui;
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.impl.AuraImplTestCase;
-import org.auraframework.throwable.quickfix.InvalidDefinitionException;
+import org.auraframework.throwable.AuraRuntimeException;
 
 /**
  * This test has automation to verify implementation of ui:ouputText component.
@@ -44,7 +44,7 @@ public class OutputTextTest extends AuraImplTestCase {
         try {
             testCmp.getDef();
             fail("XML should not be assigned as value.");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
             assertNotNull(e);
         }
 

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<aura:application preload="auradev" model="java://org.auraframework.impl.admin.AdminModel" controller="java://org.auraframework.impl.admin.AdminController">
+<aura:application preload="auradev" model="java://org.auraframework.impl.admin.AdminModel" controller="java://org.auraframework.impl.admin.AdminController" securityProvider="java://org.auraframework.impl.admin.AdminSecurityProvider">
 <aura:attribute name="mbeans" type="boolean"/>
 <div>
 <h2>Aura Administration console</h2>
@@ -29,7 +29,6 @@ Caches
 <auraadmin:cacheView data="{!m.defsData}" name="Definitions" showDefs="true" />
 <auraadmin:cacheView data="{!m.existsData}" name="Existence" />
 <auraadmin:cacheView data="{!m.stringsData}" name="Strings" />
-<auraadmin:cacheView data="{!m.descriptorFilterData}" name="Descriptor Filter" />
 </p>
 <p>
 Non-caching Registries

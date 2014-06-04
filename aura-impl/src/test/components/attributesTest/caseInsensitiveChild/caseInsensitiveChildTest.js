@@ -18,14 +18,14 @@
         test:function(cmp){
             //Child component just seens the values given by parent,
             //even though it overrides the value of the attribute, it is reflected only in the parent
-            $A.test.assertEquals('parentY',cmp.get('v.SIMPLEAttribute'),
+            $A.test.assertEquals('parentY',cmp.getValue('v.SIMPLEAttribute').getValue(),
                 "Attribute expression should be case insensitive.");
-            $A.test.assertEquals('parentY',cmp.get('v.SimpleAttribute'),
+            $A.test.assertEquals('parentY',cmp.getValue('v.SimpleAttribute').getValue(),
                 "Attribute in Child did not get the value set by parent.");
 
             //Value set in child must override the parent's attribute value
             /*TODO : W-1190572
-             * $A.test.assertEquals('childY',cmp.getSuper().get('v.SimpleAttribute'),
+             * $A.test.assertEquals('childY',cmp.getSuper().getValue('v.SimpleAttribute').getValue(),
                     "Attribute value must have been overriden by aura:set tag");
             */
         }

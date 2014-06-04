@@ -26,8 +26,6 @@ function EventDef(config) {
     this.type = config["type"];
 }
 
-EventDef.prototype.auraType = "EventDef";
-
 /**
  * Gets the event descriptor. (e.g. markup://foo:bar)
  * @returns {Object}

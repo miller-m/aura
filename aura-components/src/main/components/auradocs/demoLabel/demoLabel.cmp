@@ -16,7 +16,7 @@
 
 -->
 
-<aura:component model="java://org.auraframework.docs.LabelTestModel" access="global">
+<aura:component model="java://org.auraframework.docs.LabelTestModel">
 	<aura:iteration items="{!m.iterationItems}" var="item">
 		<ui:inputText label="{!item.label}" value="{!item.value}" aura:id="iterate"/>
 	</aura:iteration>

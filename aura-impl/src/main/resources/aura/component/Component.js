@@ -16,31 +16,21 @@
 /*jslint sub: true*/
 //#include aura.component.Component_private
 
-
 /**
  * Construct a new Component.
  * @public
  * @class
  * @constructor
- *
- * @param {Object} config - component configuration
- * @param {Boolean} [localCreation] - local creation
- * @param {ComponentCreationContext} [componentCreationContext] - ccc used to create component
  */
-function Component(config, localCreation, componentCreationContext) {
-    this.ccc = componentCreationContext;
+function Component(config, localCreation){
     this.priv = new ComponentPriv(config, this, localCreation);
     this._destroying = false;
-
-    //#if {"modes" : ["TESTING","AUTOTESTING", "TESTINGDEBUG", "AUTOTESTINGDEBUG"]}
-    this["creationPath"] = this.priv.creationPath;
-    //#end
 }
 
 /**
- * The Component type.
+ * The Component type. 
  * <p>Examples:</p>
- * <p><code>//Checks if the component value is of this type<br />obj.auraType === "Component"</code></p>
+ * <p><code>//Checks if the component value is of this type<br />cmp.getValue("v.value").auraType === "Component"</code></p> 
  * <p><code>//Checks if the elements in the body is of this type<br />
  * var body = cmp.get("v.body");<br />
  * var child = body[i];<br />
@@ -56,6 +46,9 @@ Component.prototype.auraType = "Component";
  * @public
  */
 Component.prototype.getDef = function() {
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.componentDef;
 };
 
@@ -67,6 +60,10 @@ Component.prototype.getDef = function() {
  * @protected
  */
 Component.prototype.index = function(localId, globalId){
+    if (!this.assertValid()) {
+        return null;
+    }
+
     var priv = this.priv;
     if (priv.delegateValueProvider){
         return priv.delegateValueProvider.index(localId, globalId);
@@ -109,7 +106,7 @@ Component.prototype.deIndex = function(localId, globalId){
     // Unfortunately, there are some bizarre loops with deIndex and destroy.
     // For the moment, we don't enforce that this is a valid component until
     // we can track down _why_ it is being called on already destroyed components
-    if (!this.priv) {
+    if (!this.isValid()) {
         return null;
     }
 
@@ -124,12 +121,8 @@ Component.prototype.deIndex = function(localId, globalId){
                 if($A.util.isArray(index)){
                     for(var i=0;i<index.length;i++){
                         if(index[i] === globalId){
+
                             index.splice(i, 1);
-                            //
-                            // If we have removed an index, we need to back up
-                            // our counter to process the same index.
-                            //
-                            i -= 1;
                         }
                     }
                     if(index.length === 0){
@@ -156,6 +149,9 @@ Component.prototype.deIndex = function(localId, globalId){
  * @public
  */
 Component.prototype.find = function(name){
+    if (!this.assertValid()) {
+        return null;
+    }
     if($A.util.isObject(name)){
         var type = name["instancesOf"];
         var instances = [];
@@ -194,7 +190,7 @@ Component.prototype.find = function(name){
 Component.prototype.findValue = function(name){
     var zuper = this;
     while(zuper){
-        var value = zuper._getAttributes()._getValue(name, true);
+        var value = zuper.getAttributes().getValue(name, true);
         if(value){
             if(value.isDefined){
                 if(value.isDefined()){
@@ -210,7 +206,7 @@ Component.prototype.findValue = function(name){
 };
 
 /**
- * Returns the Component instance. For example, <code>component.unwrap()</code>.
+ * Returns the Component instance. For example, <code>component.getValue("v.metadata").unwrap()</code>.
  */
 Component.prototype.unwrap = function() {
     return this;
@@ -225,7 +221,6 @@ Component.prototype.unwrap = function() {
  */
 Component.prototype.findInstancesOf = function(type, ret, cmp){
     cmp = cmp || this.getSuperest();
-
     var body = cmp.get("v.body");
     if(body){
         for(var i=0;i<body.length;i++){
@@ -282,6 +277,9 @@ Component.prototype.findInstanceOf = function(type){
  * @returns {Boolean} true if the component is an instance, or false otherwise.
  */
 Component.prototype.isInstanceOf = function(name){
+    if (!this.assertValid()) {
+        return false;
+    }
     return this.getDef().isInstanceOf(name);
 };
 
@@ -290,6 +288,9 @@ Component.prototype.isInstanceOf = function(name){
  * @param {Object} type Applies the type to its definition.
  */
 Component.prototype.implementsDirectly = function(type){
+    if (!this.assertValid()) {
+        return false;
+    }
     return this.getDef().implementsDirectly(type);
 };
 
@@ -303,6 +304,9 @@ Component.prototype.implementsDirectly = function(type){
  * @public
  */
 Component.prototype.addHandler = function(eventName, valueProvider, actionExpression, insert){
+    if (!this.assertValid()) {
+        return;
+    }
     var dispatcher = this.priv.getEventDispatcher(this);
 
     var handlers = dispatcher[eventName];
@@ -324,9 +328,13 @@ Component.prototype.addHandler = function(eventName, valueProvider, actionExpres
  * @public
  */
 Component.prototype.addValueHandler = function(config){
+    if (!this.assertValid()) {
+        return;
+    }
+
     var value = config["value"];
     if($A.util.isString(value) || value.toString() === "PropertyReferenceValue"){
-        value = this._getValue(value);
+        value = this.getValue(value);
     }
 
     if(value){
@@ -341,7 +349,6 @@ Component.prototype.addValueHandler = function(config){
             valueConfig["eventName"] = config["event"];
             valueConfig["valueProvider"] = this;
             valueConfig["actionExpression"] = config["action"];
-            valueConfig["method"] = config ["method"];
 
             value.addHandler(valueConfig);
             var priv = this.priv;
@@ -351,45 +358,6 @@ Component.prototype.addValueHandler = function(config){
             }
             valuesWithHandlers.push(value);
         }
-    }
-};
-
-/**
- * Add a document level event handler that auto-cleans.
- *
- * When called, this will create and return a handler that can be enabled and disabled at
- * will, and will be cleaned up on destroy.
- *
- * @public
- * @param {String} eventName the event name to attach.
- * @param {Function} callback the callback (only called when enabled, and component is valid & rendered)
- * @param {Boolean} autoEnable (truthy) enable the handler when created.
- * @return {Object} an object with a single visible call of setEnabled(Boolean)
- */
-Component.prototype.addDocumentLevelHandler = function(eventName, callback, autoEnable) {
-    var dlh = new $A.ns.DocLevelHandler(eventName, callback, this);
-    if (!this.priv.docLevelHandlers) {
-        this.priv.docLevelHandlers = {};
-    }
-    $A.assert(this.priv.docLevelHandlers[eventName] === undefined, "Same doc level event set twice");
-    this.priv.docLevelHandlers[eventName] = dlh;
-    dlh.setEnabled(autoEnable);
-    return dlh;
-};
-
-/**
- * Remove a document level handler.
- *
- * You need only call this if the document level handler should be destroyed, it is
- * not generally needed.
- *
- * @public
- * @param {Object} the object returned by addDocumentHandler.
- */
-Component.prototype.removeDocumentLevelHandler = function(dlh) {
-    if (dlh && dlh.setEnabled) {
-        dlh.setEnabled(false);
-        this.priv.docLevelHandlers[dlh.eventName] = undefined;
     }
 };
 
@@ -414,80 +382,34 @@ Component.prototype.finishDestroy = function(){
  * act of doing an asynchronous destroy creates false 'races' because it leaves
  * all of the events wired up.</p>
  *
- * @param {Boolean} async Set to true if component should be destroyed asychronously. The default value is true.
+ * @param {Boolean} async Set to true if component should be destroyed asychronously. The default value is false.
  * @public
  */
-Component.prototype.destroy = function(async,value){
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; DESTROY SHOULD BE CONSIDERED IMPLICIT ON ARRAYVALUE/FACET .set()
-    if(value){
-        var attribute=this._getValue(value);
-        attribute.destroy();
-        return;
-    }
-    var i;
-
-    //#if {"modes" : ["TESTING", "TESTINGDEBUG", "AUTOTESTING", "AUTOTESTINGDEBUG"]}
-	async = false; // Force synchronous destroy when in testing modes
-	//#end
-
+Component.prototype.destroy = function(async){
     if (this.priv && !this._destroying){
-    	// DCHASMAN TODO W-1879487 Reverted in 188 because of hard to diagnose rerendering weirdness in a couple of tests and one:'s mru/lists view
-    	// Default to async destroy
-        /*if (async === undefined) {
-        	async = true;
-        }*/
-
         var key;
-
-        if (this.priv.docLevelHandlers !== undefined) {
-            for (key in this.priv.docLevelHandlers) {
-                var dlh = this.priv.docLevelHandlers[key];
-                if (dlh && dlh.setEnabled) {
-                    dlh.setEnabled(false);
-                }
-            }
-        }
-
         if (async) {
-        	this._scheduledForAsyncDestruction = true;
-
             for (key in this.priv.elements){
                 var element = this.priv.elements[key];
                 if (element && element.style) {
                     element.style.display = "none";
                 }
             }
-
             $A.util.destroyAsync(this);
 
             return null;
         }
-
         var priv = this.priv;
 
         this._destroying = true;
-
-        var componentDef = this.getDef();
-        var zuper = this.getSuper();
-
+        
         var globalId = priv.globalId;
-
-        $A.renderingService.unrender(this);
-
-        // Track some useful debugging information for InvalidComponent's use
-        //#if {"excludeModes" : ["PRODUCTION"]}
-        this._globalId = globalId;
-        this._componentDef = componentDef;
-        //#end
-
-        // Swap in InvalidComponent prototype to keep us from having to add validity checks all over the place
-        $A.util.apply(this, InvalidComponent.prototype, true);
+        
+        renderingService.unrender(this);
 
         priv.elements = undefined;
 
         priv.deIndex();
-        $A.componentService.deIndex(globalId);
-
         var vp = priv.valueProviders;
         if (vp) {
             for (var k in vp) {
@@ -517,20 +439,22 @@ Component.prototype.destroy = function(async,value){
             }
         }
 
-        if (componentDef) {
-            var handlerDefs = componentDef.getAppHandlerDefs();
-            if (handlerDefs){
-                for (i = 0; i < handlerDefs.length; i++) {
-                    var handlerDef = handlerDefs[i];
-                    var handlerConfig = {};
-                    handlerConfig["globalId"] = globalId;
-                    handlerConfig["event"] = handlerDef["eventDef"].getDescriptor().getQualifiedName();
-                    $A.eventService.removeHandler(handlerConfig);
-                }
+        var componentDef = this.getDef();
+        var handlerDefs = componentDef.getAppHandlerDefs();
+        if (handlerDefs){
+            for (var i = 0; i < handlerDefs.length; i++) {
+                var handlerDef = handlerDefs[i];
+                var handlerConfig = {};
+                handlerConfig["globalId"] = globalId;
+                handlerConfig["event"] = handlerDef["eventDef"].getDescriptor().getQualifiedName();
+                eventService.removeHandler(handlerConfig);
             }
         }
 
-        if (zuper){
+        componentService.deIndex(this);
+
+        var zuper = this.getSuper();
+        if(zuper){
             zuper.destroy(async);
             priv.superComponent = undefined;
         }
@@ -550,7 +474,6 @@ Component.prototype.destroy = function(async,value){
                     for(var j=0;j<vals.length;j++){
                         delete vals[j];
                     }
-
                     delete eventDispatcher[key];
                 }
             }
@@ -571,25 +494,7 @@ Component.prototype.destroy = function(async,value){
         this.priv = undefined;
         return globalId;
     }
-
     return null;
-};
-
-/**
- * Returns true if this component has been rendered and valid.
- * @protected
- */
-Component.prototype.isRenderedAndValid = function() {
-    return this.priv && !this._destroying && this.priv.rendered;
-};
-
-/**
- * Render this component
- * @protected
- */
-Component.prototype.render = function() {
-	var renderer = this.priv.renderer;
-	return renderer.def.render(renderer.renderable) || [];
 };
 
 /**
@@ -598,6 +503,9 @@ Component.prototype.render = function() {
  * @protected
  */
 Component.prototype.isRendered = function() {
+    if (!this.assertValid()) {
+        return false;
+    }
     return this.priv.rendered;
 };
 
@@ -607,6 +515,9 @@ Component.prototype.isRendered = function() {
  * @private
  */
 Component.prototype.setUnrendering = function(unrendering) {
+    if (!this.assertValid()) {
+        return;
+    }
     this.priv.inUnrender = unrendering;
 };
 
@@ -617,6 +528,9 @@ Component.prototype.setUnrendering = function(unrendering) {
  * @private
  */
 Component.prototype.isUnrendering = function() {
+    if (!this.assertValid()) {
+        return false;
+    }
     return this.priv.inUnrender;
 };
 
@@ -643,6 +557,9 @@ Component.prototype.getRenderer = function() {
  * @public
  */
 Component.prototype.getGlobalId = function() {
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.globalId;
 };
 
@@ -652,6 +569,9 @@ Component.prototype.getGlobalId = function() {
  * @public
  */
 Component.prototype.getLocalId = function() {
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.localId;
 };
 
@@ -660,6 +580,9 @@ Component.prototype.getLocalId = function() {
  * @public
  */
 Component.prototype.getRendering = function(){
+    if (!this.assertValid()) {
+        return false;
+    }
     var concrete = this.getConcreteComponent();
 
     if(this !== concrete){
@@ -674,6 +597,9 @@ Component.prototype.getRendering = function(){
  * @protected
  */
 Component.prototype.getSuper = function(){
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.superComponent;
 };
 
@@ -686,6 +612,9 @@ Component.prototype.getSuper = function(){
  * @protected
  */
 Component.prototype.associateElement = function(config){
+    if (!this.assertValid()) {
+        return;
+    }
     if (!this.isConcrete()){
         var concrete = this.getConcreteComponent();
         concrete.associateElement(config);
@@ -706,6 +635,9 @@ Component.prototype.associateElement = function(config){
  * @public
  */
 Component.prototype.getElements = function(){
+    if (!this.assertValid()) {
+        return [];
+    }
     if (!this.isConcrete()){
         var concrete = this.getConcreteComponent();
         return concrete.getElements();
@@ -720,6 +652,9 @@ Component.prototype.getElements = function(){
  * @public
  */
 Component.prototype.getElement = function(){
+    if (!this.assertValid()) {
+        return null;
+    }
     var elements = this.getElements();
     if (elements) {
         var ret = elements["element"];
@@ -746,60 +681,32 @@ Component.prototype.getElement = function(){
 };
 
 /**
- * DO NOT USE THIS METHOD.
- *
- * @private
- *
- * @deprecated use Component.get(key) and Component.set(key,value) instead
- */
-Component.prototype.getAttributes = function () {
-    //$A.warning("DEPRECATED USE OF component.getAttributes(key). USE component.get(key) AND component.set(key,value) INSTEAD.");
-    return this._getAttributes();
-};
-
-/**
  * Returns the collection of attributes for this component.
  * See <a href="#help?topic=hideMarkup">Dynamically Showing or Hiding Markup</a> for an example.
  * Shorthand : <code>get("v")</code>
- *
- * TEMPORARILY INTERNALIZED TO GATE ACCESS
- *
- * @private
  */
-Component.prototype._getAttributes = function() {
+Component.prototype.getAttributes = function() {
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.attributes;
-};
-
-/**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.get(key) instead
- */
-Component.prototype.getValue = function (key) {
-    //$A.warning("DEPRECATED USE OF component.getValue(key). USE component.get(key) INSTEAD.",key);
-    return this._getValue(key);
 };
 
 /**
  * Returns the wrapped value referenced using property syntax.
  * If you do not need the wrapper, use <code>get()</code> instead.
- * Temporarily internalized to gate access.
  * @param {String} key The data key to look up on the Component. E.g. <code>$A.get("root.v.mapAttring.key")</code>
  *
- * @private
- *
- * @deprecated use Component.get(key,value) instead
+ * @public
  */
-Component.prototype._getValue = function(key){
+Component.prototype.getValue = function(key){
     // Should we deliberately break here?
     if (!this.isValid() || $A.util.isUndefinedOrNull(key)) {
         return undefined;
     }
 
     // this getValue is special, the only one that accepts an expression or just a key
-    if (key.toString() === "PropertyReferenceValue" || key.indexOf(".") !== -1) {
+    if (key.toString() === "PropertyReferenceValue" || key.indexOf(".") != -1) {
         // then we got an expression, lets deal with it
         return expressionService.getValue(this, key);
     }
@@ -819,62 +726,24 @@ Component.prototype._getValue = function(key){
 };
 
 /**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.set(key,value) instead
- */
-Component.prototype.setValue = function (key,value) {
-    //$A.warning("DEPRECATED USE OF component.setValue(key,value). USE component.set(key, value) INSTEAD.", {key:key,value:value});
-    return this._setValue(key,value);
-};
-
-/**
  * Gets the wrapped value referenced using property syntax and sets the value object's value.
  * @param {String} key The data key to look up on the Component. E.g. <code>$A.get("root.v.mapAttring.key")</code>
  * @param {Object} value The value to set
  *
- * TEMPORARILY INTERNALIZED TO GATE ACCESS
- *
- * @private
+ * @public
  */
-Component.prototype._setValue = function(key, value){
-    var v = this._getValue(key);
+Component.prototype.setValue = function(key, value){
+    if (!this.assertValid()) {
+        return;
+    }
+    var v = this.getValue(key);
     if ($A.util.isUndefinedOrNull(v)) {
         $A.error("Invalid key "+key);
         return;
     }
-    v._setValue(value);
+    v.setValue(value);
 };
 
-
-/**
- * Returns the value provider.
- * @return {Object} value provider
- */
-Component.prototype.getAttributeValueProvider = function() {
-    // DCHASMAN TODO: TEMPORARY PASSTHROUGH TO HIDE GETATTRIBUTES()
-	return this._getAttributes().getValueProvider();
-};
-
-/**
- * Returns the value provider of the component.
- * @return {Object} component or value provider
- */
-Component.prototype.getComponentValueProvider = function() {
-    // DCHASMAN TODO: TEMPORARY PASSTHROUGH TO HIDE GETATTRIBUTES()
-	return this._getAttributes().getComponentValueProvider();
-};
-
-/**
- * Merge attributes from another map value.
- * @param {Object} yourMap The map to merge with this AttributeSet.
- */
-Component.prototype.mergeAttributes = function(yourMap, overwrite) {
-    // DCHASMAN TODO: TEMPORARY PASSTHROUGH TO HIDE GETATTRIBUTES()
-	return this._getAttributes().merge(yourMap, overwrite);
-};
 
 /**
  * Returns the raw value referenced using property syntax.
@@ -886,27 +755,10 @@ Component.prototype.mergeAttributes = function(yourMap, overwrite) {
  * @public
  */
 Component.prototype.get = function(key){
-    return $A.expressionService.get(this, key);
-};
-
-/**
- * Gets the wrapped value referenced using property syntax and sets the value object's value.
- * @param {String} key The data key to look up on the Component. E.g. <code>$A.get("root.v.mapAttring.key")</code>
- * @param {Object} value The value to set
- *
- * @public
- */
-Component.prototype.set = function (key, value, ignoreChanges) {
-    var v = this._getValue(key);
-    if ($A.util.isUndefinedOrNull(v)) {
-        $A.error("Invalid key " + key);
+    if (!this.assertValid()) {
         return;
     }
-    // JBUCH TODO: EXTRAPOLATE THIS TO ALL FACETS
-//    if(key==="v.body"){
-//        v.destroy();
-//    }
-    v._setValue(value,ignoreChanges);
+    return $A.expressionService.get(this, key);
 };
 
 /**
@@ -924,6 +776,9 @@ Component.prototype.getConcreteComponent = function(){
  * @public
  */
 Component.prototype.isConcrete = function() {
+    if (!this.assertValid()) {
+        return false;
+    }
     return !this.priv.concreteComponentId;
 };
 
@@ -941,6 +796,9 @@ Component.prototype.getEventDispatcher = function(){
  * @public
  */
 Component.prototype.getModel = function(){
+    if (!this.assertValid()) {
+        return null;
+    }
     return this.priv.model;
 };
 
@@ -951,6 +809,12 @@ Component.prototype.getModel = function(){
  * @public
  */
 Component.prototype.getEvent = function(name) {
+    if (!this.assertValid()) {
+        return null;
+    }
+    /*if (!this.isConcrete()) {
+        return this.getConcreteComponent().getEvent(name);
+    }*/
     var eventDef = this.getDef().getEventDef(name);
     if (!eventDef) {
 
@@ -989,83 +853,30 @@ Component.prototype.getEventByDescriptor = function(descriptor) {
  * @private
  */
 Component.prototype.fire = function(name) {
+    if (!this.assertValid()) {
+        return;
+    }
     BaseValue.fire(name, this, this.getEventDispatcher());
 };
 
 /**
- * Looks up the specified value and checks if it is currently dirty.
- * @returns true if the value is dirty, and false if it is clean or does not exist.
- * @public
- * @deprecated TEMPORARY WORKAROUND
+ * Returns true if the component has not been destroyed.
+ * @private
  */
-Component.prototype.isDirty = function(expression){
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; isDirty() SHOULD BE HANDLED AUTOMATICALLY
-    var wrapper=this._getValue(expression);
-    return (wrapper&&wrapper.isDirty())||false;
+Component.prototype.assertValid = function(){
+    var valid = !$A.util.isUndefined(this.priv);
+    if (!valid) {
+        $A.error("Invalid component");
+    }
+    return valid;
 };
 
 /**
  * Returns true if the component has not been destroyed.
  * @public
  */
-Component.prototype.isValid=function(expression){
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; isValid() SHOULD BE HANDLED THROUGH ERROR EVENTS
-    if(expression){
-        var wrapper=this._getValue(expression);
-        return (wrapper&&wrapper.isValid())||false;
-    }
-    return !this._scheduledForAsyncDestruction && this.priv;
-};
-
-/**
- * Looks up the specified value and sets it to valid or invalid.
- * @public
- * @deprecated TEMPORARY WORKAROUND
- */
-Component.prototype.setValid = function (expression,valid) {
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; setValid() SHOULD BE HANDLED THROUGH ERROR EVENTS
-    var wrapper = this._getValue(expression);
-    if(wrapper&&wrapper.setValid){
-        wrapper.setValid(valid);
-    }
-};
-
-/**
- * Looks up the specified value and adds errors to it.
- * @public
- * @deprecated TEMPORARY WORKAROUND
- */
-Component.prototype.addErrors = function (expression, errors) {
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; addErrors() SHOULD BE HANDLED THROUGH ERROR EVENTS
-    var wrapper = this._getValue(expression);
-    if (wrapper&&wrapper.addErrors) {
-        wrapper.addErrors(errors);
-    }
-};
-
-/**
- * Looks up the specified value and clears errors on it.
- * @public
- * @deprecated TEMPORARY WORKAROUND
- */
-Component.prototype.clearErrors = function (expression) {
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; clearErrors() SHOULD BE HANDLED THROUGH ERROR EVENTS
-    var wrapper = this._getValue(expression);
-    if (wrapper&&wrapper.clearErrors) {
-        wrapper.clearErrors();
-    }
-};
-
-
-/**
- * Looks up the specified value and gets errors on it.
- * @public
- * @deprecated TEMPORARY WORKAROUND
- */
-Component.prototype.getErrors = function (expression) {
-    // JBUCH TODO: TEMPORARY PASSTHROUGH TO HIDE SIMPLEVALUES; getErrors() SHOULD BE HANDLED THROUGH ERROR EVENTS
-    var wrapper = this._getValue(expression);
-    return wrapper ? wrapper.getErrors() : [];
+Component.prototype.isValid = function(){
+    return !$A.util.isUndefined(this.priv);
 };
 
 /**
@@ -1109,10 +920,10 @@ Component.prototype.addClass = function(clz) {
         oldClz = $A.util.trim(oldClz);
         if (oldClz) {
             if ((' ' + oldClz + ' ').indexOf(' ' + clz + ' ') == -1) {
-                this._setValue("v.class", oldClz + ' ' + clz);
+                this.setValue("v.class", oldClz + ' ' + clz);
             }
         } else {
-            this._setValue("v.class", clz);
+            this.setValue("v.class", clz);
         }
     }
 };
@@ -1139,7 +950,7 @@ Component.prototype.removeClass = function(clz) {
         }
     }
     if (found) {
-        this._setValue("v.class", newClass.join(' '));
+        this.setValue("v.class", newClass.join(' '));
     }
 };
 
@@ -1177,17 +988,20 @@ Component.prototype.hasEventHandler = function(eventName) {
  * Returns an array of this component's facets, i.e., attributes of type <code>aura://Aura.Component[]</code>
  */
 Component.prototype.getFacets = function() {
+    if (!this.assertValid()) {
+        return [];
+    }
     if (!this.getFacets.cachedFacetNames) {
         // grab the names of each of the facets from the ComponentDef
         var facetNames = [];
         var attributeDefs = this.getDef().getAttributeDefs();
-
+        
         attributeDefs.each(function(attrDef) {
             if (attrDef.getTypeDefDescriptor() === "aura://Aura.Component[]") {
                 facetNames.push(attrDef.getDescriptor().getName());
             }
         });
-
+        
         // cache the names--they're not going to change
         this.getFacets.cachedFacetNames = facetNames;
     }
@@ -1197,59 +1011,9 @@ Component.prototype.getFacets = function() {
     var facets = [];
 
     for (var i=0, len=names.length; i<len; i++) {
-        facets.push(this._getValue("v." + names[i]));
+        facets.push(this.getValue("v." + names[i]));
     }
     return facets;
 };
-
-
-/**
- * Constructor for a doc level handler.
- *
- * @param {String} eventName the name of the event (must be valid dom event)
- * @param {Function} callback the callback function for the event (will be wrapped)
- * @param {Component} component the component attached to the handler.
- * @private
- * @constructor
- */
-$A.ns.DocLevelHandler = function DocLevelHandler(eventName, callback, component) {
-    this.eventName = eventName;
-    this.component = component;
-    this.enabled = false;
-    var that = this;
-    this.callback = function(eventObj) {
-        if (that.component.isRenderedAndValid()) {
-            callback(eventObj);
-        }
-    };
-};
-
-/**
- * Set whether the handler is enabled.
- *
- * This function will enable or disable the handler as necessary. Note that the
- * callback will be called only if the component is rendered.
- *
- * @param {Boolean} enable if truthy, the handler is enabled, otherwise disabled.
- */
-$A.ns.DocLevelHandler.prototype.setEnabled = function(enable) {
-    if (enable) {
-        if (!this.enabled) {
-            this.enabled = true;
-            $A.util.on(document.body, this.eventName, this.callback);
-        }
-    } else {
-        if (this.enabled) {
-            this.enabled = false;
-            $A.util.removeOn(document.body, this.eventName, this.callback);
-        }
-    }
-};
-
-var dlp = $A.ns.DocLevelHandler.prototype;
-exp(dlp,
-    "setEnabled", dlp.setEnabled
-);
-
 
 //#include aura.component.Component_export

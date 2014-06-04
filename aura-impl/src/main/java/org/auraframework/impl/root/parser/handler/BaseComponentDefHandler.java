@@ -23,8 +23,21 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.auraframework.Aura;
 import org.auraframework.builder.RootDefinitionBuilder;
-import org.auraframework.def.*;
+import org.auraframework.def.AttributeDef;
+import org.auraframework.def.AttributeDefRef;
+import org.auraframework.def.BaseComponentDef;
 import org.auraframework.def.BaseComponentDef.WhitespaceBehavior;
+import org.auraframework.def.ComponentDef;
+import org.auraframework.def.ComponentDefRef;
+import org.auraframework.def.ControllerDef;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.HelperDef;
+import org.auraframework.def.InterfaceDef;
+import org.auraframework.def.ModelDef;
+import org.auraframework.def.ProviderDef;
+import org.auraframework.def.RendererDef;
+import org.auraframework.def.StyleDef;
+import org.auraframework.def.TestSuiteDef;
 import org.auraframework.expression.PropertyReference;
 import org.auraframework.impl.root.AttributeDefImpl;
 import org.auraframework.impl.root.AttributeDefRefImpl;
@@ -33,16 +46,22 @@ import org.auraframework.impl.root.event.RegisterEventDefImpl;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.impl.system.SubDefDescriptorImpl;
 import org.auraframework.impl.util.TextTokenizer;
-import org.auraframework.system.*;
+import org.auraframework.system.AuraContext;
 import org.auraframework.system.AuraContext.Mode;
+import org.auraframework.system.Source;
+import org.auraframework.system.SubDefDescriptor;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  */
-public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extends RootTagHandler<T> {
+public abstract class BaseComponentDefHandler<T extends BaseComponentDef>
+        extends RootTagHandler<T> {
 
     private static final String ATTRIBUTE_RENDER = "render";
     private static final String ATTRIBUTE_TEMPLATE = "template";
@@ -59,16 +78,14 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
     private static final String ATTRIBUTE_CONTROLLER = "controller";
     private static final String ATTRIBUTE_WHITESPACE = "whitespace";
 
-    protected static final Set<String> ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>()
-            .add(ATTRIBUTE_IMPLEMENTS, ATTRIBUTE_ACCESS, ATTRIBUTE_MODEL, ATTRIBUTE_CONTROLLER)
+    protected final static Set<String> ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>()
+            .add(ATTRIBUTE_RENDER, ATTRIBUTE_TEMPLATE, ATTRIBUTE_PROVIDER,
+                    ATTRIBUTE_EXTENSIBLE, ATTRIBUTE_ABSTRACT,
+                    ATTRIBUTE_ISTEMPLATE, ATTRIBUTE_IMPLEMENTS,
+                    ATTRIBUTE_EXTENDS, ATTRIBUTE_STYLE, ATTRIBUTE_HELPER,
+                    ATTRIBUTE_RENDERER, ATTRIBUTE_MODEL, ATTRIBUTE_CONTROLLER,
+                    ATTRIBUTE_WHITESPACE)
             .addAll(RootTagHandler.ALLOWED_ATTRIBUTES).build();
-    
-	protected static final Set<String> PRIVILEGED_ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>().add(
-			ATTRIBUTE_RENDER, ATTRIBUTE_TEMPLATE, ATTRIBUTE_PROVIDER,
-            ATTRIBUTE_EXTENSIBLE, ATTRIBUTE_ABSTRACT, ATTRIBUTE_ISTEMPLATE,
-            ATTRIBUTE_EXTENDS, ATTRIBUTE_STYLE, ATTRIBUTE_HELPER, ATTRIBUTE_RENDERER,
-            ATTRIBUTE_WHITESPACE).addAll(ALLOWED_ATTRIBUTES).addAll(RootTagHandler.PRIVILEGED_ALLOWED_ATTRIBUTES).build();
-    
 
     private int innerCount = 0;
     private final List<ComponentDefRef> body = Lists.newArrayList();
@@ -96,7 +113,7 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
 
     @Override
     public Set<String> getAllowedAttributes() {
-        return isInPrivilegedNamespace ? PRIVILEGED_ALLOWED_ATTRIBUTES : ALLOWED_ATTRIBUTES;
+        return ALLOWED_ATTRIBUTES;
     }
 
     @Override
@@ -114,7 +131,7 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
             builder.getAttributeDefs().put(attributeDef.getDescriptor(),
                     attributeDef);
         } else if (RegisterEventHandler.TAG.equalsIgnoreCase(tag)) {
-            RegisterEventDefImpl regDef = new RegisterEventHandler<T>(this, xmlReader,
+            RegisterEventDefImpl regDef = new RegisterEventHandler(xmlReader,
                     source).getElement();
             if (builder.events.containsKey(regDef.getAttributeName())) {
                 error("Multiple events registered with name %s on tag %s",
@@ -129,9 +146,6 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
                     source).getElement());
         } else if (DependencyDefHandler.TAG.equalsIgnoreCase(tag)) {
             builder.addDependency(new DependencyDefHandler<T>(this, xmlReader,
-                    source).getElement());
-        } else if (ClientLibraryDefHandler.TAG.equalsIgnoreCase(tag)) {
-            builder.addClientLibrary(new ClientLibraryDefHandler<T>(this, xmlReader,
                     source).getElement());
         } else {
             body.add(getDefRefHandler(this).getElement());
@@ -173,7 +187,7 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
     @Override
     protected void readAttributes() throws QuickFixException {
         AuraContext context = Aura.getContextService().getCurrentContext();
-        context.setCurrentCaller(builder.getDescriptor());
+        context.setCurrentNamespace(builder.getDescriptor().getNamespace());
         Mode mode = context.getMode();
 
         super.readAttributes();
@@ -221,10 +235,10 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
         }
 
         // See if there is a clientController that has the same qname.
-        String jsDescriptorName = String.format("js://%s.%s",
+        String jsControllerName = String.format("js://%s.%s",
                 defDescriptor.getNamespace(), defDescriptor.getName());
         DefDescriptor<ControllerDef> jsDescriptor = DefDescriptorImpl
-                .getInstance(jsDescriptorName, ControllerDef.class);
+                .getInstance(jsControllerName, ControllerDef.class);
         if (jsDescriptor.exists()) {
             builder.controllerDescriptors.add(jsDescriptor);
         }
@@ -244,7 +258,7 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
         } else {
             // See if there is a clientRenderer that has the same qname.
             DefDescriptor<RendererDef> jsRendererDescriptor = DefDescriptorImpl
-                    .getInstance(jsDescriptorName, RendererDef.class);
+                    .getInstance(jsControllerName, RendererDef.class);
             if (jsRendererDescriptor.exists()) {
                 builder.addRenderer(jsRendererDescriptor.getQualifiedName());
             }
@@ -261,16 +275,10 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
         } else {
             // See if there is a helper that has the same qname.
             DefDescriptor<HelperDef> jsHelperDescriptor = DefDescriptorImpl
-                    .getInstance(jsDescriptorName, HelperDef.class);
+                    .getInstance(jsControllerName, HelperDef.class);
             if (jsHelperDescriptor.exists()) {
                 builder.addHelper(jsHelperDescriptor.getQualifiedName());
             }
-        }
-
-        DefDescriptor<ResourceDef> jsResourceDescriptor = DefDescriptorImpl
-                .getInstance(jsDescriptorName, ResourceDef.class);
-        if (jsResourceDescriptor.exists()) {
-            builder.addResource(jsResourceDescriptor.getQualifiedName());
         }
 
         // See if there is a style that has the same qname.
@@ -285,23 +293,11 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
             builder.styleDescriptor = cssDescriptor;
         }
 
-        DefDescriptor<ResourceDef> cssResourceDescriptor = DefDescriptorImpl.getInstance(styleName, ResourceDef.class);
-        if (cssResourceDescriptor.exists()) {
-            builder.addResource(cssResourceDescriptor.getQualifiedName());
-        }
-
-        // See if there is a themedef that has the same qname. todo -- add localTheme attr as well?
-        String themeName = String.format("%s:%s", defDescriptor.getNamespace(), defDescriptor.getName());
-        DefDescriptor<ThemeDef> themeDesc = DefDescriptorImpl.getInstance(themeName, ThemeDef.class);
-        if (themeDesc.exists()) {
-            builder.localThemeDescriptor = themeDesc;
-        }
-
         // Do not consider Javascript Test suite defs in PROD and PRODDEBUG modes.
         if (mode != Mode.PROD && mode != Mode.PRODDEBUG) {
             // See if there is a test suite that has the same qname.
             DefDescriptor<TestSuiteDef> jsTestSuiteDescriptor = DefDescriptorImpl
-                    .getInstance(jsDescriptorName, TestSuiteDef.class);
+                    .getInstance(jsControllerName, TestSuiteDef.class);
             if (jsTestSuiteDescriptor.exists()) {
                 builder.testSuiteDefDescriptor = jsTestSuiteDescriptor;
             }
@@ -355,13 +351,6 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
             builder.templateDefDescriptor = DefDescriptorImpl.getInstance(
                     templateName, ComponentDef.class);
         }
- 
-        DefDescriptor<DocumentationDef> documentationDescriptor = DefDescriptorImpl.getAssociateDescriptor(
-        		builder.getDescriptor(), DocumentationDef.class, DefDescriptor.MARKUP_PREFIX);
-
-        if (documentationDescriptor.exists()) {
-            builder.setDocumentation(documentationDescriptor.getQualifiedName());
-        }
 
         builder.render = getAttributeValue(ATTRIBUTE_RENDER);
 
@@ -370,11 +359,9 @@ public abstract class BaseComponentDefHandler<T extends BaseComponentDef> extend
                 : WhitespaceBehavior.valueOf(whitespaceVal.toUpperCase());
 
         builder.isTemplate = getBooleanAttributeValue(ATTRIBUTE_ISTEMPLATE);
-        
-        builder.setAccess(readAccessAttribute());
     }
 
-	public void setRender(String val) {
+    public void setRender(String val) {
         builder.render = val;
     }
 

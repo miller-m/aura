@@ -20,8 +20,6 @@ import java.util.Map;
 
 import org.auraframework.def.RootDefinition.SupportLevel;
 import org.auraframework.throwable.AuraRuntimeException;
-import org.auraframework.throwable.quickfix.InvalidDefinitionException;
-import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 
 public abstract class RootDefinitionTest<T extends RootDefinition> extends DefinitionTest<T> {
@@ -39,13 +37,12 @@ public abstract class RootDefinitionTest<T extends RootDefinition> extends Defin
         return defClass;
     }
 
-   
-    protected T define(String source) throws QuickFixException {
+    protected T define(String source) throws Exception {
         DefDescriptor<T> desc = addSourceAutoCleanup(getDefClass(), source);
         return desc.getDef();
     }
 
-    protected T define(String source, Object... replacements) throws QuickFixException {
+    protected T define(String source, Object... replacements) throws Exception {
         return define(String.format(source, replacements));
     }
 
@@ -165,7 +162,7 @@ public abstract class RootDefinitionTest<T extends RootDefinition> extends Defin
         try {
             define(String.format(baseTag, "support='fooBarBlah'", ""));
             fail("Support attribute should not accept invalid values.");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
             assertTrue("Exception did not have the correct string",
                     e.getMessage().contains("Invalid support level fooBarBlah"));
             assertTrue(e.getLocation().toString() + " should have started with markup://string:thing", e.getLocation()
@@ -200,7 +197,7 @@ public abstract class RootDefinitionTest<T extends RootDefinition> extends Defin
             def = define(String.format(baseTag,
                     "description='<div>use html markup in description</div> <aura:text value='foo'/>'", ""));
             fail("Shouldnt allow markup in description. ");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
 
         }
         DefDescriptor<T> parentDesc = addSourceAutoCleanup(getDefClass(),

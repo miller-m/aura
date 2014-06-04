@@ -20,17 +20,22 @@
  * @param {Object} config
  */
 function AttributeDef(config){
-    this.descriptor = new DefDescriptor(config["name"]);
-    this.typeDefDescriptor = config["type"];
-    this.defaultValue = config["default"];
-    this.required = config["required"] === true;
+    this.descriptor = new DefDescriptor(config["descriptor"]);
+    this.typeDefDescriptor = config["typeDefDescriptor"];
+    //this.typeDef = null,//FIXME - look up in TypeDefRegistry
+    if (config["defaultValue"] !== undefined) {
+        this.defaultValue = config["defaultValue"]["value"];
+    } else if (this.typeDefDescriptor.substr(this.typeDefDescriptor.length-2) === "[]" || this.typeDefDescriptor.indexOf("aura://List") === 0) {
+        this.defaultValue = [];
+    }
+    this.required = config["required"];
 }
 
 AttributeDef.prototype.auraType = "AttributeDef";
 
 /**
- * Gets the descriptor. Returns a DefDescriptor object that contains the metadata for the attribute.
- * @returns {DefDescriptor} The qualified name for a DefDescriptor object has the format <code>prefix://namespace:name</code>.
+ * Gets the descriptor. Returns a DefDescriptor object.
+ * @returns {DefDescriptor}
  */
 AttributeDef.prototype.getDescriptor = function(){
     return this.descriptor;
@@ -65,7 +70,7 @@ AttributeDef.prototype.getDefault = function(){
 /**
  * Gets the type of the definition descriptor.
  * @private
- * @returns {String}
+ * @returns {Object}
  */
 AttributeDef.prototype.getTypeDefDescriptor = function(){
     return this.typeDefDescriptor;

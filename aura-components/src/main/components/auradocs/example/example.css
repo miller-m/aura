@@ -13,29 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.THIS.container {
-    margin: 5px;
-    padding: 1em;
+.THIS{
+    position: relative;
 }
-
-.THIS h3 {
-	font-size: 26px;
-	font-weight: 800;
-	color: #2f3438;
-	margin-top: 14px;
-	margin-bottom: 14px;
+.THIS.uiTabset.displayTab{
+	height:360px;
 }
-
-.THIS p {
-	font-size: 13px;
-	line-height: 1.4;
-	margin-bottom: 1.1em;
-}
-
-.THIS .description {
-	padding: 1em;
-}
-
-.THIS .uiTabset.displayTab{
-	height: 460px;
+.THIS .frame{
+    width: 100%;
 }

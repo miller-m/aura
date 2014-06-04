@@ -19,7 +19,7 @@
      * accordingly.
      */
     handleInputChange : function(cmp, event) {
-        cmp.set('v.expanded', event.target.checked);
+        cmp.getAttributes().setValue('expanded', event.target.checked);
     },
 
     /**

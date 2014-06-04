@@ -18,20 +18,19 @@ package org.auraframework.test.mock;
 import java.io.IOException;
 import java.util.Set;
 
-import org.auraframework.def.*;
-import org.auraframework.impl.DefinitionAccessImpl;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.Definition;
 import org.auraframework.system.Location;
 import org.auraframework.system.SubDefDescriptor;
 import org.auraframework.throwable.quickfix.QuickFixException;
-import org.auraframework.util.json.*;
+import org.auraframework.util.json.Json;
 import org.auraframework.util.json.Json.Serialization;
-import org.auraframework.util.json.Json.Serialization.ReferenceScope;
 import org.auraframework.util.json.Json.Serialization.ReferenceType;
 
 /**
  * A simple Definition.
  */
-@Serialization(referenceType = ReferenceType.IDENTITY, referenceScope = ReferenceScope.REQUEST)
+@Serialization(referenceType = ReferenceType.IDENTITY)
 public abstract class MockDefinition<D extends Definition> implements Definition {
     private static final long serialVersionUID = 9040467312474951787L;
     private final DefDescriptor<D> descriptor;
@@ -75,7 +74,7 @@ public abstract class MockDefinition<D extends Definition> implements Definition
     }
 
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies){
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
     }
 
     @Override
@@ -103,11 +102,6 @@ public abstract class MockDefinition<D extends Definition> implements Definition
     @Override
     public Visibility getVisibility() {
         return Visibility.PUBLIC;
-    }
-    
-    @Override
-    public DefinitionAccess getAccess() {
-    	return DefinitionAccessImpl.defaultAccess(descriptor.getNamespace());
     }
 
     @Override

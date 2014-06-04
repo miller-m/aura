@@ -13,38 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
+{		
 	afterRender: function(cmp, helper) {
+		this.superAfterRender();
 		//update size in case carousel width is not specified
 		helper.updateSize(cmp);
-		this.superAfterRender();
-		helper.attachEvents(cmp);
-		helper.selectDefaultPage(cmp);
 	},
 	
-	rerender: function(cmp, helper) {
-		var shouldRerender = false,
-			width = cmp.getValue('v.width'),
-			height = cmp.getValue('v.height'),
-			cStyle = cmp.getValue('v.priv_carouselStyle'),	
-			pageCmps = cmp.getValue('v.pageComponents'),
-			forceUpdate = pageCmps.isDirty() ? true : false;
-
-		if (width.isDirty() || height.isDirty() || cStyle.isDirty() || forceUpdate) {
-			helper.updateSize(cmp, forceUpdate);
-			shouldRerender = true;
-		}
+	rerender: function(cmp, helper) { 
+		this.superRerender();
 		
-		if (shouldRerender) {
-			this.superRerender();
-			if (forceUpdate) {
-				helper.selectDefaultPage(cmp);
-			}			
-		}
-	},
-	
-	unrender: function(cmp, helper) {
-		helper.unrender(cmp);
-		this.superUnrender();
+		var pageCmps = cmp.getValue('v.pageComponents');
+		if (pageCmps.isDirty()) {            
+            $A.get("e.ui:updateSize").fire();  
+		}	
 	}
-})
+}

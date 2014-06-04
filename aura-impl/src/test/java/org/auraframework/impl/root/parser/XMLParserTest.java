@@ -17,7 +17,6 @@ package org.auraframework.impl.root.parser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Map;
 
 import org.auraframework.def.AttributeDef;
@@ -32,9 +31,8 @@ import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.system.Location;
 import org.auraframework.system.Parser.Format;
 import org.auraframework.system.Source;
-import org.auraframework.throwable.AuraUnhandledException;
-
-import org.auraframework.throwable.quickfix.InvalidDefinitionException;
+import org.auraframework.throwable.AuraRuntimeException;
+import org.mockito.Mockito;
 
 public class XMLParserTest extends AuraImplTestCase {
 
@@ -67,11 +65,10 @@ public class XMLParserTest extends AuraImplTestCase {
         XMLParser parser = XMLParser.getInstance();
         descriptor = DefDescriptorImpl.getInstance("test:parserInvalid", ComponentDef.class);
         Source<?> source = getSource(descriptor);
-        ComponentDef cd = parser.parse(descriptor, source);
         try {
-            cd.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Parsing invalid source should throw exception");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
             Location location = e.getLocation();
             assertTrue("Wrong filename.", location.getFileName().endsWith("parserInvalid.cmp"));
             assertEquals(19, location.getLine());
@@ -83,11 +80,10 @@ public class XMLParserTest extends AuraImplTestCase {
         XMLParser parser = XMLParser.getInstance();
         descriptor = DefDescriptorImpl.getInstance("test:parserFragment", ComponentDef.class);
         Source<?> source = getSource(descriptor);
-        ComponentDef cd = parser.parse(descriptor, source);
         try {
-            cd.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Parsing invalid source should throw exception");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
             Location location = e.getLocation();
             assertTrue("Wrong filename.", location.getFileName().endsWith("parserFragment.cmp"));
             assertEquals(18, location.getLine());
@@ -97,38 +93,17 @@ public class XMLParserTest extends AuraImplTestCase {
 
     public void testParseNonexistent() throws Exception {
         XMLParser parser = XMLParser.getInstance();
-        
-        // Cannot use Mockito on JDK7 because the File class has been changed to directly access File.path data member
-        File tmpFile = new File("") {
-            @Override
-            public String getPath() {
-                return "";
-            }
-
-            @Override
-            public String getCanonicalPath() throws IOException {
-                return "";
-            }
-
-            @Override
-            public boolean exists() {
-                return true;
-            }
-
-            @Override
-            public long lastModified() {
-                return 0L;
-            }
-
-            private static final long serialVersionUID = 1L;
-        };
-        
-        Source<?> source = new FileSource<ComponentDef>(descriptor, tmpFile, Format.XML);
+        File tmpFile = Mockito.mock(File.class);
+        Mockito.when(tmpFile.exists()).thenReturn(true);
+        Mockito.when(tmpFile.lastModified()).thenReturn(0L);
+        Mockito.when(tmpFile.getCanonicalPath()).thenReturn("");
+        Mockito.when(tmpFile.getPath()).thenReturn("");
         try {
+            Source<?> source = new FileSource<ComponentDef>(descriptor, tmpFile, Format.XML);
             parser.parse(null, source);
             fail("Parsing nonexistent source should throw exception");
-        } catch (AuraUnhandledException e) {
-            assertEquals(FileNotFoundException.class, e.getCause().getCause().getClass());
+        } catch (AuraRuntimeException e) {
+            assertTrue(e.getCause() instanceof FileNotFoundException);
         }
     }
 
@@ -139,8 +114,7 @@ public class XMLParserTest extends AuraImplTestCase {
         try {
             parser.parse(descriptor, source);
             fail("Parsing null source should throw exception");
-        } catch (AuraUnhandledException e) {
-            assertEquals(NullPointerException.class, e.getCause().getClass());
+        } catch (NullPointerException e) {
             // good!
         }
     }

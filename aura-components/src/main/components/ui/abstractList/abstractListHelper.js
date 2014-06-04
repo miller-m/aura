@@ -14,30 +14,6 @@
  * limitations under the License.
  */
 ({
-	/** Behavior when the data from one of its data providers changes **/
-	handleDataChange: function(component, event) {
-		component.getConcreteComponent().set("v.items", event.getParam("data"));
-        this.showLoading(component, false);
-	},
-
-	/** Behavior to prepare the list for new data before a refresh **/
-	beforeRefresh: function(component, event) {
-		component.getConcreteComponent().getValue("v.items").clear();
-	},
-
-	updateEmptyListContent:function (component) {
-		// make sure we are referencing a concrete component.
-		var concrete_component = component.getConcreteComponent();
-		var items = concrete_component.get("v.items");
-		var has_items = items != null && items.length > 0;
-        $A.util[has_items ? "removeClass" : "addClass"](concrete_component.getElement(), "showEmptyContent");
-    },
-
-    /** Behavior for triggering data providers on initialization **/
-    initTriggerDataProviders: function(component) {
-    	this.triggerDataProvider(component);
-    },
-
     init: function(component) {
         this.initDataProvider(component);
         this.initPagers(component);
@@ -51,13 +27,13 @@
                 dataProviders[i].addHandler("onchange", component, "c.handleDataChange");
             }
             component._dataProviders = dataProviders;
-        }
+        }       
     },
-
+    
     initPagers: function(component) {
         var facets = component.getFacets();
         var pagers = [];
-
+        
         // walk each facet looking for instances of ui:pager
         for (var i=0, len=facets.length; i<len; i++) {
             var facet = facets[i];
@@ -69,51 +45,41 @@
                     } else {
                         pagers = pagers.concat(facet.find({instancesOf:"ui:pager"}));
                     }
-                }
+                }   
             });
         }
-
+        
         // wireup handlers and values
 //      var chainedAttrs = ["currentPage", "pageSize", "totalItems"];
         var j = pagers.length;
         while (j--) {
             var pager = pagers[j];
             pager.addHandler("onPageChange", component, "c.handlePageChange");
-
+            
 //          TODO: want to wire this up so that the valueProvider for these attributes is always the parent list, not the component
 //              in which the paginators were referenced, but not sure we can do that today...
 //          var k = chainedAttrs.length;
 //          while (k--) {
 //              var exp = "v." + chainedAttrs[k];
-//              pager.getValue(exp).setValue(component.getValue(exp));
+//              pager.getValue(exp).setValue(component.getValue(exp));  
 //          }
         }
-
+        
         // cache the pagers
         component._pagers = pagers;
     },
-
+    
     showLoading:function (component, visible) {
         $A.util[visible ? "addClass" : "removeClass"](component.getElement(), "loading");
     },
-
+    
     triggerDataProvider: function(component, index) {
         this.showLoading(component, true);
-        
         if (!index) {
             index = 0;
         }
-
         if (index >= 0 && index < component._dataProviders.length) {
             component._dataProviders[index].get("e.provide").fire();
-        } else {
-        	this.showLoading(component, false);
-        	this.handleError(component, "Index is out of bounds for list's data provider trigger.")
         }
-    },
-    
-    handleError: function(cmp, errorMsg) {
-    	cmp.getConcreteComponent()._refreshing = false;
-    	$A.error(errorMsg);
     }
 })

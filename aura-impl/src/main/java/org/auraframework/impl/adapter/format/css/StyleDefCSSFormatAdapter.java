@@ -17,10 +17,16 @@ package org.auraframework.impl.adapter.format.css;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.auraframework.Aura;
 import org.auraframework.def.StyleDef;
+import org.auraframework.system.AuraContext;
+import org.auraframework.system.AuraContext.Mode;
+import org.auraframework.system.Client;
 import org.auraframework.throwable.quickfix.QuickFixException;
 
 /**
@@ -28,18 +34,39 @@ import org.auraframework.throwable.quickfix.QuickFixException;
 @ThreadSafe
 public class StyleDefCSSFormatAdapter extends CSSFormatAdapter<StyleDef> {
 
+    private static final Pattern pattern1 = Pattern.compile("\\s*([{};,:])\\s*");
+    private static final Pattern pattern2 = Pattern.compile("\\s+");
+
     @Override
     public Class<StyleDef> getType() {
         return StyleDef.class;
     }
 
     @Override
-    public void writeCollection(Collection<? extends StyleDef> values, Appendable out)
-            throws IOException, QuickFixException {
+    public void writeCollection(Collection<? extends StyleDef> values, Appendable out) throws IOException,
+            QuickFixException {
+        Mode mode = Aura.getContextService().getCurrentContext().getMode();
+        boolean compress = !(mode.isDevMode() || mode.isTestMode());
+        AuraContext context = Aura.getContextService().getCurrentContext();
+        StringBuilder sb = new StringBuilder();
+        Client.Type type = context.getClient().getType();
+        Appendable accum;
+
+        if (compress) {
+            sb = new StringBuilder();
+            accum = sb;
+        } else {
+            accum = out;
+        }
         for (StyleDef def : values) {
             if (def != null) {
-                out.append(def.getCode());
+                accum.append(def.getCode(type));
             }
+        }
+        if (compress) {
+            Matcher compressionMatcher1 = pattern1.matcher(sb.toString());
+            Matcher compressionMatcher2 = pattern2.matcher(compressionMatcher1.replaceAll("$1"));
+            out.append(compressionMatcher2.replaceAll(" "));
         }
     }
 }

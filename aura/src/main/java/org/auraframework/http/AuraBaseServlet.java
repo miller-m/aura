@@ -17,10 +17,11 @@ package org.auraframework.http;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -29,17 +30,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.collect.Sets;
 import org.apache.http.HttpHeaders;
 import org.auraframework.Aura;
 import org.auraframework.adapter.ConfigAdapter;
 import org.auraframework.adapter.ExceptionAdapter;
 import org.auraframework.def.ApplicationDef;
 import org.auraframework.def.BaseComponentDef;
-import org.auraframework.def.ClientLibraryDef;
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
+import org.auraframework.def.StyleDef;
 import org.auraframework.http.RequestParam.StringParam;
 import org.auraframework.service.DefinitionService;
 import org.auraframework.system.AuraContext;
@@ -64,15 +64,17 @@ public abstract class AuraBaseServlet extends HttpServlet {
     public static final String CSRF_PROTECT = "while(1);\n";
 
     /**
-     * "Short" pages (such as manifest cookies and AuraFrameworkServlet pages) expire in 1 day.
+     * "Short" pages (such as manifest cookies and AuraFrameworkServlet pages)
+     * expire in 1 day.
      */
     public static final long SHORT_EXPIRE_SECONDS = 24L * 60 * 60;
     public static final long SHORT_EXPIRE = SHORT_EXPIRE_SECONDS * 1000;
 
     /**
-     * "Long" pages (such as resources and cached HTML templates) expire in 45 days. We also use this to "pre-expire"
-     * no-cache pages, setting their expiration a month and a half into the past for user agents that don't understand
-     * Cache-Control: no-cache.
+     * "Long" pages (such as resources and cached HTML templates) expire in 45
+     * days. We also use this to "pre-expire" no-cache pages, setting their
+     * expiration a month and a half into the past for user agents that don't
+     * understand Cache-Control: no-cache.
      */
     public static final long LONG_EXPIRE = 45 * SHORT_EXPIRE;
     public static final String UTF_ENCODING = "UTF-8";
@@ -80,12 +82,20 @@ public abstract class AuraBaseServlet extends HttpServlet {
     public static final String JAVASCRIPT_CONTENT_TYPE = "text/javascript";
     public static final String MANIFEST_CONTENT_TYPE = "text/cache-manifest";
     public static final String CSS_CONTENT_TYPE = "text/css";
-    protected static MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+    protected static MimetypesFileTypeMap mimeTypesMap;
     public static final String OUTDATED_MESSAGE = "OUTDATED";
     protected final static StringParam csrfToken = new StringParam(AURA_PREFIX + "token", 0, true);
     private static SourceNotifier sourceNotifier = new SourceNotifier();
 
     static {
+        mimeTypesMap = new MimetypesFileTypeMap();
+        // the default MIME map is apparently circa 1992, so add some types we
+        // might need
+        mimeTypesMap.addMimeTypes(AuraBaseServlet.JAVASCRIPT_CONTENT_TYPE + " js");
+        mimeTypesMap.addMimeTypes("text/css css");
+        mimeTypesMap.addMimeTypes("audio/mpeg mp3 mpeg3");
+        mimeTypesMap.addMimeTypes("image/png png");
+        mimeTypesMap.addMimeTypes("video/mpeg mpeg mpg mpe mpv vbs mpegv");
         Aura.getDefinitionService().subscribeToChangeNotification(sourceNotifier);
     }
 
@@ -108,10 +118,10 @@ public abstract class AuraBaseServlet extends HttpServlet {
 
     /**
      * Tell the browser to not cache.
-     * 
-     * This sets several headers to try to ensure that the page will not be cached. Not sure if last modified matters
-     * -goliver
-     * 
+     *
+     * This sets several headers to try to ensure that the page will not be cached.
+     * Not sure if last modified matters -goliver
+     *
      * @param response the HTTP response to which we will add headers.
      */
     public static void setNoCache(HttpServletResponse response) {
@@ -124,10 +134,11 @@ public abstract class AuraBaseServlet extends HttpServlet {
 
     /**
      * Set a long cache timeout.
-     * 
-     * This sets several headers to try to ensure that the page will be cached for a reasonable length of time. Of note
-     * is the last-modified header, which is set to a day ago so that browsers consider it to be safe.
-     * 
+     *
+     * This sets several headers to try to ensure that the page will be cached for a reasonable
+     * length of time. Of note is the last-modified header, which is set to a day ago so that
+     * browsers consider it to be safe.
+     *
      * @param response the HTTP response to which we will add headers.
      */
     public static void setLongCache(HttpServletResponse response) {
@@ -140,10 +151,11 @@ public abstract class AuraBaseServlet extends HttpServlet {
 
     /**
      * Set a 'short' cache timeout.
-     * 
-     * This sets several headers to try to ensure that the page will be cached for a shortish length of time. Of note is
-     * the last-modified header, which is set to a day ago so that browsers consider it to be safe.
-     * 
+     *
+     * This sets several headers to try to ensure that the page will be cached for a shortish
+     * length of time. Of note is the last-modified header, which is set to a day ago so that
+     * browsers consider it to be safe.
+     *
      * @param response the HTTP response to which we will add headers.
      */
     public static void setShortCache(HttpServletResponse response) {
@@ -180,16 +192,7 @@ public abstract class AuraBaseServlet extends HttpServlet {
     protected void send404(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        response.getWriter().println("404 Not Found"
-                + "<!-- Extra text so IE will display our custom 404 page -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->"
-                + "<!--                                                   -->");
+        response.getWriter().println("404 Not Found");
         Aura.getContextService().endContext();
     }
 
@@ -202,11 +205,12 @@ public abstract class AuraBaseServlet extends HttpServlet {
 
     /**
      * Handle an exception in the servlet.
-     * 
-     * This routine shold be called whenever an exception has surfaced to the top level of the servlet. It should not be
-     * overridden unless Aura is entirely subsumed. Most special cases can be handled by the Aura user by implementing
-     * {@link ExceptionAdapter ExceptionAdapter}.
-     * 
+     *
+     * This routine shold be called whenever an exception has surfaced to the
+     * top level of the servlet. It should not be overridden unless Aura is
+     * entirely subsumed. Most special cases can be handled by the Aura user by
+     * implementing {@link ExceptionAdapter ExceptionAdapter}.
+     *
      * @param t the throwable to write out.
      * @param quickfix is this exception a valid quick-fix
      * @param context the aura context.
@@ -259,9 +263,6 @@ public abstract class AuraBaseServlet extends HttpServlet {
                 if (format != Format.JSON) {
                     send404(request, response);
                     if (!isProductionMode(context.getMode())) {
-                        // Preserve new lines and tabs in the stacktrace since this is directly being written on to the
-                        // page
-                        denyMessage = "<pre>" + denyMessage + "</pre>";
                         response.getWriter().println(denyMessage);
                     }
                     return;
@@ -276,10 +277,9 @@ public abstract class AuraBaseServlet extends HttpServlet {
                     // on every mis-spelled app. In this case we simply send a 404 and bolt.
                     //
                     if (mappedEx instanceof DefinitionNotFoundException) {
-                        DefinitionNotFoundException dnfe = (DefinitionNotFoundException) mappedEx;
+                        DefinitionNotFoundException dnfe = (DefinitionNotFoundException)mappedEx;
 
-                        if (dnfe.getDescriptor() != null
-                                && dnfe.getDescriptor().equals(context.getApplicationDescriptor())) {
+                        if (dnfe.getDescriptor() != null && dnfe.getDescriptor().equals(context.getApplicationDescriptor())) {
                             send404(request, response);
                             return;
                         }
@@ -360,7 +360,7 @@ public abstract class AuraBaseServlet extends HttpServlet {
     public static boolean shouldCacheHTMLTemplate(HttpServletRequest request) {
         AuraContext context = Aura.getContextService().getCurrentContext();
         try {
-            DefDescriptor<? extends BaseComponentDef> appDefDesc = context.getLoadingApplicationDescriptor();
+            DefDescriptor<? extends BaseComponentDef> appDefDesc = context.getApplicationDescriptor();
             if (appDefDesc != null && appDefDesc.getDefType().equals(DefType.APPLICATION)) {
                 Boolean isOnePageApp = ((ApplicationDef) appDefDesc.getDef()).isOnePageApp();
                 if (isOnePageApp != null) {
@@ -393,7 +393,8 @@ public abstract class AuraBaseServlet extends HttpServlet {
 
     /**
      * Gets the UID for the application descriptor of the current context, or {@code null} if there is no application
-     * (probably because of a compile error).
+     * (probably because of a compile
+     * error).
      */
     public static String getContextAppUid() {
         DefinitionService definitionService = Aura.getDefinitionService();
@@ -447,14 +448,20 @@ public abstract class AuraBaseServlet extends HttpServlet {
         return lastMod;
     }
 
-    protected DefDescriptor<?> setupQuickFix(AuraContext context) {
+    protected DefDescriptor<?> setupQuickFix(AuraContext context, boolean preload) {
         DefinitionService ds = Aura.getDefinitionService();
         MasterDefRegistry mdr = context.getDefRegistry();
 
         try {
-            DefDescriptor<ComponentDef> qfdesc = ds.getDefDescriptor("auradev:quickFixException", ComponentDef.class);
+            DefDescriptor<?> qfdesc = ds.getDefDescriptor("auradev:quickFixException", ComponentDef.class);
             String uid = mdr.getUid(null, qfdesc);
-            context.setPreloadedDefinitions(mdr.getDependencies(uid));
+            // if (!preload) {
+            // Set<DefDescriptor<?>> loaded = Sets.newHashSet();
+            // loaded.addAll(mdr.getDependencies(uid));
+            // context.setPreloadedDeps(loaded);
+            // }
+            context.addLoaded(qfdesc, uid);
+            context.setPreloading(qfdesc);
             return qfdesc;
         } catch (QuickFixException death) {
             //
@@ -466,88 +473,121 @@ public abstract class AuraBaseServlet extends HttpServlet {
     }
 
     public static List<String> getScripts() throws QuickFixException {
-        AuraContext context = Aura.getContextService().getCurrentContext();
         List<String> ret = Lists.newArrayList();
-        ret.addAll(getBaseScripts(context));
-        ret.addAll(getNamespacesScripts(context));
+        ret.addAll(getBaseScripts());
+        ret.addAll(getNamespacesScripts());
         return ret;
     }
 
     public static List<String> getStyles() throws QuickFixException {
         AuraContext context = Aura.getContextService().getCurrentContext();
+        Set<String> preloads = context.getPreloads();
+        Mode mode = context.getMode();
         String contextPath = context.getContextPath();
+        ConfigAdapter config = Aura.getConfigAdapter();
 
-        Set<String> ret = Sets.newLinkedHashSet();
+        List<String> ret = Lists.newArrayList();
 
-        // add css client libraries
-        ret.addAll(getClientLibraryUrls(context, ClientLibraryDef.Type.CSS));
-        
-        StringBuilder defs = new StringBuilder(contextPath).append("/l/");
-        StringBuilder sb = new StringBuilder();
+        if (preloads != null && !preloads.isEmpty()) {
+            StringBuilder defs = new StringBuilder(contextPath).append("/l/");
+            StringBuilder sb = new StringBuilder();
+
+            try {
+                Aura.getSerializationService().write(context, null, AuraContext.class, sb, "HTML");
+            } catch (IOException e) {
+                throw new AuraRuntimeException(e);
+            }
+            String contextJson = AuraTextUtil.urlencode(sb.toString());
+            defs.append(contextJson);
+            defs.append("/app.css");
+            ret.add(defs.toString());
+        }
+
+
+        if (mode == Mode.PTEST) {
+            ret.add(config.getJiffyCSSURL());
+        }
+
+        return ret;
+    }
+
+    public static Set<String> getImages() throws QuickFixException {
+        AuraContext context = Aura.getContextService().getCurrentContext();
+        Set<String> namespaces = context.getPreloads();
+        Set<String> imgURLs = new TreeSet<String>();
 
         try {
-            Aura.getSerializationService().write(context, null, AuraContext.class, sb, "HTML");
-        } catch (IOException e) {
+            DefinitionService definitionService = Aura.getDefinitionService();
+            for (String namespace : namespaces) {
+                DefDescriptor<StyleDef> matcher = definitionService.getDefDescriptor(
+                        String.format("css://%s.*", namespace), StyleDef.class);
+                Set<DefDescriptor<StyleDef>> descriptors = definitionService.find(matcher);
+
+                for (DefDescriptor<StyleDef> descriptor : descriptors) {
+                    if (!descriptor.getName().toLowerCase().endsWith("template")) {
+                        StyleDef def = descriptor.getDef();
+                        if (def != null) {
+                            Set<String> imgs = def.getValidImageURLs();
+                            if (imgs != null && imgs.size() > 0) {
+                                imgURLs.addAll(imgs);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
             throw new AuraRuntimeException(e);
         }
-        String contextJson = AuraTextUtil.urlencode(sb.toString());
-        defs.append(contextJson);
-        defs.append("/app.css");
-        ret.add(defs.toString());
-
-        return new ArrayList<String>(ret);
+        return imgURLs;
     }
 
-    /**
-     * Gets all client libraries specified. Uses client library service to resolve any urls that weren't specified.
-     * Returns list of non empty client library urls.
-     *
-     *
-     * @param context aura context
-     * @param type CSS or JS
-     * @return list of urls for client libraries
-     */
-    private static Set<String> getClientLibraryUrls(AuraContext context, ClientLibraryDef.Type type) throws QuickFixException {
-        return Aura.getClientLibraryService().getUrls(context, type);
-    }
+    public static List<String> getBaseScripts() throws QuickFixException {
+        AuraContext context = Aura.getContextService().getCurrentContext();
+        String contextPath = context.getContextPath();
+        Mode mode = context.getMode();
 
-    public static List<String> getBaseScripts(AuraContext context) throws QuickFixException {
         ConfigAdapter config = Aura.getConfigAdapter();
-        Set<String> ret = Sets.newLinkedHashSet();
 
-        String html5ShivURL = config.getHTML5ShivURL();
-        if (html5ShivURL != null) {
-            ret.add(html5ShivURL);
+        List<String> ret = Lists.newArrayList();
+
+        switch (mode) {
+        case PTEST:
+            ret.add(config.getJiffyJSURL());
+            ret.add(config.getJiffyUIJSURL());
+            break;
+        case CADENCE:
+            ret.add(config.getJiffyJSURL());
+            break;
+        default:
         }
 
-        ret.add(config.getMomentJSURL());
-        ret.addAll(config.getWalltimeJSURLs());
+        ret.add(contextPath + config.getAuraJSURL());
 
-        ret.addAll(getClientLibraryUrls(context, ClientLibraryDef.Type.JS));
-        // framework js should be after other client libraries
-        ret.add(config.getAuraJSURL());
-
-        return new ArrayList<String>(ret);
+        return ret;
     }
 
-    public static List<String> getNamespacesScripts(AuraContext context) throws QuickFixException {
+    public static List<String> getNamespacesScripts() throws QuickFixException {
+        AuraContext context = Aura.getContextService().getCurrentContext();
+        Set<String> preloads = context.getPreloads();
         String contextPath = context.getContextPath();
         List<String> ret = Lists.newArrayList();
 
-        StringBuilder defs = new StringBuilder(contextPath).append("/l/");
-        StringBuilder sb = new StringBuilder();
+        if (preloads != null && !preloads.isEmpty()) {
+            StringBuilder defs = new StringBuilder(contextPath).append("/l/");
+            StringBuilder sb = new StringBuilder();
 
-        try {
-            Aura.getSerializationService().write(context, null, AuraContext.class, sb, "HTML");
-        } catch (IOException e) {
-            throw new AuraRuntimeException(e);
+            try {
+                Aura.getSerializationService().write(context, null, AuraContext.class, sb, "HTML");
+            } catch (IOException e) {
+                throw new AuraRuntimeException(e);
+            }
+
+            String contextJson = AuraTextUtil.urlencode(sb.toString());
+            defs.append(contextJson);
+            defs.append("/app.js");
+
+            ret.add(defs.toString());
         }
-
-        String contextJson = AuraTextUtil.urlencode(sb.toString());
-        defs.append(contextJson);
-        defs.append("/app.js");
-
-        ret.add(defs.toString());
 
         return ret;
     }
@@ -561,7 +601,7 @@ public abstract class AuraBaseServlet extends HttpServlet {
      */
     private static class SourceNotifier implements SourceListener {
         @Override
-        public void onSourceChanged(DefDescriptor<?> source, SourceMonitorEvent event, String filePath) {
+        public void onSourceChanged(DefDescriptor<?> source, SourceMonitorEvent event) {
             lastModMap.clear();
         }
     }

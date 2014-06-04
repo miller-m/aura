@@ -15,23 +15,20 @@
  */
 package org.auraframework.test.adapter;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import org.auraframework.test.TestContext;
 import org.auraframework.test.TestContextAdapter;
 import org.auraframework.test.TestContextImpl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Maps;
 
 /**
  * Keep track of the current test.
  */
 public class TestContextAdapterImpl implements TestContextAdapter {
-	
-	Cache<String, TestContext> allContexts = 
-			CacheBuilder.newBuilder().concurrencyLevel(8).expireAfterAccess(30, TimeUnit.MINUTES).maximumSize(100).build();
-			
+	private final static Map<String, TestContext> allContexts = Maps
+			.newConcurrentMap();
 	private final ThreadLocal<TestContext> testContext = new ThreadLocal<TestContext>();
 
     @Override
@@ -41,28 +38,22 @@ public class TestContextAdapterImpl implements TestContextAdapter {
 
     @Override
     public TestContext getTestContext(String name) {
-    	TestContext context = allContexts.getIfPresent(name);
+        TestContext context = allContexts.get(name);
         if (context == null){
             context = new TestContextImpl(name);
             allContexts.put(name, context);
-        } 
+        }
         testContext.set(context);
         return context;
     }
 
     @Override
-    public void clear() {
-        testContext.set(null);
-    }
-    
-    @Override
     public void release() {
-    	TestContext context = testContext.get();
+        TestContext context = testContext.get();
         if (context != null) {
-            allContexts.invalidate(context.getName());
+            allContexts.remove(context.getName());
+            testContext.set(null);
             context.getLocalDefs().clear();
         }
-    	clear();
     }
-    
 }

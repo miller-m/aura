@@ -23,8 +23,7 @@ import org.auraframework.impl.root.parser.XMLParser;
 import org.auraframework.impl.source.StringSource;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.system.Parser.Format;
-
-import org.auraframework.throwable.quickfix.InvalidDefinitionException;
+import org.auraframework.throwable.AuraRuntimeException;
 
 public class InterfaceDefHandlerTest extends AuraImplTestCase {
 
@@ -61,11 +60,10 @@ public class InterfaceDefHandlerTest extends AuraImplTestCase {
         DefDescriptor<InterfaceDef> descriptor = DefDescriptorImpl.getInstance("test:fakeparser", InterfaceDef.class);
         StringSource<InterfaceDef> source = new StringSource<InterfaceDef>(descriptor,
                 "<aura:interface><aura:foo/></aura:interface>", "myID", Format.XML);
-        InterfaceDef id = parser.parse(descriptor, source);
         try {
-            id.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Should have thrown AuraException aura:foo isn't a valid child tag for aura:interface");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
 
         }
     }
@@ -75,11 +73,10 @@ public class InterfaceDefHandlerTest extends AuraImplTestCase {
         DefDescriptor<InterfaceDef> descriptor = DefDescriptorImpl.getInstance("test:fakeparser", InterfaceDef.class);
         StringSource<InterfaceDef> source = new StringSource<InterfaceDef>(descriptor,
                 "<aura:interface>Invalid text</aura:interface>", "myID", Format.XML);
-        InterfaceDef id = parser.parse(descriptor, source);
         try {
-            id.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Should have thrown AuraException because text is between aura:interface tags");
-        } catch (InvalidDefinitionException e) {
+        } catch (AuraRuntimeException e) {
 
         }
     }

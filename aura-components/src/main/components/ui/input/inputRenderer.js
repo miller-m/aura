@@ -26,39 +26,15 @@
 		return this.superRender();
 	},
 	
+	
 	afterRender: function(component, helper) {
         this.superAfterRender();
 		helper.addInputClass(component);
-
-        var concreteCmp = component.getConcreteComponent();
-        var concreteHelper = concreteCmp.getDef().getHelper();
-        concreteHelper.addInputDomEvents(component);
-        if (component.get("v.doFormat")) {
-            var value = concreteCmp.get("v.value");
-            if (!$A.util.isEmpty(value)) {
-                var el = concreteHelper.getInputElement(concreteCmp);
-                el.value = concreteHelper.formatValue(concreteCmp);
-            }
-        }
+        helper.addInputDomEvents(component);
     },
     
     rerender: function(component, helper) {
-    	var concreteCmp = component.getConcreteComponent();
-        var concreteHelper = concreteCmp.getDef().getHelper();
-        concreteHelper.addInputDomEvents(component);
-        
         helper.handleErrors(component);
-        if (component.get("v.doFormat")) {
-            var concreteCmp = component.getConcreteComponent();
-            var concreteHelper = concreteCmp.getDef().getHelper();
-            var value = concreteCmp.get("v.value");
-            if (!$A.util.isEmpty(value)) {
-                var el = concreteHelper.getInputElement(concreteCmp);
-                el.value = concreteHelper.formatValue(concreteCmp);
-            }
-        }
-
         this.superRerender();
-        helper.addInputClass(component);
     }
 })

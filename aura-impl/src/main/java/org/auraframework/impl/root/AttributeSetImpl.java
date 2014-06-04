@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.auraframework.Aura;
 import org.auraframework.def.AttributeDef;
 import org.auraframework.def.AttributeDefRef;
 import org.auraframework.def.DefDescriptor;
@@ -41,10 +40,7 @@ import org.auraframework.impl.util.AuraUtil;
 import org.auraframework.instance.Attribute;
 import org.auraframework.instance.AttributeSet;
 import org.auraframework.instance.BaseComponent;
-
 import org.auraframework.instance.EventHandler;
-import org.auraframework.instance.Instance;
-import org.auraframework.instance.InstanceStack;
 import org.auraframework.instance.ValueProvider;
 import org.auraframework.instance.Wrapper;
 import org.auraframework.system.Location;
@@ -70,14 +66,12 @@ public class AttributeSetImpl implements AttributeSet {
     private final Map<DefDescriptor<AttributeDef>, Attribute> attributes = Maps.newHashMap();
     private final Map<DefDescriptor<EventHandlerDef>, EventHandler> events = Maps.newHashMap();
     private final BaseComponent<?, ?> valueProvider;
-    private final Instance<?> parent;
     private boolean trackDirty = false;
 
     public AttributeSetImpl(DefDescriptor<? extends RootDefinition> componentDefDescriptor,
-            BaseComponent<?, ?> valueProvider, Instance<?> parent) throws QuickFixException {
+            BaseComponent<?, ?> valueProvider) throws QuickFixException {
         this.rootDefDescriptor = componentDefDescriptor;
         this.valueProvider = valueProvider;
-        this.parent = parent;
         setDefaults();
     }
 
@@ -145,12 +139,7 @@ public class AttributeSetImpl implements AttributeSet {
         }
 
         Object value = attributeDefRef.getValue();
-        InstanceStack iStack = Aura.getContextService().getCurrentContext().getInstanceStack();
-        iStack.markParent(parent);
-        iStack.setAttributeName(attributeDef.getDescriptor().toString());
         value = attributeDef.getTypeDef().initialize(value, valueProvider);
-        iStack.clearAttributeName(attributeDef.getDescriptor().toString());
-        iStack.clearParent(parent);
         attribute.setValue(value);
 
         set(attribute);
@@ -239,13 +228,7 @@ public class AttributeSetImpl implements AttributeSet {
         if (value instanceof Expression) {
             att.setValue(value);
         } else {
-            InstanceStack iStack = Aura.getContextService().getCurrentContext().getInstanceStack();
-
-            iStack.markParent(parent);
-            iStack.setAttributeName(desc.toString());
             att.setValue(rootDefDescriptor.getDef().getAttributeDef(att.getName()).getTypeDef().initialize(value, null));
-            iStack.clearAttributeName(desc.toString());
-            iStack.clearParent(parent);
         }
         set(att);
     }

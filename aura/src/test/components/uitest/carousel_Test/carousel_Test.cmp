@@ -16,30 +16,24 @@
 
 -->    	
 <aura:component>
-	<aura:attribute name="isPageChangeActionCalled" type="Boolean" default="{!false}"/>
-		
 <div> 	
  	<ui:carousel aura:id="carousel1" width="450" height="450" class="myclass">
  		<aura:set attribute="pageComponents">
 	 		<ui:carouselPage aura:id="c1-p1">
-	 			<ul aura:id="pageItems">
-		 			<li class="pageItem"><a href="#"><span class="entity-post">New Post 1</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-task">Task 1</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-opportunity">New Opportunity 1</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-thanks">Thank Someone 1</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-file">File 1</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-poll">Post a New Poll 1</span></a></li>
-	 			</ul>
+	 			<ui:carouselPageItem label="New Post 1" class="entity-post" />
+	 			<ui:carouselPageItem label="Task 1" class="entity-task" />
+	 			<ui:carouselPageItem label="New Opportunity 1" class="entity-opportunity" />	
+	 			<ui:carouselPageItem label="Thank Someone 1" class="entity-thanks" />
+	 			<ui:carouselPageItem label="File 1" class="entity-file" />
+	 			<ui:carouselPageItem label="Post a New Poll 1" class="entity-poll" />
 	 		</ui:carouselPage>
 	 		<ui:carouselPage aura:id="c1-p2" isDefault="{!true}">
-	 			<ul aura:id="pageItems">
-		 			<li class="pageItem"><a href="#"><span class="entity-post">New Post 2</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-task">Task 2</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-opportunity">New Opportunity 2</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-thanks">Thank Someone 2</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-file">File 2</span></a></li>
-		 			<li class="pageItem"><a href="#"><span class="entity-poll">Post a New Poll 2</span></a></li>
-	 			</ul>
+	 			<ui:carouselPageItem label="New Post 2" class="entity-post" />
+	 			<ui:carouselPageItem label="Task 2" class="entity-task" />
+	 			<ui:carouselPageItem label="New Opportunity 2" class="entity-opportunity" />	
+	 			<ui:carouselPageItem label="Thank Someone 2" class="entity-thanks" />
+	 			<ui:carouselPageItem label="File 2" class="entity-file" />
+	 			<ui:carouselPageItem label="Post a New Poll 2" class="entity-poll" />
 	 		</ui:carouselPage>
 	 		<ui:carouselPage aura:id="c1-pageWithLongString" title="PAGE 3">
 	 			{!m.longStr}
@@ -49,9 +43,7 @@
 	 		</ui:carouselPage>
 	 		<ui:carouselPage aura:id="c1-mixContent">
 	 			<h1>Welcome to this page!</h1>
-	 			<ul aura:id="pageItems">
-		 			<li class="pageItem"><a href="#"><span class="entity-post">Carousel Page Item</span></a></li>
-		 		</ul>
+	 			<ui:carouselPageItem label="Carousel Page Item"/>
 	 			<div>
 	 				<ui:image src="/auraFW/resources/aura/images/hula.gif" imageType="decorative"/> This is an ui:carousel page to demo the exciting ui:carousel components. Enjoy!
 	 			</div>
@@ -92,15 +84,14 @@
 
 
 <br/><br/>Carousel2<br/><br/>
-<ui:carousel aura:id="carousel2" >
+<ui:carousel aura:id="carousel2" width="450" height="450">
 	<aura:set attribute="pageComponents">
  		<ui:carouselPage>
- 			<p>Press button to rerender this carousel with a new carousel that has 10 pages.<br/>
+ 			<p>Press button to rerender this carousel with a new carousel that has 100 pages.<br/>
  				This component will be usefull to test<br/>
  				<ul>
  					<li>One tab carousel</li>
  					<li>Carousel rerendering</li>
- 					<li>Dynamic tab rendering</li>
  				</ul>
  			</p>
  			<ui:button aura:id="btnCreatePages" press="{!c.addManyPgCarousel}" label="create pages"/>
@@ -286,23 +277,6 @@
  		</ui:carouselPage>
  		<ui:carouselPage>
  			<ui:outputText aura:id="ccf-p3-output" value="page 3"/>
- 		</ui:carouselPage>
-	</aura:set>
-</ui:carousel>
-
-
-<br/><br/>Page Change Custom Action<br/><br/>
-<ui:carousel aura:id="pgChangeAction" width="450" height="450" onPageChange="{!c.changePageAction}">
-	<aura:set attribute="pageComponents">
- 		<ui:carouselPage aura:id="cpca-p1">
- 			<ui:outputText aura:id="cpca-p1-output" value="page 1"/><br/>
- 			<ui:button aura:id="btnForceRefresh" press="{!c.forceRefresh}" label="refresh"/>
- 		</ui:carouselPage>
- 		<ui:carouselPage aura:id="cpca-p2">
- 			<ui:outputText aura:id="cpca-p2-output" value="page 2"/>
- 		</ui:carouselPage>
- 		<ui:carouselPage aura:id="cpca-p3">
- 			<ui:outputText aura:id="cpca-p3-output" value="page 3"/>
  		</ui:carouselPage>
 	</aura:set>
 </ui:carousel>

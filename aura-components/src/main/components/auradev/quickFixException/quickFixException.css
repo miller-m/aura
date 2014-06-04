@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.THIS.content {
+.auradevQuickFixException.content {
 	margin-left: 15px;
 	border-left: 3px dashed #002D23;
 	background-color: #B8C0E0;
 }
 
-.THIS .toolbar {
+.auradevQuickFixException .toolbar {
 	width: 100%;
 	background-color: #7A8EAF;
 	color: #E8F2FC;
@@ -32,45 +32,25 @@
 	white-space: nowrap;
 }
 
-.THIS .bottom {
-	width: 100%;
-	background-color: #7A8EAF;
-	color: #E8F2FC;
-	padding: 10px;
-	padding-left: 20px;
-	vertical-align: baseline;
-	border-top: 1px solid #3B6670;
-	border-bottom: 1px solid #3B6670;
-	overflow: hidden;
-	white-space: nowrap;
-	height: 35px;
+.auradevQuickFixException .toolbar .location {
+    font-size: 80%;
+    color: #DEE7F2;
 }
 
-.THIS .toolbar .location {
-        font-size: 80%;
-        color: #DEE7F2;
-}
-
-.THIS .optionWrapper {
+.auradevQuickFixException .optionWrapper {
 	height: 80%;
 	margin-left: 120px;
 	opacity: 1;
-	overflow: scroll;
+	overflow: hidden;
 	color: #999;
+	border-bottom: 35px solid #7A8EAF;
 	background-color: #335D72;
 }
 
-.THIS .causeWrapper {
-	opacity: 1;
-	margin-left: -10px;
+.auradevQuickFixException .options {
 	background-color: #E8F2FC;
-	padding:10px;
-	border-left: 2px solid #FF0000;
-}
-
-.THIS .options {
-	background-color: #E8F2FC;
-	overflow: scroll;
 	height: 100%;
 	padding:10px;
 }
+
+

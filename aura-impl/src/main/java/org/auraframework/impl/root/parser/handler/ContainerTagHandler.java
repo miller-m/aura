@@ -19,20 +19,16 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.auraframework.Aura;
 import org.auraframework.def.BaseComponentDef;
 import org.auraframework.def.BaseComponentDef.WhitespaceBehavior;
 import org.auraframework.def.ComponentDefRef;
 import org.auraframework.def.ComponentDefRef.Load;
 import org.auraframework.def.Definition;
-import org.auraframework.def.DefinitionAccess;
 import org.auraframework.def.HtmlTag;
 import org.auraframework.def.RootDefinition;
 import org.auraframework.system.Location;
 import org.auraframework.system.Source;
 import org.auraframework.throwable.AuraRuntimeException;
-import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
-import org.auraframework.throwable.quickfix.InvalidAccessValueException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 
 /**
@@ -42,7 +38,6 @@ public abstract class ContainerTagHandler<T extends Definition> extends XMLHandl
     protected Location startLocation;
     protected WhitespaceBehavior whitespaceBehavior = BaseComponentDef.DefaultWhitespaceBehavior;
     public static final String SCRIPT_TAG = "script";
-    public static final String ATTRIBUTE_ACCESS = "access";
 
     public ContainerTagHandler() {
         super();
@@ -55,7 +50,6 @@ public abstract class ContainerTagHandler<T extends Definition> extends XMLHandl
     @Override
     public final T getElement() throws XMLStreamException, QuickFixException {
         if (source.exists()) {
-            validateAttributes();
             this.startLocation = getLocation();
             String startTag = getTagName();
             if (!handlesTag(startTag)) {
@@ -96,10 +90,6 @@ public abstract class ContainerTagHandler<T extends Definition> extends XMLHandl
         return createDefinition();
     }
 
-    public final T getErrorElement() throws QuickFixException {
-        return createDefinition();
-    }
-
     public WhitespaceBehavior getWhitespaceBehavior() {
         return whitespaceBehavior;
     }
@@ -133,35 +123,8 @@ public abstract class ContainerTagHandler<T extends Definition> extends XMLHandl
     protected void readSystemAttributes() throws QuickFixException {
         // do nothing
     }
-    
-    protected DefinitionAccess readAccessAttribute() throws InvalidAccessValueException {
-        String access = getAttributeValue(ATTRIBUTE_ACCESS);
-        if (access != null) {
-        	DefinitionAccess a;
-			try {
-	        	String namespace = source.getDescriptor().getNamespace();
-				a = Aura.getDefinitionParserAdapter().parseAccess(namespace, access);
-	        	a.validate(namespace, allowAuthenticationAttribute(), allowPrivateAttribute());
-			} catch (InvalidAccessValueException e) {
-				// re-throw with location
-				throw new InvalidAccessValueException(e.getMessage(), getLocation());
-			}
-        	return a;
-        }
-        else {
-        	return null;
-        }
-    }
 
-	protected  boolean allowAuthenticationAttribute() {
-		return false;
-	}
-
-	protected boolean allowPrivateAttribute() {
-		return false;
-	}
-
-	/**
+    /**
      * @return this container's tag. May return a more generic term for the
      *         class of tag expected if more than one is handled. Not safe for
      *         tag comparisons, only for messaging. For comparisons, use
@@ -185,7 +148,7 @@ public abstract class ContainerTagHandler<T extends Definition> extends XMLHandl
     protected abstract T createDefinition() throws QuickFixException;
 
     protected <P extends RootDefinition> ParentedTagHandler<? extends ComponentDefRef, ?> getDefRefHandler(
-            RootTagHandler<P> parentHandler) throws DefinitionNotFoundException {
+            RootTagHandler<P> parentHandler) {
         String tag = getTagName();
         if (HtmlTag.allowed(tag)) {
             if (!parentHandler.getAllowsScript() && SCRIPT_TAG.equals(tag.toLowerCase())) {

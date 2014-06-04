@@ -24,7 +24,6 @@ import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
 import org.auraframework.def.Definition;
 import org.auraframework.def.DescriptorFilter;
- 
 import org.auraframework.system.Source;
 
 import com.google.common.collect.Maps;
@@ -115,10 +114,5 @@ public class StaticDefRegistryImpl<T extends Definition> extends DefRegistryImpl
     @Override
     public boolean isCacheable() {
         return false;
-    }
-    
-    @Override
-    public boolean isStatic() {
-        return true;
     }
 }

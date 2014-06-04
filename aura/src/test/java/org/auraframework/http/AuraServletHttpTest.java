@@ -19,6 +19,7 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import org.auraframework.def.DefDescriptor;
 import org.auraframework.system.AuraContext.Format;
 import org.auraframework.test.AuraHttpTestCase;
 import org.auraframework.test.client.UserAgent;
+import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.json.JsFunction;
 import org.auraframework.util.json.Json;
 import org.auraframework.util.json.JsonReader;
@@ -51,20 +53,29 @@ public class AuraServletHttpTest extends AuraHttpTestCase {
     }
 
     /**
-     * Test for W-2063110 this test is to verify the order of actions and context in the response we used to have
-     * context before actions, now it's the opposite
+     * Get responses should have preloads serialized.
      */
-    public void testPostRawResponseSimpleAction() throws Exception {
-        Map<String, Object> actionParams = new HashMap<String, Object>();
-        actionParams.put("param", "some string");
-        ServerAction a = new ServerAction(
-                "java://org.auraframework.impl.java.controller.JavaTestController/ACTION$getString",
-                actionParams);
-        a.run();
-        String rawRes = a.getrawResponse();
-        Integer posActions = rawRes.indexOf("actions");
-        Integer posContex = rawRes.indexOf("context");
-        assertTrue(posActions < posContex);
+    @SuppressWarnings("unchecked")
+    public void testGetContextHasPreloads() throws Exception {
+        String url = "/aura?aura.tag=test%3Atext&aura.context="
+                + AuraTextUtil.urlencode(getSimpleContext(Format.JSON, false));
+        HttpGet get = obtainGetMethod(url);
+        HttpResponse httpResponse = perform(get);
+        int statusCode = getStatusCode(httpResponse);
+        String response = getResponseBody(httpResponse);
+        get.releaseConnection();
+
+        if (HttpStatus.SC_OK != statusCode) {
+            fail(String.format("Unexpected status code <%s>, expected <%s>, response:%n%s", statusCode,
+                    HttpStatus.SC_OK, response));
+        }
+        Map<String, Object> json = (Map<String, Object>) new JsonReader().read(response
+                .substring(AuraBaseServlet.CSRF_PROTECT.length()));
+        Map<String, Object> context = (Map<String, Object>) json.get("context");
+        assertTrue("preloads wasn't serialized", context.containsKey("preloads"));
+        List<String> preloads = (List<String>) context.get("preloads");
+        assertNotNull(preloads);
+        assertTrue("missing explicit preload", preloads.contains("preloadTest"));
     }
 
     /**
@@ -104,7 +115,7 @@ public class AuraServletHttpTest extends AuraHttpTestCase {
                 .substring(AuraBaseServlet.CSRF_PROTECT.length()));
         @SuppressWarnings("unchecked")
         Map<String, Object> context = (Map<String, Object>) json.get("context");
-        assertTrue("There should preloads", context.containsKey("preloads"));
+        assertFalse("preloads shouldn't get serialized on posts", context.containsKey("preloads"));
     }
 
     /**
@@ -190,14 +201,15 @@ public class AuraServletHttpTest extends AuraHttpTestCase {
                         URLEncoder.encode("http://any.host/m#someid?param=extra", "UTF-8")), "/m#someid?param=extra");
     }
 
-    public void testNoCacheNoTag() throws Exception {
+    public void testNoCacheNoValue() throws Exception {
         HttpGet get = obtainGetMethod("/aura?aura.tag&nocache");
         HttpResponse response = perform(get);
 
         assertEquals(HttpStatus.SC_OK, getStatusCode(response));
-        String responseText = getResponseBody(response);
-        assertTrue("Expected tag error in: " + responseText,
-                responseText.contains("Invalid request, tag must not be empty"));
+        assertTrue(getResponseBody(response).startsWith(
+                String.format("%s*/{\n  \"message\":\"QualifiedName is required for descriptors\"",
+                        AuraBaseServlet.CSRF_PROTECT)));
+
         get.releaseConnection();
     }
 
@@ -334,7 +346,8 @@ public class AuraServletHttpTest extends AuraHttpTestCase {
         HttpResponse response = perform(get);
         assertEquals(HttpStatus.SC_OK, getStatusCode(response));
         // Fetch the latest timestamp of the JS group and construct URL for DEV mode.
-        String expectedFWUrl = String.format("/auraFW/javascript/%s/aura_dev.js",
+        String expectedFWUrl = String.format("/auraFW/javascript/%s/aura_dev.js?aura.fwuid=%s",
+                Aura.getConfigAdapter().getAuraFrameworkNonce(),
                 Aura.getConfigAdapter().getAuraFrameworkNonce());
         String scriptTag = String.format("<script src=\"%s\" ></script>", expectedFWUrl);
         assertTrue("Expected Aura FW Script tag not found. Expected to see: " + scriptTag,
@@ -345,30 +358,12 @@ public class AuraServletHttpTest extends AuraHttpTestCase {
 
     public void testGetUnhandledError() throws Exception {
         DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class,
-                "<aura:application><aura:attribute name='bah'/></aura:application>");
+                "<aura:application><aura:attribute type='bah'/></aura:application>");
         HttpGet get = obtainGetMethod(String.format("/%s/%s.app", desc.getNamespace(), desc.getName()));
         HttpResponse httpResponse = perform(get);
-        assertEquals(HttpStatus.SC_OK, getStatusCode(httpResponse));
+        assertEquals(HttpStatus.SC_NOT_FOUND, getStatusCode(httpResponse));
         String response = getResponseBody(httpResponse);
-        assertTrue("Expected null descriptor error message but got: " + response,
-                response.contains("descriptor is null"));
-        get.releaseConnection();
-    }
-
-    /**
-     * Verify providing invalid DefDescriptor format to the aura.tag param results in the proper handled Exception and
-     * not an AuraUnhandledException, which results in a Gack on SFDC.
-     */
-    public void testInvalidDefDescriptorFormat() throws Exception {
-        String url = String.format("/aura?aura.tag=foo:bar:baz");
-        HttpGet get = obtainGetMethod(url);
-        HttpResponse httpResponse = perform(get);
-        assertEquals(HttpStatus.SC_OK, getStatusCode(httpResponse));
-        String response = getResponseBody(httpResponse);
-        assertTrue("Expected 'SystemErrorException: Invalid Descriptor Format' but got: " + response,
-                response.contains("SystemErrorException: Invalid Descriptor Format: foo:bar:baz"));
-        assertFalse("Invalid aura.tag input should not result in an AuraUnhandledException. " + response,
-                response.contains("AuraUnhandledException: Unable to process your request"));
+        assertEquals("Expected simple error page but got: " + response, "404 Not Found\ndescriptor is null\n", response);
         get.releaseConnection();
     }
 }

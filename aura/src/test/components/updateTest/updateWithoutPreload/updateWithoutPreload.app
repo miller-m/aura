@@ -20,4 +20,3 @@
     <updateTest:updateable/>
     <updateTest:updateableAlso/>
 </aura:application>
- 

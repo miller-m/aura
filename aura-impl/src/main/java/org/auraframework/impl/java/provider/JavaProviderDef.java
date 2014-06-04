@@ -122,9 +122,6 @@ public class JavaProviderDef extends DefinitionImpl<ProviderDef> implements Prov
             } catch (IllegalAccessException iae) {
                 throw new InvalidDefinitionException("Constructor is inaccessible for "
                         + builder.providerClass.getName(), location);
-            } catch (RuntimeException e) {
-                throw new InvalidDefinitionException("Failed to instantiate " + builder.providerClass.getName(),
-                        location, e);
             }
         } else {
             //
@@ -183,8 +180,9 @@ public class JavaProviderDef extends DefinitionImpl<ProviderDef> implements Prov
     /**
      * Validate our definition.
      * 
-     * This validation ensures that we have a provider method to get either a descriptor (simple case) or a config
-     * (complex case). It also refuses to allow a method by the name of provideAttributes.
+     * This validation ensures that we have a provider method to get either a
+     * descriptor (simple case) or a config (complex case). It also refuses to
+     * allow a method by the name of provideAttributes.
      */
     @Override
     public void validateDefinition() throws QuickFixException {
@@ -192,7 +190,7 @@ public class JavaProviderDef extends DefinitionImpl<ProviderDef> implements Prov
     }
 
     @Override
-    public ComponentConfig provide(DefDescriptor<? extends RootDefinition> intfDescriptor) throws QuickFixException {
+    public ComponentConfig provide(DefDescriptor<? extends RootDefinition> intfDescriptor) {
         ComponentConfig config = null;
         LoggingService loggingService = Aura.getLoggingService();
         loggingService.stopTimer(LoggingService.TIMER_AURA);
@@ -207,7 +205,7 @@ public class JavaProviderDef extends DefinitionImpl<ProviderDef> implements Prov
                 loggingService.incrementNum("JavaCallCount");
             }
         } catch (Exception e) {
-            throw AuraExceptionUtil.wrapExecutionException(e, this.location);
+            AuraExceptionUtil.wrapExecutionException(e, this.location);
         } finally {
             loggingService.stopTimer("java");
             loggingService.startTimer(LoggingService.TIMER_AURA);
@@ -227,7 +225,7 @@ public class JavaProviderDef extends DefinitionImpl<ProviderDef> implements Prov
             config = staticConfigProvider.provide(ref);
             loggingService.incrementNum("JavaCallCount");
         } catch (Exception e) {
-            throw AuraExceptionUtil.wrapExecutionException(e, this.location);
+            AuraExceptionUtil.wrapExecutionException(e, this.location);
         } finally {
             loggingService.stopTimer("java");
             loggingService.startTimer(LoggingService.TIMER_AURA);

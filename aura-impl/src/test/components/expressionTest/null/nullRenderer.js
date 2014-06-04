@@ -16,7 +16,7 @@
 ({
     render : function(cmp, helper){
         // can't assign literal null in markup
-        cmp.set("v.isNull", null);
+        cmp.getAttributes().setValue("isNull", null);
         return this.superRender();
     }
 })

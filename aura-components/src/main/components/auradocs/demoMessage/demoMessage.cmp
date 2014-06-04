@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<aura:component access="global">
+<aura:component>
 	<ui:message title="Confirmation" severity="confirm" closable="true">
 			This is a confirmation message.
 	</ui:message>

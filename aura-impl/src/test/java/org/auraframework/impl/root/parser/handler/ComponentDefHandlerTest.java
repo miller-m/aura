@@ -20,15 +20,13 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.DefDescriptor;
-import org.auraframework.def.ThemeDef;
 import org.auraframework.impl.AuraImplTestCase;
 import org.auraframework.impl.root.component.ComponentDefImpl;
 import org.auraframework.impl.root.parser.XMLParser;
 import org.auraframework.impl.source.StringSource;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.system.Parser.Format;
-
-import org.auraframework.throwable.quickfix.InvalidDefinitionException;
+import org.auraframework.throwable.AuraRuntimeException;
 
 public class ComponentDefHandlerTest extends AuraImplTestCase {
     XMLStreamReader xmlReader;
@@ -74,11 +72,10 @@ public class ComponentDefHandlerTest extends AuraImplTestCase {
         StringSource<ComponentDef> source = new StringSource<ComponentDef>(descriptor,
                 "<aura:component><aura:attribute name=\"implNumber\" type=\"String\"/>"
                         + "<aura:attribute name=\"implNumber\" type=\"String\"/></aura:component>", "myID", Format.XML);
-        ComponentDef cd = parser.parse(descriptor, source);
         try {
-            cd.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Should have thrown Exception. Two attributes with the same name cannot exist");
-        } catch (InvalidDefinitionException expected) {
+        } catch (AuraRuntimeException expected) {
         }
     }
 
@@ -92,11 +89,10 @@ public class ComponentDefHandlerTest extends AuraImplTestCase {
         StringSource<ComponentDef> source = new StringSource<ComponentDef>(descriptor,
                 "<aura:component extends='test:fakeAbstract' extends='test:fakeAbstractParent'></aura:component>",
                 "myID", Format.XML);
-        ComponentDef cd = parser.parse(descriptor, source);
         try {
-            cd.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Should have thrown Exception. Same attribute specified twice on aura:component tag.");
-        } catch (InvalidDefinitionException expected) {
+        } catch (AuraRuntimeException expected) {
         }
     }
 
@@ -107,20 +103,11 @@ public class ComponentDefHandlerTest extends AuraImplTestCase {
         DefDescriptor<ComponentDef> descriptor = DefDescriptorImpl.getInstance("test:fakeparser", ComponentDef.class);
         StringSource<ComponentDef> source = new StringSource<ComponentDef>(descriptor,
                 "<aura:component extends=''></aura:component>", "myID", Format.XML);
-        ComponentDef cd = parser.parse(descriptor, source);
         try {
-            cd.validateDefinition();
+            parser.parse(descriptor, source);
             fail("Should have thrown Exception. Attribute value cannot be blank.");
-        } catch (InvalidDefinitionException expected) {
+        } catch (AuraRuntimeException expected) {
         }
-    }
 
-    /** tests that themes in the component bundle are correctly associated */
-    public void testLocalComponentTheme() throws Exception {
-        DefDescriptor<ThemeDef> themeDesc = addSourceAutoCleanup(ThemeDef.class, "<aura:theme/>");
-        String fmt = String.format("%s:%s", themeDesc.getNamespace(), themeDesc.getName());
-        DefDescriptor<ComponentDef> cmpDesc = DefDescriptorImpl.getInstance(fmt, ComponentDef.class);
-        addSourceAutoCleanup(cmpDesc, "<aura:component/>");
-        assertEquals(themeDesc, cmpDesc.getDef().getLocalThemeDescriptor());
     }
 }

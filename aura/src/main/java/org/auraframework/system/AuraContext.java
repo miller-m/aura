@@ -15,7 +15,6 @@
  */
 package org.auraframework.system;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,15 +23,12 @@ import java.util.Set;
 import org.auraframework.def.BaseComponentDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
-import org.auraframework.def.ThemeDef;
 import org.auraframework.instance.Action;
 import org.auraframework.instance.BaseComponent;
 import org.auraframework.instance.Event;
 import org.auraframework.instance.GlobalValueProvider;
-import org.auraframework.instance.InstanceStack;
 import org.auraframework.instance.ValueProviderType;
 import org.auraframework.util.javascript.directive.JavascriptGeneratorMode;
-import org.auraframework.util.json.Json;
 import org.auraframework.util.json.JsonSerializationContext;
 
 /**
@@ -102,17 +98,10 @@ public interface AuraContext {
         MANIFEST, CSS, JS, JSON, HTML;
     }
 
-    public static enum Authentication {
-        UNAUTHENTICATED, AUTHENTICATED
-    }
-        
     public static enum Access {
-        PUBLIC,  
-        GLOBAL, 
-        PRIVATE,
-        INTERNAL
+        PUBLIC, AUTHENTICATED
     }
-    
+
     /**
      * @return the master def registry
      */
@@ -177,21 +166,16 @@ public interface AuraContext {
      * Set the current namespace.
      *
      * FIXME: this is an anti-pattern. it is used inside calls to set the
-     * current "calling" descr, but is never reset, so it persists in strange and
+     * current namespace, but is never reset, so it persists in strange and
      * interesting ways. Figure out another way to do this?
      */
-    void setCurrentCaller(DefDescriptor<?> descriptor);
+    void setCurrentNamespace(String namespace);
 
     /**
-     * Get the current "calling" descriptor.
+     * Get the current namespace.
      */
-    DefDescriptor<?> getCurrentCaller();
+    String getCurrentNamespace();
 
-    /**
-     * Get the descriptor for either the current instance or current def (runtime versus compile time).
-     */
-	DefDescriptor<?> getCurrentDescriptor();
-    
     /**
      * If a qualifiedName for a DefDescriptor of the given type does not include
      * a prefix (apex:// or java://, etc...), this method on the context will be
@@ -201,11 +185,6 @@ public interface AuraContext {
      * @return The default prefix for the given DefType in this context
      */
     String getDefaultPrefix(DefType defType);
-    
-    /**
-     * Get the full set of default prefixes.
-     */
-    Map<DefType, String> getDefaultPrefixes();
 
     /**
      * Get the mode of execution.
@@ -244,6 +223,14 @@ public interface AuraContext {
     void addPreload(String preload);
 
     /**
+     * Clear the current set of preloads.
+     *
+     * This can be used to reset preloads in the case of error, preventing
+     * recurrance of any quick fix error.
+     */
+    void clearPreloads();
+
+    /**
      * get the current set of preloads.
      *
      * By default, the aura and os namespaces are included.
@@ -252,15 +239,23 @@ public interface AuraContext {
 
     Format getFormat();
 
-    Authentication getAccess();
+    Access getAccess();
 
     Map<ValueProviderType, GlobalValueProvider> getGlobalProviders();
+
+    Map<String, BaseComponent<?, ?>> getComponents();
+
+    void registerComponent(BaseComponent<?, ?> component);
+
+    int getNextId();
 
     String getContextPath();
 
     void setContextPath(String path);
 
     boolean getSerializePreLoad();
+
+    void setSerializePreLoad(boolean s);
 
     boolean getSerializeLastMod();
 
@@ -270,7 +265,25 @@ public interface AuraContext {
 
     void setPreloading(boolean p);
 
-    void addDynamicNamespace(String namespace);
+    /**
+     * Set the current descriptor to send.
+     *
+     * This sets a descriptor that is intended to be 'preloaded'
+     * on the client. This means that it, and all of the non-loaded
+     * dependencies will be sent to the client. This is set by the
+     * servlet to allow us to know what we should send without
+     * changing the context sent to the client.
+     *
+     * TODO: move this W-1474844
+     */
+    void setPreloading(DefDescriptor<?> descriptor);
+
+    /**
+     * Get the currently preloading descriptor.
+     *
+     * TODO: move this W-1474844
+     */
+    DefDescriptor<?> getPreloading();
 
     /**
      * Set the incoming loaded descriptors.
@@ -347,49 +360,12 @@ public interface AuraContext {
     /**
      * Set the application (or component) descriptor.
      *
-     * This sets the application. It should generally be used at context start time
-     * only, and will only allow certain overrides.
+     * This returns the currently loaded application/component for this context.
+     * It can only be a component for non-production mode.
      *
      * @param appDesc the descriptor for the application/component.
      */
     void setApplicationDescriptor(DefDescriptor<? extends BaseComponentDef> appDesc);
-
-    /**
-     * Get the current 'loading' application descriptor.
-     *
-     * This generally returns the application descriptor passed in from the client, but
-     * in dev mode, when a quick fix exception occurs, this will be the quick fix rather
-     * than the application. That way we keep our context clean, but remember that we
-     * have a quick fix.
-     *
-     * @return the application descriptor.
-     */
-    DefDescriptor<? extends BaseComponentDef> getLoadingApplicationDescriptor();
-
-    /**
-     * Set the loading application (or component) descriptor.
-     *
-     * This sets a descriptor to tell the app server that we are actually loading a different
-     * application/component than the original one supplied. This is used to override the
-     * descriptor in the case of a quick fix (but could be used for other things as well).
-     *
-     * @param loadingAppDesc the descriptor for the application/component.
-     */
-    void setLoadingApplicationDescriptor(DefDescriptor<? extends BaseComponentDef> loadingAppDesc);
-
-    /**
-     * Set the definitions that the client should already have.
-     *
-     * @param preloaded the actual set.
-     */
-    void setPreloadedDefinitions(Set<DefDescriptor<?>> preloaded);
-
-    /**
-     * Get the definitions that the client should already have.
-     *
-     * @return the actual set (unmodifiable).
-     */
-    Set<DefDescriptor<?>> getPreloadedDefinitions();
 
     List<Locale> getRequestedLocales();
 
@@ -418,7 +394,7 @@ public interface AuraContext {
     /**
      * Set the framework UID from the client (or server).
      *
-     * @param uid UID that we should set.
+     * @param the UID that we should set.
      */
     void setFrameworkUID(String uid);
 
@@ -429,48 +405,5 @@ public interface AuraContext {
      */
     String getFrameworkUID();
 
-    /**
-     * FIXME: This is busted!!!!
-     */
-    boolean getIsDebugToolEnabled();
-
-    /**
-     * Get the instance stack currently in use.
-     *
-     * This could either be a 'local' instance stack for the context (deprecated behavior)
-     * or it could be from the action.
-     */
-    InstanceStack getInstanceStack();
-
-	String getCurrentNamespace();
-	
-    /**
-     * Register a new component.
-     *
-     * This is the entry point for adding a new component to the context.
-     * This delegates to the appropriate instance stack.
-     *
-     * @param component the component to register.
-     */
-    void registerComponent(BaseComponent<?, ?> component);
-
-    /**
-     * Get the next id for the context.
-     */
-    int getNextId();
-
-    /**
-     * Serialize out the components.
-     */
-    void serializeAsPart(Json json) throws IOException;
-
-    /**
-     * Gets the {@link ThemeDef} that overrides default variable values for any CSS processed within this context.
-     */
-    DefDescriptor<ThemeDef> getOverrideThemeDescriptor();
-
-    /**
-     * Sets the {@link ThemeDef} to override default variable values for any CSS processed within this context.
-     */
-    void setOverrideThemeDescriptor(DefDescriptor<ThemeDef> themeDescriptor);
+	boolean getIsDebugToolEnabled();
 }

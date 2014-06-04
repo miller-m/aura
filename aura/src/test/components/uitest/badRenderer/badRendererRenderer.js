@@ -15,26 +15,26 @@
  */
 ({
     render: function(component, helper) {
-        var skipRender = $A.util.getBooleanValue(component.get("v.skipRender"));
+        var skipRender = component.getValue("v.skipRender").getBooleanValue();
         return !skipRender ? this.superRender() : null;
     },
 
     afterRender: function(component, helper) {
-        var skipAfterRender = $A.util.getBooleanValue(component.get("v.skipAfterRender"));
+        var skipAfterRender = component.getValue("v.skipAfterRender").getBooleanValue();
         if (!skipAfterRender) {
             this.superAfterRender();
         }
     },
 
     rerender: function(component, helper) {
-        var skipRerender = $A.util.getBooleanValue(component.get("v.skipRerender"));
+        var skipRerender = component.getValue("v.skipRerender").getBooleanValue();
         if (!skipRerender) {
             this.superRerender();
         }
     },
 
     unrender: function(component, helper) {
-        var skipUnrender = $A.util.getBooleanValue(component.get("v.skipUnrender"));
+        var skipUnrender = component.getValue("v.skipUnrender").getBooleanValue();
         if (!skipUnrender) {
             this.superUnrender();
         }

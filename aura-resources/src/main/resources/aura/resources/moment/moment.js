@@ -657,7 +657,7 @@
         // AM / PM
         case 'a' : // fall through to A
         case 'A' :
-            config._isPm = (parseAmpm(input, config._l) === 'pm'); //SFDC
+            config._isPm = (parseAmpm(input, config._l) === 'pm'); // @SFDC
             break;
         // 24 HOUR
         case 'H' : // fall through to hh
@@ -713,7 +713,7 @@
     
     /**
      * function to parse localized am/pm
-     * SFDC
+     * @SFDC
      */
     function parseAmpm(input, lang) {
         if (!lang) {
@@ -722,9 +722,6 @@
         var inp = (input + '').toLowerCase();
         var localizedAmpm = moment.langData(lang)._ampm;
         if (localizedAmpm && localizedAmpm.pm) {
-            if ("fi" === lang && (inp.charAt(inp.length - 1) !== ".")) { // am/pm in Finnish should be ap./ip., but the "." is incorrectly stripped off from "input".
-                inp = inp + ".";
-            }
             return inp === localizedAmpm.pm ? 'pm' : 'am';
         }
         return inp;
@@ -843,31 +840,6 @@
             makeDateFromStringAndFormat(config);
         } else {
             config._d = new Date(string);
-            if (config._useUTC) {
-                //
-                // Twisted. When we parse a string into a date, it
-                // is is our current time zone, and if we are meant
-                // to be parsing in UTC, this will be wrong, but
-                // only for timezones in the '+' sector (i.e. UTC+1
-                // to UTC+12), as dates are parsed as midnight.
-                //
-                // This fixes it by brute force. Ordering may be important,
-                // as months may have differing number of days. The year
-                // shouldn't matter, as it will only change if we are on
-                // Jan 1.
-                //
-                var year = config._d.getFullYear();
-                var month = config._d.getMonth();
-                var day = config._d.getDate();
-                var hour = config._d.getHours();
-                var minute = config._d.getMinutes();
-
-                config._d.setUTCFullYear(year);
-                config._d.setUTCMonth(month);
-                config._d.setUTCDate(day);
-                config._d.setUTCHours(hour);
-                config._d.setUTCMinutes(minute);
-            }
         }
     }
 
@@ -2100,7 +2072,7 @@ moment.lang('eo', {
         LLL : "D-\\an \\de MMMM, YYYY LT",
         LLLL : "dddd, \\l\\a D-\\an \\d\\e MMMM, YYYY LT"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "a.t.m.",
         pm: "p.t.m."
     },
@@ -2367,17 +2339,6 @@ moment.lang('fi', {
         ll : "Do MMM YYYY",
         lll : "Do MMM YYYY, [klo] LT",
         llll : "ddd, Do MMM YYYY, [klo] LT"
-    },
-    ampm: { //SFDC
-        am: "ap.",
-        pm: "ip."
-    },
-    meridiem : function (hour, minute, isLower) { //SFDC
-        if (hour < 12) {
-            return "ap.";
-        } else {
-            return "ip.";
-        }
     },
     calendar : {
         sameDay : '[tänään] [klo] LT',
@@ -2941,7 +2902,7 @@ moment.lang('ja', {
         LLL : "YYYY年M月D日LT",
         LLLL : "YYYY年M月D日LT dddd"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "午前",
         pm: "午後"
     },
@@ -2995,7 +2956,7 @@ moment.lang('ko', {
         LLL : "YYYY년 MMMM D일 LT",
         LLLL : "YYYY년 MMMM D일 dddd LT"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "오전",
         pm: "오후"
     },
@@ -3811,17 +3772,6 @@ moment.lang('sv', {
         LLL : "D MMMM YYYY LT",
         LLLL : "dddd D MMMM YYYY LT"
     },
-    ampm: { //SFDC
-        am: "fm",
-        pm: "em"
-    },
-    meridiem : function (hour, minute, isLower) { //SFDC
-        if (hour < 12) {
-            return "fm";
-        } else {
-            return "em";
-        }
-    },
     calendar : {
         sameDay: '[Idag klockan] LT',
         nextDay: '[Imorgon klockan] LT',
@@ -3877,7 +3827,7 @@ moment.lang('th', {
         LLL : "D MMMM YYYY เวลา LT",
         LLLL : "วันddddที่ D MMMM YYYY เวลา LT"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "ก่อนเที่ยง",
         pm: "หลังเที่ยง"
     },
@@ -4237,7 +4187,7 @@ moment.lang('zh-cn', {
         lll : "YYYY年MMMD日LT",
         llll : "YYYY年MMMD日ddddLT"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "上午",
         pm: "下午"
     },
@@ -4255,7 +4205,7 @@ moment.lang('zh-cn', {
             return "晚上";
         }
     */
-        if (hour < 12) { //SFDC
+        if (hour < 12) { //@SFDC
             return "上午";
         } else {
             return "下午";
@@ -4308,7 +4258,7 @@ moment.lang('zh-tw', {
         lll : "YYYY年MMMD日LT",
         llll : "YYYY年MMMD日ddddLT"
     },
-    ampm: { //SFDC
+    ampm: { //@SFDC
         am: "上午",
         pm: "下午"
     },
@@ -4326,7 +4276,7 @@ moment.lang('zh-tw', {
             return "晚上";
         }
     */
-        if (hour < 12) { //SFDC
+        if (hour < 12) { //@SFDC
             return "上午";
         } else {
             return "下午";

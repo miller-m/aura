@@ -15,21 +15,20 @@
  */
 package org.auraframework.impl.css.style;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.auraframework.Aura;
-import org.auraframework.def.*;
-import org.auraframework.impl.css.StyleTestCase;
-import org.auraframework.system.AuraContext.Authentication;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.NamespaceDef;
+import org.auraframework.def.StyleDef;
+import org.auraframework.impl.AuraImplTestCase;
+import org.auraframework.impl.system.DefDescriptorImpl;
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.system.AuraContext.Format;
 import org.auraframework.system.AuraContext.Mode;
-import org.auraframework.throwable.quickfix.QuickFixException;
-import org.auraframework.throwable.quickfix.ThemeValueNotFoundException;
-import org.auraframework.util.AuraTextUtil;
-import org.auraframework.util.json.Json;
-import org.auraframework.util.json.JsonReader;
+import org.auraframework.test.annotation.UnAdaptableTest;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 /**
@@ -37,14 +36,88 @@ import com.google.common.collect.Sets;
  * 
  * @since 0.0.240
  */
-public class StyleDefImplTest extends StyleTestCase {
+public class StyleDefImplTest extends AuraImplTestCase {
     public StyleDefImplTest(String name) {
         super(name);
     }
 
+    private void assertUrls(Set<String> expected, Set<String> actual) throws Exception {
+        StringBuilder errorMsg = new StringBuilder();
+        if (!actual.containsAll(expected)) {
+            Set<String> missing = Sets.newHashSet(expected);
+            missing.removeAll(actual);
+            errorMsg.append("Missing urls in style: ").append(missing).append('\n');
+        }
+        if (!expected.containsAll(actual)) {
+            Set<String> extras = Sets.newHashSet(actual);
+            extras.removeAll(expected);
+            errorMsg.append("Unexpected urls in style: ").append(extras).append('\n');
+        }
+        if (errorMsg.length() > 0) {
+            fail(errorMsg.toString());
+        }
+    }
+
     /**
-     * TODONM remove
-     * 
+     * StyleDef without urls.
+     */
+    // TODO: wait for W-1618450 to be resolved
+    public void _testCssWithoutUrls() throws Exception {
+        DefDescriptor<StyleDef> descriptor = DefDescriptorImpl.getInstance("appCache.testApp", StyleDef.class);
+        StyleDef style = descriptor.getDef();
+        assertTrue("Unexpected urls found for style", style.getImageURLs().isEmpty());
+        assertTrue("Unexpected valid urls found for style", style.getValidImageURLs().isEmpty());
+    }
+
+    /**
+     * StyleDef without valid urls. Valid urls are relative and are accessible by HEAD request.
+     */
+    @UnAdaptableTest
+    // Errors for invalid URLs differ, so the unit test result varies from
+    // standalone
+    // TODO: wait for W-1618450 to be resolved
+    public void _testCssWithoutValidUrls() throws Exception {
+        if (Aura.getContextService().isEstablished()) {
+            Aura.getContextService().endContext();
+        }
+        Aura.getContextService().startContext(Mode.DEV, Format.HTML, Access.AUTHENTICATED);
+        DefDescriptor<StyleDef> descriptor = DefDescriptorImpl.getInstance("appCache.unsupportedUrls", StyleDef.class);
+        StyleDef style = descriptor.getDef();
+        assertUrls(ImmutableSet.of("/auraFW/resources/qa/images/imaginary.png", "http://www.facebook.com/ipo.jpg",
+                "http://dummy.salesforce.com/invalidhost", "//dummy.salesforce.com/noprotocol", "http:///nohost",
+                "/auraFW/resources/qa/images/auralogo.png?unrooted"), style.getImageURLs());
+        assertTrue("Unexpected valid urls found for style", style.getValidImageURLs().isEmpty());
+    }
+
+    /**
+     * StyleDef with valid urls. Valid urls are relative and are accessible by HEAD request.
+     */
+    // Cannot run this as a unit test since validating urls involves making a
+    // http connection. See
+    // AppCacheManifestHttpTest for a test that validates that only the valid
+    // URLs are cached.
+    // TODO: wait for W-1618450 to be resolved
+    public void _testCssWithValidUrls() throws Exception {
+        DefDescriptor<StyleDef> descriptor = DefDescriptorImpl.getInstance("appCache.nopreload", StyleDef.class);
+        StyleDef style = descriptor.getDef();
+        assertUrls(ImmutableSet.of("/auraFW/resources/qa/images/s.gif", "/auraFW/resources/qa/images/auralogo.png",
+                " /auraFW/resources/qa/images/auralogo.png?wsstart",
+                "/auraFW/resources/qa/images/auralogo.png?wsend   ", "/auraFW/resources/qa/images/auralogo.png?wsboth",
+                "'/auraFW/resources/qa/images/auralogo.png?singlequotes'",
+                "\"/auraFW/resources/qa/images/auralogo.png?doublequotes\"", "/auraFW/resources/aura/bootstrap.css"),
+                style.getValidImageURLs());
+        assertUrls(ImmutableSet.of("/auraFW/resources/qa/images/imaginary.png", "http://www.facebook.com/ipo.jpg",
+                "http://dummy.salesforce.com/invalidhost", "//dummy.salesforce.com/noprotocol", "http:///nohost",
+                "qa/images/auralogo.png?unrooted", "/auraFW/resources/qa/images/s.gif",
+                "/auraFW/resources/qa/images/auralogo.png)", " /auraFW/resources/qa/images/auralogo.png?wsstart",
+                "/auraFW/resources/qa/images/auralogo.png?wsend   ", "/auraFW/resources/qa/images/auralogo.png?wsboth",
+                "'/auraFW/resources/qa/images/auralogo.png?singlequotes'",
+                "\"/auraFW/resources/qa/images/auralogo.png?doublequotes\"",
+                "/auraFW/resources/qa/images/auralogo.png?myvar", "/auraFW/resources/qa/images/auralogo.png?myurl",
+                "/auraFW/resources/aura/bootstrap.css"), style.getImageURLs());
+    }
+
+    /**
      * StyleDef must have a dependency on a NamespaceDef.
      */
     public void testAppendDependenciesHasNamespaceDef() throws Exception {
@@ -59,7 +132,7 @@ public class StyleDefImplTest extends StyleTestCase {
         // need to restart context because old context will not have the new
         // namespace registered
         Aura.getContextService().endContext();
-        Aura.getContextService().startContext(Mode.UTEST, Format.JSON, Authentication.AUTHENTICATED);
+        Aura.getContextService().startContext(Mode.UTEST, Format.JSON, Access.AUTHENTICATED);
 
         StyleDef styleDef = styleDesc.getDef();
         Set<DefDescriptor<?>> deps = Sets.newHashSet();
@@ -68,104 +141,5 @@ public class StyleDefImplTest extends StyleTestCase {
         DefDescriptor<NamespaceDef> nsDesc = Aura.getDefinitionService().getDefDescriptor(styleDesc.getNamespace(),
                 NamespaceDef.class);
         assertTrue("NamespaceDef missing from StyleDef dependencies", deps.contains(nsDesc));
-    }
-
-    public void testThemeDependenciesNsThemeOnly() throws QuickFixException {
-        DefDescriptor<ThemeDef> theme = addNsTheme(theme().var("color", "red"));
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: theme(color) }");
-
-        Set<DefDescriptor<?>> dependencies = Sets.newHashSet();
-        style.getDef().appendDependencies(dependencies);
-        assertTrue(dependencies.contains(theme));
-    }
-
-    public void testThemeDependenciesLocalThemeOnly() throws QuickFixException {
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: theme(color) }");
-        DefDescriptor<ThemeDef> theme = addLocalTheme(theme().var("color", "red"), style);
-
-        assertTrue("expected theme to be a localTheme", theme.getDef().isLocalTheme());
-
-        Set<DefDescriptor<?>> dependencies = Sets.newHashSet();
-        style.getDef().appendDependencies(dependencies);
-        assertTrue(dependencies.contains(theme));
-    }
-
-    public void testThemeDependenciesBothThemes() throws QuickFixException {
-        DefDescriptor<ThemeDef> nsTheme = addNsTheme(theme().var("color", "red"));
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: theme(color) }");
-        DefDescriptor<ThemeDef> localTheme = addLocalTheme(theme().var("color", "red"), style);
-
-        Set<DefDescriptor<?>> dependencies = Sets.newHashSet();
-        style.getDef().appendDependencies(dependencies);
-        assertTrue("expected dependencies to contain namespace theme", dependencies.contains(nsTheme));
-        assertTrue("expected dependencies to contain local theme", dependencies.contains(localTheme));
-    }
-
-    public void testThemeDependenciesDoesntHaveThemeDef() throws QuickFixException {
-        DefDescriptor<ThemeDef> nsTheme = addNsTheme("<aura:theme><aura:var name='color' value='red'/></aura:theme>");
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: red }");
-        DefDescriptor<ThemeDef> localTheme = addLocalTheme(theme().var("color", "red"), style);
-
-        Set<DefDescriptor<?>> dependencies = Sets.newHashSet();
-        style.getDef().appendDependencies(dependencies);
-        assertFalse(dependencies.contains(nsTheme));
-        assertFalse(dependencies.contains(localTheme));
-    }
-
-    public void testInvalidRef() throws QuickFixException {
-        addNsTheme("<aura:theme><aura:var name='color' value='red'/></aura:theme>");
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: theme(bam) }");
-
-        try {
-            style.getDef().validateReferences();
-            fail("expected an exception");
-        } catch (Exception e) {
-            checkExceptionContains(e, ThemeValueNotFoundException.class, "was not found");
-        }
-    }
-
-    public void testGetClassName() throws QuickFixException {
-        DefDescriptor<StyleDef> style = addStyleDef(".THIS {color: red }");
-        String expected = style.getNamespace() + AuraTextUtil.initCap(style.getName());
-        assertEquals(expected, style.getDef().getClassName());
-    }
-    /**
-     * Verify that if already preloaded, StyleDef doesn't include code when serialized.
-     * @throws Exception
-     */
-    public void testDefSerializationWhenPreloaded()throws Exception{
-        DefDescriptor<StyleDef> styleDesc = addStyleDef(".THIS {color: red }");
-        Aura.getContextService().getCurrentContext().setPreloading(false);
-        Set<DefDescriptor<?>> preloaded = Sets.newHashSet();
-        preloaded.add(styleDesc);
-        Aura.getContextService().getCurrentContext().setPreloadedDefinitions(preloaded);
-        verifyStyleDefSerialization(styleDesc, false);
-    }
-    
-    /**
-     * Verify that if not preloaded, StyleDef includes code when serialized.
-     * @throws Exception
-     */
-    public void testDefSerializationWhenNotPreloaded()throws Exception{
-        DefDescriptor<StyleDef> styleDesc = addStyleDef(".THIS {color: green }");
-        Aura.getContextService().getCurrentContext().setPreloading(false);
-        Set<DefDescriptor<?>> preloaded = Sets.newHashSet();
-        Aura.getContextService().getCurrentContext().setPreloadedDefinitions(preloaded);
-        verifyStyleDefSerialization(styleDesc, true);
-    }
-    
-    @SuppressWarnings("unchecked")
-    private void verifyStyleDefSerialization(DefDescriptor<StyleDef> styleDesc, Boolean expectCode)throws Exception{
-        String serialized = Json.serialize(styleDesc.getDef());
-        Object o = new JsonReader().read(serialized);
-        assertTrue(o instanceof Map);
-        Map<String, Object> outerMap = (Map<String, Object>) o;
-        assertEquals(styleDesc.toString(), outerMap.get("descriptor"));
-        assertEquals(styleDesc.getNamespace() + AuraTextUtil.initCap(styleDesc.getName()), outerMap.get("className"));
-        if(expectCode){
-            assertEquals("StyleDef content not included.", styleDesc.getDef().getCode(),outerMap.get("code"));
-        }else{
-            assertNull("StyleDef content should not be included.", outerMap.get("code"));
-        }
     }
 }

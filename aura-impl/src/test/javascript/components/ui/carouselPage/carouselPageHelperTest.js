@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 Function.RegisterNamespace("Test.Components.Ui.CarouselPage");
 
 [Fixture]
 Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
 	var targetHelper = null;
-
+	
 	ImportJson("ui.carouselPage.carouselPageHelper",function(path,result){
 		targetHelper=result;
 	});
-
+	
 	[Fixture]
     function selectPage(){
     	[Fact]
     	function PageSelectedAddsCorrectCSS(){
     		// Arrange
     		expected = "addClass";
-
+    		
     		var targetComponent = {
-                set:function(){},
     			get : function(expression) {
     				if (expression === "v.pageIndex") {
     					return 1;
@@ -45,24 +44,20 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
     					}}];
     				}
     			},
-    			getElement : function() {return {setAttribute:function(){}}},
+    			getElement : function() {},
     			getValue : function(value) {
     				return {
-    					setValue : function(value) {},
-    					getBooleanValue : function() {return true;}
+    					setValue : function(value) {}
     				}
     			}
     		};
     		var targetEvent = {
     			getParam : function(param) {return 1;}
     		};
-
+    		
     		var mockAura = Mocks.GetMock(Object.Global(), "$A", Stubs.GetObject({}, {
 				util : {
-                    getBooleanValue: function (value) {
-                        return value;
-                    },
-                    addClass : function(element, css) {
+					addClass : function(element, css) {
 						if (css === "carousel-page-selected") {
 							actual="addClass";
 						}
@@ -74,25 +69,24 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
 					}
 				}
 			}));
-
+			
     		actual = "";
-
+    		
     		// Act
     		mockAura(function(){
     			targetHelper.selectPage(targetComponent, targetEvent);
     		});
-
+    		
     		// Assert
     		Assert.Equal(expected,actual);
     	}
-
+    	
     	[Fact]
     	function PageUnSelectedAddsCorrectCSS(){
     		// Arrange
     		expected = "removeClass";
-
+    		
     		var targetComponent = {
-                set:function(){},
     			get : function(expression) {
     				if (expression === "v.pageIndex") {
     					return 1;
@@ -115,7 +109,7 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
     		var targetEvent = {
     			getParam : function(param) {return 2;}
     		};
-
+    		
     		var mockAura = Mocks.GetMock(Object.Global(), "$A", Stubs.GetObject({}, {
 				util : {
 					removeClass : function(element, css) {
@@ -125,19 +119,19 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
 					}
 				}
 			}));
-
+			
     		actual = "";
-
+    		
     		// Act
     		mockAura(function(){
     			targetHelper.selectPage(targetComponent, targetEvent);
     		});
-
+    		
     		// Assert
     		Assert.Equal(expected,actual);
     	}
     }
-
+    
     [Fixture]
     function updatePage(){
     	[Fact]
@@ -159,16 +153,16 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
     		var targetEvent = {
     			getParam : function(param) {return true;}
     		};
-
+    		
     		actual = false;
-
+    		
     		// Act
     		targetHelper.updatePage(targetComponent, targetEvent);
-
+    		
     		// Assert
     		Assert.True(actual);
     	}
-
+    	
     	[Fact]
     	function DestroyDoesNotGetCalledWhenContainerIsEmpty(){
     		// Arrange
@@ -188,12 +182,12 @@ Test.Components.Ui.Carousel.CarouselPageHelperTest=function(){
     		var targetEvent = {
     			getParam : function(param) {return true;}
     		};
-
+    		
     		actual = false;
-
+    		
     		// Act
     		targetHelper.updatePage(targetComponent, targetEvent);
-
+    		
     		// Assert
     		Assert.False(actual);
     	}

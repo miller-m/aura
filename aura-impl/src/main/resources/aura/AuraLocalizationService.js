@@ -15,58 +15,17 @@
  */
 /*jslint sub: true */
 /**
- * @namespace The Aura Localization service Service, accessible using $A.localizationService. Provides utility methods
- * for localizing data or getting formatters for numbers, currencies, dates, etc.
+ * @namespace The Aura Localization Service, accessible using $A.localizationService. Manages localization of date and time using Moment.js and WallTime.js.  
  * @constructor
  */
 var AuraLocalizationService = function AuraLocalizationService() {
-    var numberFormat, percentFormat, currencyFormat;
     // moment.js and walltime-js must be loaded before we can use date/time related APIs
     var localizationService = {
-        ZERO : "0",
-
         cache : {
             format : {},
             langLocale : {}
         },
-
-        formatNumber : function(number) {
-            return this.getDefaultNumberFormat().format(number);
-        },
-
-        formatPercent : function(number) {
-            return this.getDefaultPercentFormat().format(number);
-        },
-
-        formatCurrency : function(number) {
-            return this.getDefaultCurrencyFormat().format(number);
-        },
-
-        getNumberFormat : function(format, symbols) {
-            return new NumberFormat(format, symbols);
-        },
-
-        getDefaultNumberFormat : function() {
-            if (!numberFormat) {
-                numberFormat = new NumberFormat($A.get("$Locale.numberFormat"));
-            }
-            return numberFormat;
-        },
-
-        getDefaultPercentFormat : function() {
-            if (!percentFormat) {
-                percentFormat = new NumberFormat($A.get("$Locale.percentFormat"));
-            }
-            return percentFormat;
-        },
-
-        getDefaultCurrencyFormat : function() {
-            if (!currencyFormat) {
-                currencyFormat = new NumberFormat($A.get("$Locale.currencyFormat"));
-            }
-            return currencyFormat;
-        },
-
+        
         /**
          * Displays a length of time.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -78,7 +37,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDuration : function(d, noSuffix) {
             return d["humanize"](noSuffix);
         },
-
+        
         /**
          * Displays a length of time in days.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -89,7 +48,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInDays : function(d) {
             return d["asDays"]();
         },
-
+        
         /**
          * Displays a length of time in hours.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -100,7 +59,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInHours : function(d) {
             return d["asHours"]();
         },
-
+        
         /**
          * Displays a length of time in milliseconds.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -111,7 +70,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInMilliseconds : function(d) {
             return d["asMilliseconds"]();
         },
-
+        
         /**
          * Displays a length of time in minutes.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -122,7 +81,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInMinutes : function(d) {
             return d["asMinutes"]();
         },
-
+        
         /**
          * Displays a length of time in months.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -133,7 +92,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInMonths : function(d) {
             return d["asMonths"]();
         },
-
+        
         /**
          * Displays a length of time in seconds.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -144,7 +103,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInSeconds : function(d) {
             return d["asSeconds"]();
         },
-
+        
         /**
          * Displays a length of time in years.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -155,7 +114,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         displayDurationInYears : function(d) {
             return d["asYears"]();
         },
-
+        
         /**
          * Creates an object representing a length of time.
          * @param {Number|Object} num The length of milliseconds/unit
@@ -167,7 +126,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         duration : function(num, unit) {
             return unit ? moment["duration"](num, unit) : moment["duration"](num);
         },
-
+        
         /**
          * Converts the passed in Date by setting it to the end of a unit of time.
          * @param {String|Number|Date} date A format that the JavaScript Date object can parse
@@ -177,9 +136,9 @@ var AuraLocalizationService = function AuraLocalizationService() {
          * @public
          */
         endOf : function(date, unit) {
-            return moment(date)["endOf"](unit)["toDate"]();
+            return (moment(date)["endOf"](unit)).toDate();
         },
-
+        
         /**
          * Formats a date.
          * @param {String|Number|Date} date The date format that the JavaScript Date object can parse.
@@ -188,20 +147,20 @@ var AuraLocalizationService = function AuraLocalizationService() {
          * @return A formatted and localized date string
          * @memberOf AuraLocalizationService
          * @public
-         */
+         */ 
         formatDate : function(date, formatString, locale) {
             var mDate = moment(date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.dateformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.dateformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
                 throw {message: "Invalid date value"};
             }
         },
-
+        
         /**
          * Formats a date in UTC.
          * @param {String|Number|Date} date The date format that JS Date object can parse.
@@ -213,17 +172,17 @@ var AuraLocalizationService = function AuraLocalizationService() {
          */
         formatDateUTC : function(date, formatString, locale) {
             var mDate = moment["utc"](date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.dateformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.dateformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
                 throw {message: "Invalid date value"};
             }
         },
-
+        
         /**
          * Formats a datetime.
          * @param {String|Number|Date} date The datetime format that the JavaScript Date object can parse.
@@ -235,17 +194,17 @@ var AuraLocalizationService = function AuraLocalizationService() {
          */
         formatDateTime : function(date, formatString, locale) {
             var mDate = moment(date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.datetimeformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.datetimeformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
                 throw {message: "Invalid date time value"};
             }
         },
-
+        
         /**
          * Formats a datetime in UTC.
          * @param {String|Number|Date} date The datetime format that the JavaScript Date object can parse.
@@ -256,10 +215,10 @@ var AuraLocalizationService = function AuraLocalizationService() {
          */
         formatDateTimeUTC : function(date, formatString, locale) {
             var mDate = moment["utc"](date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.datetimeformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.datetimeformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
@@ -278,17 +237,17 @@ var AuraLocalizationService = function AuraLocalizationService() {
          */
         formatTime : function(date, formatString, locale) {
             var mDate = moment(date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.timeformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.timeformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
                 throw {message: "Invalid time value"};
             }
         },
-
+        
         /**
          * Formats a time in UTC.
          * @param {String|Number|Date} date The time format that JavaScript Date object can parse.
@@ -300,10 +259,10 @@ var AuraLocalizationService = function AuraLocalizationService() {
          */
         formatTimeUTC : function(date, formatString, locale) {
             var mDate = moment["utc"](date);
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 var format = formatString;
                 if (!format) { // use default format
-                    format = $A.get("$Locale.timeformat");
+                    format = $A.getGlobalValueProviders().get("$Locale.timeformat");
                 }
                 return localizationService.displayDateTime(mDate, format, locale);
             } else {
@@ -311,17 +270,14 @@ var AuraLocalizationService = function AuraLocalizationService() {
             }
         },
 
-        /**
-         * Gets the number of days in a duration.
-         * @param {Duration} d The duration object returned by localizationService.duration
-         * @return {Number} The number of days in d.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        getDaysInDuration : function(d) {
-            return d["days"]();
+        formatNumber : function(number, formatter) {
+
         },
 
+        formatCurrency : function(amount, formatter) {
+
+        },
+        
         /**
          * Gets the number of hours in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -332,19 +288,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getHoursInDuration : function(d) {
             return d["hours"]();
         },
-
-        /**
-         * Get the date time related labels (month name, weekday name, am/pm etc.).
-         * @return {Object} the localized label set.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        getLocalizedDateTimeLabels : function() {
-            var langLocale = $A.get("$Locale.langLocale");
-            var l = localizationService.getNormalizedLangLocale(langLocale);
-            return moment["langData"](l);
-        },
-
+        
         /**
          * Gets the number of milliseconds in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -355,7 +299,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getMillisecondsInDuration : function(d) {
             return d["milliseconds"]();
         },
-
+        
         /**
          * Gets the number of minutes in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -366,7 +310,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getMinutesInDuration : function(d) {
             return d["minutes"]();
         },
-
+        
         /**
          * Gets the number of months in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -377,7 +321,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getMonthsInDuration : function(d) {
             return d["months"]();
         },
-
+        
         /**
          * Gets the number of seconds in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -388,7 +332,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getSecondsInDuration : function(d) {
             return d["seconds"]();
         },
-
+                
         /**
          * Gets the number of years in a duration.
          * @param {Duration} d The duration object returned by localizationService.duration
@@ -399,33 +343,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         getYearsInDuration : function(d) {
             return d["years"]();
         },
-
-        /**
-         * An utility function to check if a datetime pattern string uses a 24-hour or period (12 hour with am/pm) time view.
-         * @param {String} datetime pattern string
-         * @return {Boolean} Returns true if it uses period time view.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        isPeriodTimeView : function(pattern) {
-            if (!pattern || typeof pattern  != 'string') {
-                return false;
-            }
-            var shouldEscape = false;
-            for (var i = 0; i < pattern.length; i++) {
-                var c = pattern.charAt(i);
-                if (c === 'h' && shouldEscape === false) {
-                    return true;
-                }
-                if (c === '[') {
-                    shouldEscape = true;
-                } else if (c === ']') {
-                    shouldEscape = false;
-                }
-            }
-            return false;
-        },
-
+        
         /**
          * Checks if date1 is after date2.
          * @param {String|Number|Date} date1 A date format that the JavaScript Date object can parse
@@ -435,11 +353,11 @@ var AuraLocalizationService = function AuraLocalizationService() {
          * @return {Boolean} Returns true if date1 is after date2, or false otherwise.
          * @memberOf AuraLocalizationService
          * @public
-         */
+         */ 
         isAfter : function(date1, date2, unit) {
             return moment(date1)["isAfter"](date2, unit);
         },
-
+        
         /**
          * Checks if date1 is before date2.
          * @param {String|Number|Date} date1 A date format that the JavaScript Date object can parse
@@ -453,7 +371,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
         isBefore : function(date1, date2, unit) {
             return moment(date1)["isBefore"](date2, unit);
         },
-
+        
         /**
          * Checks if date1 is the same as date2.
          * @param {String|Number|Date} date1 A date format that the JavaScript Date object can parse
@@ -481,33 +399,13 @@ var AuraLocalizationService = function AuraLocalizationService() {
             if (!dateTimeString) {
                 return null;
             }
-
+            
             var mDate = moment(dateTimeString, localizationService.getNormalizedFormat(targetFormat), localizationService.getNormalizedLangLocale(locale));
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 return mDate["toDate"]();
             }
-            return null;
         },
-
-        /**
-         * Parses a date time string in an ISO-8601 format.
-         * @param {String} dateTimeString The datetime string in an ISO-8601 format
-         * @return {Date} A JavaScript Date object
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        parseDateTimeISO8601 : function(dateTimeString) {
-            if (!dateTimeString) {
-                return null;
-            }
-
-            var mDate = moment(dateTimeString);
-            if (mDate && mDate["isValid"]()) {
-                return mDate["toDate"]();
-            }
-            return null;
-        },
-
+        
         /**
          * Parses a string to a JavaScript Date in UTC.
          * @param {String} dateTimeString The datetime string to be parsed
@@ -518,17 +416,17 @@ var AuraLocalizationService = function AuraLocalizationService() {
          * @public
          */
         parseDateTimeUTC : function(dateTimeString, targetFormat, locale) {
-            if (!dateTimeString) {
+            if (!dateTimeString && !targetFormat) {
                 return null;
             }
-
+            
             var mDate = moment["utc"](dateTimeString, localizationService.getNormalizedFormat(targetFormat), localizationService.getNormalizedLangLocale(locale));
-            if (mDate && mDate["isValid"]()) {
+            if (mDate["isValid"]()) {
                 return mDate["toDate"]();
             }
             return null;
         },
-
+        
         /**
          * Converts the passed in Date by setting it to the start of a unit of time.
          * @param {String|Number|Date} date It could be anything that JS Date object can parse.
@@ -538,123 +436,9 @@ var AuraLocalizationService = function AuraLocalizationService() {
          * @public
          */
         startOf : function(date, unit) {
-            return moment(date)["startOf"](unit)["toDate"]();
+            return (moment(date)["startOf"](unit)).toDate();
         },
-
-        /**
-         * Most of modern browsers support this method on Date object. But that is not the case for IE8 and older.
-         * @param {Date} date a Date object
-         * @return {String} An ISO8601 string to represent passed in Date object.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        toISOString : function(date) {
-            if (date && (date instanceof Date)) {
-                if (date.toISOString) {
-                    return date.toISOString();
-                } else {
-                    return date.getUTCFullYear() + '-'
-                         + localizationService.pad(date.getUTCMonth() + 1) + '-'
-                         + localizationService.pad(date.getUTCDate()) + 'T'
-                         + localizationService.pad(date.getUTCHours()) + ':'
-                         + localizationService.pad(date.getUTCMinutes()) + ':'
-                         + localizationService.pad(date.getUTCSeconds()) + '.'
-                         + localizationService.doublePad(date.getUTCMilliseconds()) + 'Z';
-                }
-            } else {
-                return date;
-            }
-        },
-
-        /**
-         * Translate the localized digit string to a string with Arabic digits if there is any.
-         * @param {String} input a string with localized digits.
-         * @return {String} a string with Arabic digits.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        translateFromLocalizedDigits : function(input) {
-            if (!input) {
-                return input;
-            }
-
-            var localizedZero = $A.get("$Locale.zero");
-            var zeroCharCodeOffset = localizedZero.charCodeAt(0) - this.ZERO.charCodeAt(0);
-            if (!zeroCharCodeOffset) {
-                return input;
-            }
-
-            var charArray = input.split("");
-            for (var i = 0; i < charArray.length; i++) {
-                var charCode = charArray[i].charCodeAt(0);
-                if (charCode <= localizedZero.charCodeAt(0) + 9 && charCode >= localizedZero.charCodeAt(0)) {
-                    charArray[i] = String.fromCharCode(charCode - zeroCharCodeOffset);
-                }
-            }
-            return charArray.join("");
-        },
-
-        /**
-         * Translate the input date from other calendar system (for example, Buddhist calendar) to Gregorian calendar
-         * based on the locale.
-         * @param {Date} date a Date Object.
-         * @return {Date} an updated Date object.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        translateFromOtherCalendar : function(date) {
-            var userLocaleLang = $A.get("$Locale.userLocaleLang");
-            var userLocaleCountry = $A.get("$Locale.userLocaleCountry");
-            if ('th' === userLocaleLang && 'TH' === userLocaleCountry) { // Buddhist year
-                date.setFullYear(date.getFullYear() - 543);
-            }
-            return date;
-        },
-
-        /**
-         * Translate the input string to a string with localized digits (different from Arabic) if there is any.
-         * @param {String} input a string with Arabic digits.
-         * @return {String} a string with localized digits.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        translateToLocalizedDigits : function(input) {
-            if (!input) {
-                return input;
-            }
-
-            var localizedZero = $A.get("$Locale.zero");
-            var zeroCharCodeOffset = localizedZero.charCodeAt(0) - this.ZERO.charCodeAt(0);
-            if (!zeroCharCodeOffset) {
-                return input;
-            }
-
-            var charArray = input.split("");
-            for (var i = 0; i < charArray.length; i++) {
-                var charCode = charArray[i].charCodeAt(0);
-                if (charCode <= "9".charCodeAt(0) && charCode >= "0".charCodeAt(0)) {
-                    charArray[i] = String.fromCharCode(charCode + zeroCharCodeOffset);
-                }
-            }
-            return charArray.join("");
-        },
-
-        /**
-         * Translate the input date to a date in other calendar system, for example, Buddhist calendar based on the locale.
-         * @param {Date} date a Date Object.
-         * @return {Date} an updated Date object.
-         * @memberOf AuraLocalizationService
-         * @public
-         */
-        translateToOtherCalendar : function(date) {
-            var userLocaleLang = $A.get("$Locale.userLocaleLang");
-            var userLocaleCountry = $A.get("$Locale.userLocaleCountry");
-            if ('th' === userLocaleLang && 'TH' === userLocaleCountry) { // Buddhist year
-                date.setFullYear(date.getFullYear() + 543);
-            }
-            return date;
-        },
-
+        
         /**
          * Converts a datetime from UTC to a specified timezone.
          * @param {Date} date A JavaScript Date object
@@ -666,14 +450,14 @@ var AuraLocalizationService = function AuraLocalizationService() {
         UTCToWallTime : function(date, timezone, callback) {
             if (typeof callback === 'function') {
                 if (!timezone) {
-                    timezone = $A.get("$Locale.timezone");
+                    timezone = $A.getGlobalValueProviders().get("$Locale.timezone");
                 }
-
+                
                 if (timezone == "GMT" || timezone == "UTC") {
                     callback(date);
                     return;
                 }
-
+            
                 if (!WallTime["zones"] || !WallTime["zones"][timezone]) {
                     // retrieve timezone data from server
                     localizationService.getTimeZoneInfo(timezone, function() {
@@ -684,7 +468,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
                 }
             }
         },
-
+        
         /**
          * Converts a datetime from a specified timezone to UTC.
          * @param {Date} date A JavaScript Date object
@@ -696,14 +480,14 @@ var AuraLocalizationService = function AuraLocalizationService() {
         WallTimeToUTC : function(date, timezone, callback) {
             if (typeof callback === 'function') {
                 if (!timezone) {
-                    timezone = $A.get("$Locale.timezone");
+                    timezone = $A.getGlobalValueProviders().get("$Locale.timezone");
                 }
-
+                
                 if (timezone == "GMT" || timezone == "UTC") {
                     callback(date);
                     return;
                 }
-
+            
                 if (!WallTime["zones"] || !WallTime["zones"][timezone]) {
                     // retrieve timezone data from server
                     localizationService.getTimeZoneInfo(timezone, function() {
@@ -714,9 +498,9 @@ var AuraLocalizationService = function AuraLocalizationService() {
                 }
             }
         },
-
+        
         /**---------- Private functions ----------*/
-
+        
         /**
          * Display date, datetime or time based on the format string.
          *
@@ -728,23 +512,23 @@ var AuraLocalizationService = function AuraLocalizationService() {
             }
             return mDate["format"](localizationService.getNormalizedFormat(format));
         },
-
+        
         /**
          * Normalize a Java format string to make it compatible with moment.js
          *
          * @private
          */
-        getNormalizedFormat : function(format) {
+        getNormalizedFormat : function(format) {            
             if (format) {
                 if (!localizationService.cache.format[format]) {
-                    var normalizedFormat = format.replace(/y/g, "Y").replace(/d/g, "D").replace(/E/g, "d").replace(/a/g, "A");
+                    var normalizedFormat = format.replace(/y/g, "Y").replace(/d/g, "D").replace(/E/g, "d").replace(/a/g, "A"); 
                     localizationService.cache.format[format] = normalizedFormat;
                 }
                 return localizationService.cache.format[format];
             }
             return format;
         },
-
+        
         /**
          * Normalize the input Java locale string to moment.js compatible one.
          *
@@ -754,11 +538,11 @@ var AuraLocalizationService = function AuraLocalizationService() {
             if (!langLocale) {
                 return langLocale;
             }
-
+            
             if (!localizationService.cache.langLocale[langLocale]) {
                 var lang = [];
                 var token = "";
-
+        
                 var index = langLocale.indexOf("_");
                 while (index > 0) {
                     token = langLocale.substring(0, index);
@@ -766,12 +550,12 @@ var AuraLocalizationService = function AuraLocalizationService() {
                     lang.push(token.toLowerCase());
                     index = langLocale.indexOf("_");
                 }
-
+        
                 langLocale = langLocale.substring(index + 1);
                 if (!$A.util.isEmpty(langLocale)) {
                     lang.push(langLocale.toLowerCase());
                 }
-
+        
                 var ret = lang[0];
                 if (lang[1]) {
                     var langAndCountry = lang[0] + "-" + lang[1];
@@ -786,13 +570,13 @@ var AuraLocalizationService = function AuraLocalizationService() {
             }
             return localizationService.cache.langLocale[langLocale];
         },
-
+        
         /**
          * retrieve timezone info from server.
          *
          * @private
          */
-        getTimeZoneInfo: function(timezone, callback) {
+        getTimeZoneInfo: function(timezone, callback) { 
             var a = $A.get("c.aura://TimeZoneInfoController.getTimeZoneInfo");
             a.setParams({
                 "timezoneId": timezone
@@ -805,7 +589,7 @@ var AuraLocalizationService = function AuraLocalizationService() {
                         WallTime["data"] = ret;
                         if (WallTime["zones"]) {
                             WallTime["addRulesZones"](WallTime["data"]["rules"], WallTime["data"]["zones"]);
-                        } else { // initialize walltime-js if it doesn't yet
+                        } else { // initialize walltime-js if it doesn't yet 
                             WallTime["autoinit"] = true;
                             WallTime["init"](WallTime["data"]["rules"], WallTime["data"]["zones"]);
                         }
@@ -815,8 +599,8 @@ var AuraLocalizationService = function AuraLocalizationService() {
             });
             $A.enqueueAction(a);
         },
-
-       /**
+        
+       /** 
         * @private
         */
         getUTCFromWallTime : function(d, timezone) {
@@ -826,18 +610,18 @@ var AuraLocalizationService = function AuraLocalizationService() {
             } catch (e) {
                 // The timezone id is invalid or for some reason, we can't get timezone info.
                 // use default timezone
-                timezone = $A.get("$Locale.timezone");
+                timezone = $A.getGlobalValueProviders().get("$Locale.timezone");
                 if (timezone == "GMT" || timezone == "UTC") {
                     return d;
-        }
+                }
                 try {
                     ret = WallTime["WallTimeToUTC"](timezone, d);
-                } catch (ignore) {}
+                } catch (ee) {}
             }
             return ret;
         },
-
-       /**
+        
+       /** 
         * @private
         */
         getWallTimeFromUTC : function(d, timezone) {
@@ -847,43 +631,27 @@ var AuraLocalizationService = function AuraLocalizationService() {
             } catch (e) {
                 // The timezone id is invalid or for some reason, we can't get timezone info.
                 // use default timezone
-                timezone = $A.get("$Locale.timezone");
+                timezone = $A.getGlobalValueProviders().get("$Locale.timezone");
                 if (timezone == "GMT" || timezone == "UTC") {
                     return d;
                 }
                 try {
                     ret = WallTime["UTCToWallTime"](d, timezone)["wallTime"];
-                } catch (ignore) {}
+                } catch (ee) {}
             }
             return ret;
         },
-
+        
         /**
          * Initialize localization service.
          * @private
          */
         init : function() {
             // Set global default language locale
-            var defaultLangLocale = $A.get("$Locale.langLocale");
+            var defaultLangLocale = $A.getGlobalValueProviders().get("$Locale.langLocale");
             if (defaultLangLocale) {
                 moment.lang(localizationService.getNormalizedLangLocale(defaultLangLocale));
             }
-        },
-
-        /**
-         * Append zero in front if necessary to standardize a number with two digits. For example, "9" becomes "09".
-         * @private
-         */
-        pad : function(n) {
-            return n < 10 ? '0' + n : n;
-        },
-
-        /**
-         * Append zero in front if necessary to standardize a number with three digits. For example, "99" becomes "099".
-         * @private
-         */
-        doublePad : function(n) {
-            return n < 10 ? '00' + n : n  < 100 ? '0' + n : n;
         }
     };
     //#include aura.AuraLocalizationService_export

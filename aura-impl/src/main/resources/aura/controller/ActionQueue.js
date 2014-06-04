@@ -15,38 +15,35 @@
  */
 /**
  * A queue of actions both client-side and server-side, foreground and background.
- * 
- * Handles pruning abortable actions as needed. The queue is divided into 'transactions' that correspond to all actions
- * queued up from the start of an entry point to the last exit from aura. If a later transaction has an abortable
- * action, all previous abortable actions will be aborted if they have not yet executed..
- * 
+ *
+ * Handles pruning abortable actions as needed. The queue is divided into 'transactions' that correspond
+ * to all actions queued up from the start of an entry point to the last exit from aura. If a later transaction
+ * has an abortable action, all previous abortable actions will be aborted if they have not yet executed..
+ *
  * This object is not intended to be public.
- * 
- * @name ActionQueue
- * @private
+ *
  * @constructor
+ * @protected
  */
-
 var ActionQueue = function ActionQueue() {
-	this.nextTransactionId = -1;
-	this.lastAbortableTransactionId = -1;
-	this.actions = [];
-        this.xhr = false;
+    this.nextTransactionId = -1;
+    this.lastAbortableTransactionId = -1;
+    this.actions = [];
 };
 
 ActionQueue.prototype.auraType = "ActionQueue";
 
 /**
- * Put a single action in the queue, possibly clearing prior abortable actions.
- * 
- * This maintains the order of the queue, but if, this action is the first action in the current transaction that is
- * abortable, all previous abortable actions are cleared.
- * 
- * @protected
+ * Put a single action in the queue, possibly clearing prior abortable actionssssssss.
+ *
+ * This maintains the order of the queue, but if, this action is the first action in the current
+ * transaction that is abortable, all previous abortable actions are cleared.
+ *
  * @param {Action}
- *            action the action to enqueue
+ *      action the action to enqueue
  * @param {Boolean}
- *            dontSave do not actually put the action in the queue (internal use only).
+ *      dontSave do not actually put the action in the queue (internal use only).
+ * @protected
  */
 ActionQueue.prototype.enqueue = function(action, dontSave) {
     if (action.isAbortable() && (this.lastAbortableTransactionId !== this.nextTransactionId)) {
@@ -54,170 +51,153 @@ ActionQueue.prototype.enqueue = function(action, dontSave) {
         this.lastAbortableTransactionId = this.nextTransactionId;
     }
     if (!dontSave) {
-        //
-        // only do this in the case that we are saving the action, because otherwise
-        // we would think we have an XHR even if it was a bypass. XHR is only set for
-        // forground server actions that are not forced into a boxcar.
-        //
-        if (!action.isCaboose() && action.getDef().isServerAction() && !action.isBackground()) {
-            this.xhr = true;
-        }
         this.actions.push(action);
     }
 };
 
 /**
  * Handle a set of actions, but bypass the queue.
- * 
- * This function is used if the actions will not use the normal queuing mechanism, but will rather be 'fast-tracked'
- * around the queue. This is needed to maintain the correct state for abortable actions.
- * 
- * @protected
+ *
+ * This function is used if the actions will not use the normal queuing mechanism, but will
+ * rather be 'fast-tracked' around the queue. This is needed to maintain the correct state
+ * for abortable actions.
+ *
  * @param {Array}
- *            actions the set of actions that will bypass the queue.
+ *      actions the set of actions that will bypass the queue.
+ * @protected
  */
 ActionQueue.prototype.bypass = function(actions) {
-	var i;
+    var i;
 
-	for (i = 0; i < actions.length; i++) {
-		if (actions[i]) {
-			this.enqueue(actions[i], true);
-		}
-	}
+    for (i = 0; i < actions.length; i++) {
+        if (actions[i]) {
+            this.enqueue(actions[i], true);
+        }
+    }
 };
 
 /**
  * Get the transaction ID for the next set pulled from the queue.
- * 
+ *
+ * @return {Number}
+ *      the next transaction id.
  * @protected
- * @return {Number} the next transaction id.
  */
 ActionQueue.prototype.getTransactionId = function() {
-	return this.nextTransactionId;
+    return this.nextTransactionId;
 };
 
 /**
  * Increment the transaction id.
- * 
+ *
  * This is used when we terminate/begin a transaction.
- * 
- * @protected
  */
 ActionQueue.prototype.incrementNextTransactionId = function() {
-	this.nextTransactionId++;
-};
-
-/**
- * Does the queue currently have an action that wants an immediate XHR?.
- */
-ActionQueue.prototype.needXHR = function() {
-    return this.xhr;
+    this.nextTransactionId++;
 };
 
 /**
  * Pop the current set of foreground server actions.
- * 
+ *
  * Pop the current set of foreground server actions (that are not isBackground()), clearing the actions from the queue.
- * 
- * @protected
- * @return {Array} the array of actions, empty if there are none.
+ *
+ * @return {Array}
+ *      the array of actions, empty if there are none.
  */
 ActionQueue.prototype.getServerActions = function() {
-        this.xhr = false;
-	return this.filterActions(function(action) {
-		return action.getDef().isServerAction() && !action.isBackground();
-	});
+    return this.filterActions(function(action) {
+        return action.getDef().isServerAction() && !action.isBackground();
+    });
 };
 
 /**
  * Get the next background action.
- * 
+ *
  * This will return the next background action, or null if there is none.
- * 
- * @protected
- * @return {Action} The first action in the queue that is marked as background.
+ *
+ * @return {Action}
+ *      The first action in the queue that is marked as background.
  */
 ActionQueue.prototype.getNextBackgroundAction = function() {
-	for ( var i = 0; i < this.actions.length; i++) {
-		var action = this.actions[i];
+    for (var i = 0; i < this.actions.length; i++) {
+        var action = this.actions[i];
 
-		if (action.isBackground() && action.getDef().isServerAction()) {
-			this.actions.splice(i, 1);
-			return action;
-		}
-	}
-	return null;
+        if (action.isBackground() && action.getDef().isServerAction()) {
+            this.actions.splice(i, 1);
+            return action;
+        }
+    }
+    return null;
 };
 
 /**
  * Return the current set of client actions, clearing them from the queue. Returns [] is there are no client actions in
  * the queue.
- * 
- * @protected
- * @return {Array} the set of client actions.
+ *
+ * @return {Array}
+ *      the set of client actions.
  */
 ActionQueue.prototype.getClientActions = function() {
-	return this.filterActions(function(action) {
-		return action.getDef().isClientAction();
-	});
+    return this.filterActions(function(action) {
+        return action.getDef().isClientAction();
+    });
 };
 
 /**
  * Return the number of the last 'transaction' containing an abortable action.
- * 
- * @protected
  */
 ActionQueue.prototype.getLastAbortableTransactionId = function() {
-	return this.lastAbortableTransactionId;
+    return this.lastAbortableTransactionId;
 };
 
 /**
  * Clear the previous abortable actions.
- * 
- * This internal function clears out all previous abortable actions, marking them as aborted. and returns the remaining
- * actions.
- * 
- * @private
+ *
+ * This internal function clears out all previous abortable actions, marking them as aborted.
+ * and returns the remaining actions.
+ *
  * @param {Array}
- *            The incoming array of actions
- * @return {Array} A copy of the array with all abortable actions removed.
+ *      The incoming array of actions
+ * @return {Array}
+ *      A copy of the array with all abortable actions removed.
+ * @private
  */
 ActionQueue.prototype.clearPreviousAbortableActions = function(queue) {
-	var newQueue = [];
-	var counter;
-	for (counter = 0; counter < queue.length; counter++) {
-		if (!queue[counter].isAbortable()) {
-			newQueue.push(queue[counter]);
-		} else {
-			queue[counter].abort();
-		}
-	}
-	return newQueue;
+    var newQueue = [];
+    var counter;
+    for (counter = 0; counter < queue.length; counter++) {
+        if (!queue[counter].isAbortable()) {
+            newQueue.push(queue[counter]);
+        } else {
+            queue[counter].abort();
+        }
+    }
+    return newQueue;
 };
 
 /**
  * Extract action(s) matching the given filter leave the rest in this.actions and return the match(es).
  * 
- * @private
  * @param {Function}
- *            filter A filter function that should return true if the action should be removed and returned.
+ *      filter A filter function that should return true if the action should be removed and returned.
+ * @private
  */
 ActionQueue.prototype.filterActions = function(filter) {
-	var actionsCopy = this.actions;
-	this.actions = [];
-	var newActions = [];
-	var requestedActions = [];
-	var action;
-	var counter;
-
-	for (counter = 0; counter < actionsCopy.length; counter++) {
-		action = actionsCopy[counter];
-		if (filter(action)) {
-			requestedActions.push(action);
-		} else {
-			newActions.push(action);
-		}
-	}
-	this.actions = newActions;
-	return requestedActions;
+    var actionsCopy = this.actions;
+    this.actions = [];
+    var newActions = [];
+    var requestedActions = [];
+    var action;
+    var counter;
+    
+    for (counter = 0; counter < actionsCopy.length; counter++) {
+        action = actionsCopy[counter];
+        if (filter(action)) {
+            requestedActions.push(action);
+        } else {
+            newActions.push(action);
+        }
+    }
+    this.actions = newActions;
+    return requestedActions;
 };

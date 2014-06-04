@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 ({
-    // TODO: W-1937288 Fix flapping
-    _testInitialValue:{
+    testInitialValue:{
         attributes : {displayDatePicker: 'true', value: '2012-09-10', format: 'MM/dd/yyyy'},
         test: function(cmp){
             var inputDateStr = cmp.find("inputText").getElement().value;

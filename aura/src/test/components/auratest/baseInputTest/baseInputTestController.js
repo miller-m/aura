@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
+{
 	submit : function(component, event) {		
 		var cmpType = component.get("v.cmpType");
 		var inputCmpValue = component.get('v.ref');
@@ -42,7 +42,7 @@
 		        	value.setValid(false);
 		        	value.addErrors(action.getError());
 		        }
-		        component.find("outputValue").set("v.value", retValue);
+		        component.find("outputValue").getAttributes().setValue("value", retValue);
 	        });
         } catch(e) {
         	$A.test.fail("Test fail! Unexpected error: " + e.message);       
@@ -50,4 +50,4 @@
         
         $A.enqueueAction(a);
 	}
-})
+}

@@ -16,14 +16,13 @@
 ({
     incermentSubmitCount : function(component) {
         // calculate and save number of times submit has been clicked
-        var submitCount = component.get("v.submitCount");
+        var submitCountCmp = component.getAttributes().getValue("submitCount");
+        var submitCount = submitCountCmp.getValue("value");
         if (!submitCount) {
             submitCount = 0
         }
-        
-        component.find("outSubmitCount").set("v.value", ++submitCount);
-        
-        component.set("v.submitCount", submitCount);
+        component.find("outSubmitCount").getAttributes().setValue("value", ++submitCount);
+        submitCountCmp.setValue(submitCount);
     },
 
     goToServer : function(controller, component, event, cmpName, inValue) {
@@ -39,7 +38,7 @@
                 $A.log("Success!\nValue from server:");
                 var retValue = action.getReturnValue();
                 $A.log(retValue);
-                component.find("out" + cmpName).set("v.value", "**" + retValue + "**");
+                component.find("out" + cmpName).getAttributes().setValue("value", "**" + retValue + "**");
 
                 var value = component.find("in" + cmpName).getValue("v.value");
                 value.setValid(true);

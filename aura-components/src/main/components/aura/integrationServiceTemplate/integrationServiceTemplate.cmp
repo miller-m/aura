@@ -35,6 +35,12 @@
 
     <div id="auraErrorMessage"/>
 
+    <script>
+    if (window.$A !== undefined) {
+    	throw new Error("Aura has already been initialized!");
+    }
+    </script>
+
     {!v.extraMetaTags}
     {!v.auraStyleTags}
     {!v.extraStyleTags}
@@ -44,6 +50,10 @@
 
     {!v.extraScriptTags}
     {!v.auraScriptTags}
+    
+    <script src="/auraFW/resources/moment/moment.js"></script>
+    <script src="{!'/auraFW/resources/walltime-js/olson/walltime-data_' + $Locale.timezoneFileName + '.js'}"></script>
+    <script src="/auraFW/resources/walltime-js/walltime.js"></script>
     
     <script>
    	$A.initConfig({!v.auraInit}, true, true, true);

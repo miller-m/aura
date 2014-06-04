@@ -15,5 +15,5 @@
     limitations under the License.
 
 -->
-<aura:event type="APPLICATION" support="GA" access="GLOBAL" 
+<aura:event type="APPLICATION" support="GA"
     description="Indicates that the client-side framework is done waiting for a response to a server request.  This will always be preceded by a aura:waiting event."/>

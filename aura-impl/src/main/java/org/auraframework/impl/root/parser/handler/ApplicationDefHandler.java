@@ -16,12 +16,18 @@
 package org.auraframework.impl.root.parser.handler;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamReader;
 
 import org.auraframework.Aura;
-import org.auraframework.def.*;
+import org.auraframework.def.ApplicationDef;
+import org.auraframework.def.ComponentDef;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.EventDef;
+import org.auraframework.def.LayoutsDef;
 import org.auraframework.impl.root.DependencyDefImpl;
 import org.auraframework.impl.root.application.ApplicationDefImpl;
 import org.auraframework.impl.system.DefDescriptorImpl;
@@ -54,10 +60,10 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
 
     @Override
     public Set<String> getAllowedAttributes() {
-        return isInPrivilegedNamespace ? PRIVILEGED_ALLOWED_ATTRIBUTES : ALLOWED_ATTRIBUTES;
+        return ALLOWED_ATTRIBUTES;
     }
 
-	@Override
+    @Override
     protected ApplicationDefImpl.Builder createBuilder() {
         return new ApplicationDefImpl.Builder();
     }
@@ -69,7 +75,7 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
 
     /**
      * Allows embedded script tags by default in applications
-     * 
+     *
      * @return - return true if your instance should allow embedded script tags in HTML
      */
     @Override
@@ -80,6 +86,10 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
     @Override
     protected void readAttributes() throws QuickFixException {
         super.readAttributes();
+
+        appBuilder.setSecurityProviderDescriptor(getAttributeValue(ATTRIBUTE_SECURITY_PROVIDER));
+
+        appBuilder.access = getAttributeValue(ATTRIBUTE_ACCESS);
 
         String locationChangeEvent = getAttributeValue(ATTRIBUTE_LOCATION_CHANGE_EVENT);
         if (!AuraTextUtil.isNullEmptyOrWhitespace(locationChangeEvent)) {
@@ -109,7 +119,7 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
                 ddb.setParentDescriptor(this.defDescriptor);
                 ddb.setLocation(getLocation());
                 ddb.setResource(preload);
-                ddb.setType("APPLICATION,COMPONENT,STYLE,EVENT");
+                ddb.setType("*");
                 appBuilder.addDependency(ddb.build());
             }
         }
@@ -130,27 +140,6 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
         } else {
             appBuilder.isOnePageApp = false;
         }
-
-        String themeName = getAttributeValue(ATTRIBUTE_OVERRIDE_THEME);
-        if (themeName != null) {
-            // an empty string is a valid value, and it means don't use any theme override. this is a way to opt-out of
-            // the implicit default (below)
-            if (!AuraTextUtil.isNullEmptyOrWhitespace(themeName)) {
-                appBuilder.setOverrideThemeDescriptor(DefDescriptorImpl.getInstance(themeName, ThemeDef.class));
-            }
-        } else {
-            // check for app bundle theme
-            themeName = defDescriptor.getDescriptorName();
-            DefDescriptor<ThemeDef> desc = DefDescriptorImpl.getInstance(themeName, ThemeDef.class);
-            if (desc.exists()) {
-                appBuilder.setOverrideThemeDescriptor(desc);
-            } else {
-                // the implicit theme override for an app is the namespace-default theme, if it exists
-                themeName = String.format("%s:%sTheme", defDescriptor.getNamespace(), defDescriptor.getNamespace());
-                desc = DefDescriptorImpl.getInstance(themeName, ThemeDef.class);
-                appBuilder.setOverrideThemeDescriptor(desc.exists() ? desc : null);
-            }
-        }
     }
 
     @Override
@@ -169,24 +158,18 @@ public class ApplicationDefHandler extends BaseComponentDefHandler<ApplicationDe
         }
     }
 
-    @Override
-	protected boolean allowAuthenticationAttribute() {
-    	return true;
-	}
 
-	private static final String ATTRIBUTE_PRELOAD = "preload";
+    private static final String ATTRIBUTE_PRELOAD = "preload";
     private static final String ATTRIBUTE_LAYOUTS = "layouts";
     private static final String ATTRIBUTE_LOCATION_CHANGE_EVENT = "locationChangeEvent";
+    private static final String ATTRIBUTE_ACCESS = "access";
+    private static final String ATTRIBUTE_SECURITY_PROVIDER = "securityProvider";
     private static final String ATTRIBUTE_APPCACHE_ENABLED = "useAppcache";
     private static final String ATTRIBUTE_ADDITIONAL_APPCACHE_URLS = "additionalAppCacheURLs";
     private static final String ATTRIBUTE_IS_ONE_PAGE_APP = "isOnePageApp";
-    private static final String ATTRIBUTE_OVERRIDE_THEME = "overrideTheme";
 
-    private static final Set<String> ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>()
-            .add(ATTRIBUTE_APPCACHE_ENABLED)
-            .addAll(BaseComponentDefHandler.ALLOWED_ATTRIBUTES).build();
-    
-	private static final Set<String> PRIVILEGED_ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>().add(
-			ATTRIBUTE_PRELOAD, ATTRIBUTE_LAYOUTS, ATTRIBUTE_LOCATION_CHANGE_EVENT, 
-            ATTRIBUTE_ADDITIONAL_APPCACHE_URLS, ATTRIBUTE_IS_ONE_PAGE_APP, ATTRIBUTE_OVERRIDE_THEME).addAll(ALLOWED_ATTRIBUTES).addAll(BaseComponentDefHandler.PRIVILEGED_ALLOWED_ATTRIBUTES).build();
+    private final static Set<String> ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>()
+            .add(ATTRIBUTE_PRELOAD, ATTRIBUTE_LAYOUTS, ATTRIBUTE_LOCATION_CHANGE_EVENT, ATTRIBUTE_PRELOAD,
+                    ATTRIBUTE_ACCESS, ATTRIBUTE_SECURITY_PROVIDER, ATTRIBUTE_APPCACHE_ENABLED, ATTRIBUTE_ADDITIONAL_APPCACHE_URLS,
+                    ATTRIBUTE_IS_ONE_PAGE_APP).addAll(BaseComponentDefHandler.ALLOWED_ATTRIBUTES).build();
 }

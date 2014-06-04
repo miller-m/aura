@@ -15,9 +15,6 @@
  */
 package org.auraframework.impl;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.auraframework.Aura;
@@ -58,16 +55,8 @@ public class ExceptionAdapterImpl implements ExceptionAdapter {
             //
             loggable = th.getCause();
             error = false;
-        } else{
-        	String message = "Unable to process your request";
-        	//If non-production setup, add more information to exception message
-        	if(!Aura.getConfigAdapter().isProduction()){
-        		StringWriter sw = new StringWriter();
-                PrintWriter p = new PrintWriter(sw);
-                th.printStackTrace(p);                
-                message = message + "\n\n" + sw.toString();
-        	}
-        	mapped = new AuraUnhandledException(message);
+        } else if (Aura.getConfigAdapter().isProduction()) {
+            mapped = new AuraUnhandledException("Unable to process your request");
         }
         if (error) {
             logging = log.isErrorEnabled();
@@ -77,6 +66,7 @@ public class ExceptionAdapterImpl implements ExceptionAdapter {
         if (loggable != null && logging) {
             StringBuilder extended = new StringBuilder();
             String logString = null;
+            ;
 
             if (action != null) {
                 try {

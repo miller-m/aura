@@ -36,7 +36,5 @@ exp(p,
     "getErrors", p.getErrors,
     "destroy", p.destroy,
     "toString", p.toString,
-    "addHandler", p.addHandler,
-    "observe", p.observe,
-    "unobserve", p.unobserve
+    "addHandler", p.addHandler
 );

@@ -15,10 +15,6 @@
     limitations under the License.
 
 -->
-<!-- reinitializeModelTest.java use this component -->
-<aura:component extensible="true" model="java://test.model.TestReinitializeModel">
-    <aura:attribute name="attrInParent" type="String" default="default attribute in Parent"/>
-    <br/>Parent CMP<br/>
-    m.valueParent={!m.valueParent}
-    {!v.body}
+<aura:component extensible="true">
+    {!m.parentValue}
 </aura:component>

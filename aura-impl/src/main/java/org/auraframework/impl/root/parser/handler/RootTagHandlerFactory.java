@@ -17,15 +17,21 @@ package org.auraframework.impl.root.parser.handler;
 
 import javax.xml.stream.XMLStreamReader;
 
-import org.auraframework.def.*;
+import org.auraframework.def.ApplicationDef;
+import org.auraframework.def.ComponentDef;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.EventDef;
+import org.auraframework.def.InterfaceDef;
+import org.auraframework.def.LayoutsDef;
+import org.auraframework.def.NamespaceDef;
+import org.auraframework.def.RootDefinition;
 import org.auraframework.system.Source;
-import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
 
 public class RootTagHandlerFactory {
 
     @SuppressWarnings("unchecked")
     public static <T extends RootDefinition> RootTagHandler<T> newInstance(DefDescriptor<T> defDescriptor,
-            Source<T> source, XMLStreamReader xmlReader) throws DefinitionNotFoundException {
+            Source<T> source, XMLStreamReader xmlReader) {
         switch (defDescriptor.getDefType()) {
         case APPLICATION:
             return (RootTagHandler<T>) new ApplicationDefHandler((DefDescriptor<ApplicationDef>) defDescriptor,
@@ -45,12 +51,6 @@ public class RootTagHandlerFactory {
         case NAMESPACE:
             return (RootTagHandler<T>) new NamespaceDefHandler((DefDescriptor<NamespaceDef>) defDescriptor,
                     (Source<NamespaceDef>) source, xmlReader);
-        case THEME:
-            return (RootTagHandler<T>) new ThemeDefHandler((DefDescriptor<ThemeDef>) defDescriptor,
-                    (Source<ThemeDef>) source, xmlReader);
-        case DOCUMENTATION:
-            return (RootTagHandler<T>) new DocumentationDefHandler((DefDescriptor<DocumentationDef>) defDescriptor,
-                    (Source<DocumentationDef>) source, xmlReader);
         default:
             throw new UnsupportedOperationException();
         }

@@ -50,12 +50,8 @@
             <ui:stamp severity="{!m.support=='PROTO'?'important':m.support=='DEPRECATED'?'inverse':m.support=='BETA'?'warning':m.support=='GA'?'success':''}">{!m.support}</ui:stamp>
         </aura:if>
     </aura:set>
-    <ui:tabSet class="subtabs">
-        <auradocs:stretchTab title="Overview">
-        	<aura:if isTrue="{!m.documentation != null &amp;&amp; m.documentation.descriptions.length > 0}"> 
-        		<auradocs:defDescription descriptions="{!m.documentation.descriptions}"/>
-        	</aura:if>
-        
+    <ui:tabset class="subtabs">
+        <ui:tab title="overview">
             <aura:if isTrue="{!m.attributes.length > 0}">
                 <auradocs:defMemberList title="Attributes" list="{!m.attributes}"/>
             </aura:if>
@@ -67,24 +63,19 @@
             <aura:if isTrue="{!m.events.length > 0}">
                 <auradocs:defMemberList title="Events" list="{!m.events}"/>
             </aura:if>
-        </auradocs:stretchTab>
+        </ui:tab>
 
-        <auradocs:stretchEditorPanel title="Source" descriptor="{!v.descriptor}" defType="{!v.defType}"/>
+        <!--<ui:tab title="examples" scroll="false">examples</ui:tab>-->
+
+        <auradocs:editorPanel title="source" descriptor="{!v.descriptor}" defType="{!v.defType}"/>
 
         <aura:forEach items="{!m.defs}" var="def">
-            <auradocs:stretchEditorPanel title="{!def.name}" descriptor="{!def.descriptor}" defType="{!def.defType}"/>
+            <auradocs:editorPanel title="{!def.name}" descriptor="{!def.descriptor}" defType="{!def.defType}"/>
         </aura:forEach>
 
-        <auradocs:stretchTab title="Dependencies">
+        <ui:tab title="dependencies">
             <auradocs:defDependencies descriptor="{!v.descriptor}" defType="{!v.defType}"/>
-        </auradocs:stretchTab>
-        
-        <!-- findInstancesOf cannot traverse if or renderIf -->
-        <!--aura:if isTrue="{!m.documentation != null &amp;&amp; m.documentation.hasExamples}"--> 
-	        <auradocs:stretchTab title="Examples">
-	            <auradocs:examplesc name="{!v.descriptor}"/>
-	        </auradocs:stretchTab>
-	    <!--/aura:if-->
-    </ui:tabSet>
+        </ui:tab>
+    </ui:tabset>
 
 </aura:component>

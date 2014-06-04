@@ -15,12 +15,9 @@
  */
 package org.auraframework.impl;
 
-import java.util.Map;
-
 import org.auraframework.adapter.LoggingAdapter;
 import org.auraframework.service.LoggingService;
 import org.auraframework.system.LoggingContext;
-import org.auraframework.system.LoggingContext.KeyValueLogger;
 
 /**
  */
@@ -51,22 +48,6 @@ public class LoggingServiceImpl implements LoggingService {
         }
     }
 
-    @Override
-    public void startAction(String actionName) {
-        LoggingContext lc = getLoggingContext();
-        if (lc != null) {
-            lc.startAction(actionName);
-        }
-    }
-    
-    @Override
-    public void stopAction(String actionName) {
-        LoggingContext lc = getLoggingContext();
-        if (lc != null) {
-            lc.stopAction(actionName);
-        }
-    }
-    
     @Override
     public void stopTimer(String name) {
         LoggingContext lc = getLoggingContext();
@@ -149,12 +130,12 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     @Override
-    public void flush() {
+    public void doLog() {
         LoggingContext lc = getLoggingContext();
         if (lc != null) {
             stopTimer(LoggingService.TIMER_AURA);
             stopTimer(LoggingService.TIMER_TOTAL);
-            lc.logRequestValues();
+            lc.log();
         }
     }
 
@@ -167,22 +148,5 @@ public class LoggingServiceImpl implements LoggingService {
             return null;
         }
         return la.getLoggingContext();
-    }
-
-    @Override
-    public KeyValueLogger getKeyValueLogger(StringBuffer log) {
-        LoggingContext lc = getLoggingContext();
-        if (lc != null) {
-            return lc.getKeyValueLogger(log);
-        }
-        return null;
-    }
-
-    @Override
-    public void logCSPReport(Map<String, Object> report) {
-        LoggingContext lc = getLoggingContext();
-        if (lc != null) {
-            lc.logCSPReport(report);
-        }
     }
 }

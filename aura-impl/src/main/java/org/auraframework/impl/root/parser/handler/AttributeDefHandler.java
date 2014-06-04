@@ -30,11 +30,8 @@ import org.auraframework.impl.root.AttributeDefRefImpl;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.impl.util.TextTokenizer;
 import org.auraframework.system.Source;
-import org.auraframework.throwable.quickfix.InvalidAccessValueException;
 import org.auraframework.throwable.quickfix.QuickFixException;
-import org.auraframework.util.AuraTextUtil;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -55,22 +52,17 @@ public class AttributeDefHandler<P extends RootDefinition> extends ParentedTagHa
     private static final String ATTRIBUTE_SERIALIZE_TO = "serializeTo";
     private static final String ATTRIBUTE_VISIBILITY = "visibility";
 
-    private static final Set<String> ALLOWED_ATTRIBUTES = ImmutableSet.of(ATTRIBUTE_DEFAULT, ATTRIBUTE_REQUIRED,
-            ATTRIBUTE_TYPE, ATTRIBUTE_NAME, ATTRIBUTE_DESCRIPTION, ATTRIBUTE_ACCESS);
-	private static final Set<String> PRIVILEGED_ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>().add(
-			ATTRIBUTE_SERIALIZE_TO, ATTRIBUTE_VISIBILITY).addAll(ALLOWED_ATTRIBUTES).build();
+    private final static Set<String> ALLOWED_ATTRIBUTES = ImmutableSet.of(ATTRIBUTE_DEFAULT, ATTRIBUTE_REQUIRED,
+            ATTRIBUTE_TYPE, ATTRIBUTE_NAME, ATTRIBUTE_DESCRIPTION, ATTRIBUTE_SERIALIZE_TO, ATTRIBUTE_VISIBILITY);
 
     private final AttributeDefImpl.Builder builder = new AttributeDefImpl.Builder();
     private final List<ComponentDefRef> body = Lists.newArrayList();
     private String defaultValue = null;
 
-    private final Optional<String> defaultType;
-
     /**
      * For writing
      */
     public AttributeDefHandler() {
-        this.defaultType = Optional.absent();
     }
 
     /**
@@ -78,36 +70,24 @@ public class AttributeDefHandler<P extends RootDefinition> extends ParentedTagHa
      *            appropriate position before getElement() is invoked.
      */
     public AttributeDefHandler(RootTagHandler<P> parentHandler, XMLStreamReader xmlReader, Source<?> source) {
-        this(parentHandler, xmlReader, source, null);
-    }
-
-    public AttributeDefHandler(RootTagHandler<P> parentHandler, XMLStreamReader xmlReader, Source<?> source,
-            String defaultType) {
         super(parentHandler, xmlReader, source);
-        this.defaultType = Optional.fromNullable(defaultType);
     }
 
     @Override
     public Set<String> getAllowedAttributes() {
-        return isInPrivilegedNamespace() ? PRIVILEGED_ALLOWED_ATTRIBUTES : ALLOWED_ATTRIBUTES;
+        return ALLOWED_ATTRIBUTES;
     }
 
-	@Override
+    @Override
     protected void readAttributes() {
         String name = getAttributeValue(ATTRIBUTE_NAME);
 
-        if (AuraTextUtil.isNullEmptyOrWhitespace(name)) {
-        	error("Attribute '%s' is required on <%s>", ATTRIBUTE_NAME, TAG);
-        }
-        
         builder.setParentDescriptor(getParentHandler().getDefDescriptor());
         builder.setDescriptor(DefDescriptorImpl.getInstance(name, AttributeDef.class));
         builder.setLocation(getLocation());
+        builder.setTypeDefDescriptor(DefDescriptorImpl.getInstance(getAttributeValue(ATTRIBUTE_TYPE), TypeDef.class));
         builder.setRequired(getBooleanAttributeValue(ATTRIBUTE_REQUIRED));
         builder.setDescription(getAttributeValue(ATTRIBUTE_DESCRIPTION));
-
-        String type = Optional.fromNullable(getAttributeValue(ATTRIBUTE_TYPE)).or(defaultType).orNull();
-        builder.setTypeDefDescriptor(DefDescriptorImpl.getInstance(type, TypeDef.class));
 
         String serializeTo = getAttributeValue(ATTRIBUTE_SERIALIZE_TO);
         if (serializeTo != null) {
@@ -129,12 +109,7 @@ public class AttributeDefHandler<P extends RootDefinition> extends ParentedTagHa
         else {
             builder.setVisibility(AttributeDef.Visibility.PUBLIC);
         }
-        
-        try {
-			builder.setAccess(readAccessAttribute());
-		} catch (InvalidAccessValueException e) {
-			builder.setParseError(e);
-		}
+
     }
 
     @Override
@@ -180,10 +155,4 @@ public class AttributeDefHandler<P extends RootDefinition> extends ParentedTagHa
     @Override
     public void writeElement(AttributeDefImpl def, Appendable out) {
     }
-
-	@Override
-	protected boolean allowPrivateAttribute() {
-		return true;
-	}
-    
 }

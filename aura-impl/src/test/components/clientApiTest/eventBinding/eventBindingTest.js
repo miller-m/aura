@@ -22,15 +22,16 @@
         test: function(cmp) {
             var input = cmp.find("input").getElement();
 
-            $A.test.fireDomEvent(input, "focus");
-            $A.test.addWaitForWithFailureMessage(true, function() {
-                return $A.util.getBooleanValue(cmp.get("v.focusEvent"));
-            }, "Did not pick up focus event on html element");
+            input.click();
+            input.focus();
 
-            $A.test.fireDomEvent(input, "blur");
             $A.test.addWaitForWithFailureMessage(true, function() {
-                return $A.util.getBooleanValue(cmp.get("v.blurEvent"));
-            }, "Did not pick up blur event on html element");
+                return cmp.getAttributes().getValue("clickEvent").getBooleanValue();
+            }, "Did not pick up click event on html element");
+
+            $A.test.addWaitForWithFailureMessage(true, function() {
+                return cmp.getAttributes().getValue("focusEvent").getBooleanValue();
+            }, "Did not pick up focus event on html element");
         }
     }
 })

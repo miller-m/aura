@@ -20,19 +20,7 @@
 
     itemsChange: function(cmp, evt, helper) {
         var v = evt.getParam("value");
-        //JBUCH: FIXME: THIS IS A HUGE WRONG: THIS IS FIRING WHEN ATTRIBUTES OTHER THAN ITEMS ARE CHANGED
-        if($A.util.isArray(v)){
-            if (v === cmp._items) {
-                helper.rerenderSelective(cmp);
-            } else {
-                helper.rerenderEverything(cmp);
-                cmp._items = v;
-            }
-        }
-    },
-
-    firstRender: function(cmp, evt, helper) {
-        if (cmp.get("v.realbody").length === 0) {
+        if (v === cmp.getValue("v.items")) {
             helper.rerenderEverything(cmp);
         }
     }

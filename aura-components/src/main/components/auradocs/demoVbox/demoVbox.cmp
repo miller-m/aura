@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<aura:component access="global">
+<aura:component>
     <ui:vbox>
             <aura:set attribute="north">
                 <span class="theNorth">

@@ -15,6 +15,8 @@
  */
 package org.auraframework.impl.layouts;
 
+import java.util.concurrent.TimeUnit;
+
 import org.auraframework.test.WebDriverTestCase;
 import org.openqa.selenium.By;
 
@@ -42,12 +44,12 @@ public class LayoutItemsUITest extends WebDriverTestCase {
         open("/layoutServiceTest/multipleLayoutItems.app");
 
         // might take a while for initial layout to load
-        auraUITestingUtil.waitForElement(layoutDone);
+        getDriver().manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
         findDomElement(layoutDone);
         verifyExpectedResultsForInitialLayout();
 
         // subsequent layouts should NOT take that long to load
-        auraUITestingUtil.waitForElement(layoutDone);
+        getDriver().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         findDomElement(forwardButton).click();
         findDomElement(layoutDone);
         verifyExpectedResultsForLayout1();
@@ -69,31 +71,32 @@ public class LayoutItemsUITest extends WebDriverTestCase {
         verifyExpectedResultsForLayout1();
 
         findDomElement(removeLayoutDone).click();
-        auraUITestingUtil.getEval("window.history.back()");
+        getDriver().navigate().back();
         findDomElement(layoutDone);
         verifyExpectedResultsForInitialLayout();
 
         findDomElement(removeLayoutDone).click();
-        auraUITestingUtil.getEval("window.history.forward()");
+        getDriver().navigate().forward();
         findDomElement(layoutDone);
         verifyExpectedResultsForLayout1();
     }
 
     private void verifyExpectedResultsForInitialLayout() throws Exception {
-        waitForElementTextPresent(findDomElement(resultBtn1), "Ready to party?");
+        assertEquals("Ready to party?", findDomElement(resultBtn1).getText());
         assertEquals("", findDomElement(resultBtn2).getText());
+
     }
 
     private void verifyExpectedResultsForLayout1() throws Exception {
         assertEquals("Step1", getHashToken());
-        waitForElementTextPresent(findDomElement(resultBtn1), "Step 1a. Wear a Suit");
+        assertEquals("Step 1a. Wear a Suit", findDomElement(resultBtn1).getText());
         assertEquals("Step 1b. Wear a Jacket", findDomElement(resultBtn2).getText());
 
     }
 
     private void verifyExpectedResultForLayout2() throws Exception {
         assertEquals("Step2", getHashToken());
-        waitForElementTextPresent(findDomElement(resultBtn1), "Step 2a. Start your car");
+        assertEquals("Step 2a. Start your car", findDomElement(resultBtn1).getText());
         assertEquals("Step 2b. Go party", findDomElement(resultBtn2).getText());
     }
 

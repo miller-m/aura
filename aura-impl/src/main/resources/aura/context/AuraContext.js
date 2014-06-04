@@ -19,14 +19,8 @@
  *            can include a mode, such as "DEV" for development mode or "PROD" for production mode.
  * @constructor
  * @protected
- * @class AuraContext
- * @param {Object} config the 'founding' config for the context from the server.
- * @param {Function} initCallback an optional callback invoked after the config has finished its
- *  asynchronous initialization.
  */
-function AuraContext(config, initCallback) {
-    var i, defs, length;
-
+function AuraContext(config) {
     this.mode = config["mode"];
     this.preloads = config["preloads"];
     this.loaded = config["loaded"];
@@ -46,38 +40,14 @@ function AuraContext(config, initCallback) {
     this.cmp = config["cmp"];
     this.test = config["test"];
 
-    var that = this;
-    this.globalValueProviders = new $A.ns.GlobalValueProviders(config["globalValueProviders"], function() {
-        // Careful now, the def is null, this fake action sets up our paths.
-        that.currentAction = new Action(null, ""+that.num, null, null, false, null, false);
-        if (config["componentDefs"]) {
-            defs = config["componentDefs"];
-            length = defs.length;
-            for (i = 0; i < length; i++) {
-                $A.services.component.getDef(defs[i]);
-            }
-        }
-        if (config["eventDefs"]) {
-            defs = config["eventDefs"];
-            length = defs.length;
-            for (i = 0; i < length; i++) {
-                $A.services.event.getEventDef(defs[i]);
-            }
-        }
-        that.joinComponentConfigs(config["components"], that.currentAction.getId());
-
-        if (initCallback) {
-            initCallback();
-        }
-    });
+    this.joinComponentConfigs(config["components"]);
+    this.globalValueProviders = new $A.ns.GlobalValueProviders(config["globalValueProviders"]);
 }
 
 /**
  * Returns the mode for the current request. Defaults to "PROD" for production mode and "DEV" for development mode.
  * The HTTP request format is <code>http://<your server>/namespace/component?aura.mode=PROD</code>.
  * <p>See Also: <a href="#help?topic=modesReference">AuraContext</a></p>
- *
- * @return {string} the mode from the server.
  */
 AuraContext.prototype.getMode = function() {
     return this.mode;
@@ -85,10 +55,8 @@ AuraContext.prototype.getMode = function() {
 
 /**
  * Provides access to global value providers.
- * For example, <code>$A.get("$Label.Related_Lists.task_mode_today");</code> gets the label value.
+ * For example, <code>$A.getGlobalValueProviders().get("$Label.Related_Lists.task_mode_today");</code> gets the label value.
  * <p>See Also: <a href="#help?topic=dynamicLabel">Dynamically Constructing Labels</a></p>
- *
- * @private
  * @return {GlobalValueProviders}
  */
 AuraContext.prototype.getGlobalValueProviders = function() {
@@ -96,15 +64,21 @@ AuraContext.prototype.getGlobalValueProviders = function() {
 };
 
 /**
- * JSON representation of context for server requests
  * @private
- * @return {String} json representation
  */
-AuraContext.prototype.encodeForServer = function() {
+AuraContext.prototype.encodeForServer = function(includePreloads) {
+    var preloads;
+    if (aura.util.isUndefined(includePreloads) || includePreloads) {
+        preloads = this.getDynamicNamespaces();
+        if (this.preloads) {
+            preloads = preloads.concat(this.preloads);
+        }
+    }
+
     return aura.util.json.encode({
         "mode" : this.mode,
+        "preloads" : preloads,
         "loaded" : this.loaded,
-        "dn" : $A.services.component.getDynamicNamespaces(),
         "app" : this.app,
         "cmp" : this.cmp,
         "lastmod" : this.lastmod,
@@ -115,12 +89,25 @@ AuraContext.prototype.encodeForServer = function() {
 
 /**
  * @private
- * @param {Object}
- *      otherContext the context from the server to join in to this one.
+ */
+AuraContext.prototype.getDynamicNamespaces = function() {
+    var dynamicNamespaces = [];
+
+    var descriptors = $A.services.component.getRegisteredComponentDescriptors();
+    for ( var n = 0; n < descriptors.length; n++) {
+        var desc = descriptors[n];
+        if (desc.indexOf("layout://") === 0) {
+            dynamicNamespaces.push(new DefDescriptor(desc).getNamespace());
+        }
+    }
+
+    return dynamicNamespaces;
+};
+
+/**
+ * @private
  */
 AuraContext.prototype.join = function(otherContext) {
-    var i, defs, length;
-
     if (otherContext["mode"] !== this.getMode()) {
         throw new Error("Mode mismatch");
     }
@@ -132,29 +119,12 @@ AuraContext.prototype.join = function(otherContext) {
     }
     this.globalValueProviders.join(otherContext["globalValueProviders"]);
     $A.localizationService.init();
-    if (otherContext["componentDefs"]) {
-        defs = otherContext["componentDefs"];
-        length = defs.length;
-        for (i = 0; i < length; i++) {
-            $A.services.component.getDef(defs[i]);
-        }
-    }
-    if (otherContext["eventDefs"]) {
-        defs = otherContext["eventDefs"];
-        length = defs.length;
-        for (i = 0; i < length; i++) {
-            $A.services.event.getEventDef(defs[i]);
-        }
-    }
-    this.joinComponentConfigs(otherContext["components"], ""+this.getNum());
+    this.joinComponentConfigs(otherContext["components"]);
     this.joinLoaded(otherContext["loaded"]);
 };
 
 /**
- * FIXME: this should return a string, and it should probably not even be here.
- *
  * @private
- * @return {number} the 'num' for this context
  */
 AuraContext.prototype.getNum = function() {
     return this.num;
@@ -179,7 +149,7 @@ AuraContext.prototype.incrementRender = function() {
 
 /**
  * @private
- * @return {Number} incremented transaction number
+ * @return transaction number
  */
 AuraContext.prototype.incrementTransaction = function() {
     this.transaction = this.transaction + 1;
@@ -188,7 +158,7 @@ AuraContext.prototype.incrementTransaction = function() {
 
 /**
  * @private
- * @return {Number} gets the number of the current transaction
+ * @return gets the number of the current transaction
  */
 AuraContext.prototype.getTransaction = function() {
     return this.transaction;
@@ -205,7 +175,7 @@ AuraContext.prototype.updateTransactionName = function(_transactionName) {
 
 /**
  * @private
- * @return {String} gets the name of the transaction
+ * @return gets the name of the transaction
  */
 AuraContext.prototype.getTransactionName = function() {
     return this.transactionName;
@@ -220,7 +190,6 @@ AuraContext.prototype.clearTransactionName = function() {
 
 /**
  * @private
- * @return {Number} Next global ID
  */
 AuraContext.prototype.getNextGlobalId = function() {
     this.lastGlobalId = this.lastGlobalId + 1;
@@ -228,24 +197,12 @@ AuraContext.prototype.getNextGlobalId = function() {
 };
 
 /**
- * Returns components configs object
  * @private
- * @param {String} creationPath creation path to check
- * @return {Boolean} Whether creation path is in component configs
  */
-AuraContext.prototype.containsComponentConfig = function(creationPath) {
-    return this.componentConfigs.hasOwnProperty(creationPath);
-};
-
-/**
- * @private
- *
- * @param {string} creationPath the creation path to look up.
- */
-AuraContext.prototype.getComponentConfig = function(creationPath) {
+AuraContext.prototype.getComponentConfig = function(globalId) {
     var componentConfigs = this.componentConfigs;
-    var ret = componentConfigs[creationPath];
-    delete componentConfigs[creationPath];
+    var ret = componentConfigs[globalId];
+    delete componentConfigs[globalId];
     return ret;
 };
 
@@ -258,102 +215,18 @@ AuraContext.prototype.getApp = function() {
 
 /**
  * @private
- * @param {Object}
- *      otherComponentConfigs the component configs from the server to join in.
- * @param {string}
- *      actionId the id of the action that we are joining in (used to amend the creationPath).
  */
-AuraContext.prototype.joinComponentConfigs = function(otherComponentConfigs, actionId) {
-    var cP, idx, config, def;
-
+AuraContext.prototype.joinComponentConfigs = function(otherComponentConfigs) {
     if (otherComponentConfigs) {
-        for (idx = 0; idx < otherComponentConfigs.length; idx++) {
-            config = otherComponentConfigs[idx];
-            def = config["componentDef"];
+        for ( var k in otherComponentConfigs) {
+            var config = otherComponentConfigs[k];
+            var def = config["componentDef"];
             if (def) {
                 componentService.getDef(def);
             }
-            cP = config["creationPath"];
-            this.componentConfigs[actionId+cP] = config;
+            this.componentConfigs[k] = config;
         }
     }
-};
-
-/**
- * Internal routine to clear out component configs to factor out common code.
- *
- * @private
- * @param {string} actionId the action id that we should clear.
- * @param {boolean} logit should we log as we go? including errors.
- * @return {number} the count of component configs removed.
- */
-AuraContext.prototype.internalClear = function(actionId, logit) {
-    var count = 0;
-    var removed = 0;
-    var error = "";
-    var prefix = actionId+"/";
-    var len = prefix.length;
-    var ccs = this.componentConfigs;
-
-    for ( var k in ccs ) {
-        if (ccs.hasOwnProperty(k) && (k === actionId || k.substr(0,len) === prefix)) {
-            removed += 1;
-            if (logit) {
-                $A.log("config not consumed: "+k, ccs[k]);
-                delete ccs[k];
-                if (error !== "") {
-                    error = error+", ";
-                }
-                error = error + k;
-            }
-        } else {
-            count += 1;
-        }
-    }
-    if (error !== "") {
-        $A.warning("unused configs for "+actionId+": "+error);
-    }
-    if (count === 0) {
-        this.componentConfigs = {};
-    } else if (logit) {
-        $A.log("leftover configs ", ccs);
-        $A.error("leftover configs");
-    }
-    return removed;
-};
-
-/**
- * finish off the component configs for an action.
- *
- * This routine looks through all of the pending component configs, and
- * flags any that are un-consumed at the end of the action. This is a
- * relatively strict enforcement, but since we have all of the partial
- * configs to create the components, it is not clear why we would leave
- * them lying around.
- *
- * The Rule: You must consume component configs in the action callback.
- * you may _not_ delay creating components.
- *
- * @private
- * @param {string} actionId the action id that we should clear.
- */
-AuraContext.prototype.finishComponentConfigs = function(actionId) {
-    this.internalClear(actionId, true);
-};
-
-/**
- * Clear out pending component configs.
- *
- * This routine can be used in error conditions (or in tests) to clear out
- * configs left over by an action. In this case, we remove them, and drop
- * them on the floor to be garbage collected.
- *
- * @public
- * @param {string} actionId the action id that we should clear.
- * @return {number} the count of component configs removed.
- */
-AuraContext.prototype.clearComponentConfigs = function(actionId) {
-    return this.internalClear(actionId, false);
 };
 
 /**
@@ -365,13 +238,11 @@ AuraContext.prototype.joinLoaded = function(loaded) {
     }
     if (loaded) {
         for ( var i in loaded) {
-            if (loaded.hasOwnProperty(i) && !($A.util.isFunction(i))) {
-                var newL = loaded[i];
-                if (newL === 'deleted') {
-                    delete this.loaded[i];
-                } else {
-                    this.loaded[i] = newL;
-                }
+            var newL = loaded[i];
+            if (newL === 'deleted') {
+                delete this.loaded[i];
+            } else {
+                this.loaded[i] = newL;
             }
         }
     }
@@ -379,29 +250,9 @@ AuraContext.prototype.joinLoaded = function(loaded) {
 
 /**
  * This should be private but is needed for testing... ideas?
- *
- * ... should move to $A.test.
  */
 AuraContext.prototype.getLoaded = function() {
     return this.loaded;
-};
-
-/**
- * This should be private but is needed for testing and dev modes.
- *
- * ... should move to $A.test.
- */
-AuraContext.prototype.getPreloadedNamespaces = function() {
-    return this.preloads;
-};
-
-/**
- * This should be private but is needed for testing and dev modes.
- *
- * ... should move to $A.test.
- */
-AuraContext.prototype.getPreloadedNamespaces = function() {
-    return this.preloads;
 };
 
 /**
@@ -414,11 +265,9 @@ AuraContext.prototype.setCurrentAction = function(action) {
 };
 
 /**
- * EBA - temporarily made public for helpers to obtain action - return to private when current visibility is determined
- * @public
- * @return {Action} the current action.
+ * @private
  */
-AuraContext.prototype.getCurrentAction = function() {
+AuraContext.prototype.getCurrentAction = function(action) {
     return this.currentAction;
 };
 

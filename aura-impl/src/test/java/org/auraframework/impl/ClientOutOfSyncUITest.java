@@ -60,7 +60,8 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
         src.addOrUpdate(content);
     }
 
-    private DefDescriptor<ComponentDef> setupTriggerComponent(String attrs, String body) {
+    private DefDescriptor<ComponentDef> setupTriggerComponent(String attrs,
+            String body) {
         DefDescriptor<ComponentDef> cmpDesc = addSourceAutoCleanup(
                 ComponentDef.class,
                 String.format(
@@ -85,7 +86,6 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
         auraUITestingUtil.getRawEval("document._waitingForReload = true;");
         auraUITestingUtil.findDomElement(By.cssSelector("button")).click();
         waitForCondition("return !document._waitingForReload");
-        auraUITestingUtil.waitForDocumentReady();
         waitForAuraFrameworkReady();
     }
 
@@ -124,8 +124,7 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
     }
 
     @ThreadHostileTest("NamespaceDef modification affects namespace")
-    // TODONM remove (do we need one for themes?)
-    public void _testGetClientRenderingAfterNamespaceChange() throws Exception {
+    public void testGetClientRenderingAfterNamespaceChange() throws Exception {
         DefDescriptor<ComponentDef> cmpDesc = addSourceAutoCleanup(ComponentDef.class,
                 String.format(baseComponentTag, "", "<div id='out'>hi</div>"));
         String className = cmpDesc.getNamespace() + StringUtils.capitalize(cmpDesc.getName());
@@ -211,13 +210,13 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
                         String.format("<aura:registerevent name='end' type='%s'/>", eventDesc.getDescriptorName())));
         open(cmpDesc);
         assertEquals("pow", auraUITestingUtil.getEval(String.format(
-                "return $A.getEvt('%s').getDef().getAttributeDefs().explode['default'];",
+                "return $A.getEvt('%s').getDef().getAttributeDefs().explode.defaultValue.value;",
                 eventDesc.getDescriptorName())));
         updateStringSource(eventDesc,
                 "<aura:event type='APPLICATION'><aura:attribute name='explode' type='String' default='kaboom'/></aura:event>");
         open(cmpDesc);
         assertEquals("kaboom", auraUITestingUtil.getEval(String.format(
-                "return $A.getEvt('%s').getDef().getAttributeDefs().explode['default'];",
+                "return $A.getEvt('%s').getDef().getAttributeDefs().explode.defaultValue.value;",
                 eventDesc.getDescriptorName())));
     }
 
@@ -354,8 +353,7 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
     }
 
     @ThreadHostileTest("NamespaceDef modification affects namespace")
-    // TODONM remove (do we need one for themes?)
-    public void _testPostAfterNamespaceChange() throws Exception {
+    public void testPostAfterNamespaceChange() throws Exception {
         DefDescriptor<ComponentDef> cmpDesc = setupTriggerComponent("", "<div id='out'>hi</div>");
         String className = cmpDesc.getNamespace() + StringUtils.capitalize(cmpDesc.getName());
         DefDescriptor<?> styleDesc = Aura.getDefinitionService().getDefDescriptor(cmpDesc, DefDescriptor.CSS_PREFIX,
@@ -491,7 +489,7 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
                 String.format("<aura:registerevent name='end' type='%s'/>", eventDesc.getDescriptorName()));
         open(cmpDesc);
         assertEquals("pow", auraUITestingUtil.getEval(String.format(
-                "return $A.getEvt('%s').getDef().getAttributeDefs().explode['default'];",
+                "return $A.getEvt('%s').getDef().getAttributeDefs().explode.defaultValue.value;",
                 eventDesc.getDescriptorName())));
         updateStringSource(eventDesc,
                 "<aura:event type='APPLICATION'><aura:attribute name='explode' type='String' default='kaboom'/></aura:event>");
@@ -502,7 +500,7 @@ public class ClientOutOfSyncUITest extends WebDriverTestCase {
                 auraUITestingUtil.waitForDocumentReady();
                 auraUITestingUtil.waitForAuraFrameworkReady(null);
                 String eval = String
-                        .format("return ((window.$A && $A.getEvt('%s')) && (window.$A && $A.getEvt('%s')).getDef().getAttributeDefs().explode['default']);",
+                        .format("return ((window.$A && $A.getEvt('%s')) && (window.$A && $A.getEvt('%s')).getDef().getAttributeDefs().explode.defaultValue.value);",
                                 eventDesc.getDescriptorName(), eventDesc.getDescriptorName());
                 return "kaboom".equals(auraUITestingUtil.getEval(eval));
             }

@@ -34,7 +34,6 @@ import org.auraframework.impl.source.BaseSourceLoader;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.impl.util.AuraUtil;
 import org.auraframework.system.Parser.Format;
-import org.auraframework.system.PrivilegedNamespaceSourceLoader;
 import org.auraframework.system.Source;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.util.AuraTextUtil;
@@ -46,7 +45,7 @@ import com.google.common.collect.Sets;
 
 /**
  */
-public class ResourceSourceLoader extends BaseSourceLoader implements PrivilegedNamespaceSourceLoader {
+public class ResourceSourceLoader extends BaseSourceLoader {
 
     protected final String packagePrefix;
     protected final String resourcePrefix;
@@ -89,18 +88,11 @@ public class ResourceSourceLoader extends BaseSourceLoader implements Privileged
                                 name = testSuiteMatcher.group(1);
                             }
                         }
-                        if (defType == null) {
-                            //unrecognized entry in index, skip it
-                            continue;
-                        }
-                        switch(defType) {
-                        case STYLE:
+                        if (defType == DefType.STYLE) {
                             name = "css://" + AuraTextUtil.replaceChar(name, ':', ".");
-                            break;
-                        case TESTSUITE:
+                        } else if (defType == DefType.TESTSUITE) {
                             name = "js://" + AuraTextUtil.replaceChar(name, ':', ".");
-                            break;
-                        default:
+                        } else {
                             name = "markup://" + name;
                         }
 
@@ -209,9 +201,4 @@ public class ResourceSourceLoader extends BaseSourceLoader implements Privileged
         }
     }
 
-	@Override
-	public boolean isPrivilegedNamespace(String namespace) {
-		// All resource based namespaces are considered system by default
-		return true;
-	}
 }

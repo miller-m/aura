@@ -16,7 +16,7 @@
 ({
     provide : function(component) {
         var helper = component.getDef().getHelper();
-        var type = component.get("v.type")||'';
+        var type = component.getAttributes().get("type")||'';
         if ($A.util.isEmpty(type)) {
             return helper.typeMap["action"];
         } else {

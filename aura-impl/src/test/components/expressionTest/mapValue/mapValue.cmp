@@ -21,5 +21,4 @@
     
     <aura:attribute name="fribble" type="Boolean" default="false"/>
     <div disabled="{!v.fribble}" readonly="true" aura:id="htmlDiv"/>
-    <ui:outputText aura:id="outputText" value="{!m.map.subkey}"/>
 </aura:component>

@@ -31,10 +31,6 @@
         })();
     },
     
-    fetchData: function(component, event, helper) {
-        helper.fetchData(component, event);
-    },
-    
     handleFocus: function(component, event, helper) {
         var inputCmp = event.getSource();
         var elem = inputCmp ? inputCmp.getElement() : null;
@@ -55,18 +51,6 @@
     
     handleKeyAction: function(component, event, helper) {
         helper.handleKeyAction(component, event);
-        var domEvent = event.getParam("domEvent");
-        helper.fireEvent(component, domEvent, helper);
-    },
-    
-    handleMatchDone: function(component, event, helper) {
-        var evt = component.get("e.matchDone");
-        if (evt) {
-            evt.setParams({
-                size: event.getParam("size")
-            });
-            evt.fire();
-        }
     },
     
     handleSelectOption: function(component, event, helper) {
@@ -79,10 +63,8 @@
     
     matchText: function(component, event, helper) {
         var listCmp = component.find("list");
-        if (listCmp) {
-            listCmp.set("v.keyword", event.getParam("keyword"));
-            listCmp.get("e.matchText").fire();
-        }
+        listCmp.setValue("v.keyword", event.getParam("keyword"));
+        listCmp.get("e.matchText").fire();
     },
     
     updateAriaAttributes: function(component, event, helper) {

@@ -15,15 +15,28 @@
  */
 package org.auraframework.impl.source.file;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-import org.auraframework.def.*;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.impl.DefaultFileMonitor;
+import org.apache.log4j.Logger;
+import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
+import org.auraframework.def.Definition;
+import org.auraframework.def.DescriptorFilter;
 import org.auraframework.impl.source.BaseSourceLoader;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.system.Parser.Format;
-import org.auraframework.system.PrivilegedNamespaceSourceLoader;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.util.IOUtil;
 
@@ -31,9 +44,10 @@ import com.google.common.collect.Maps;
 
 /**
  */
-public class FileSourceLoader extends BaseSourceLoader implements PrivilegedNamespaceSourceLoader {
+public class FileSourceLoader extends BaseSourceLoader {
 
     private static final EnumMap<DefType, FileFilter> filters = new EnumMap<DefType, FileFilter>(DefType.class);
+    private static final Logger logger = Logger.getLogger(FileSourceLoader.class);
     protected final File base;
     // Tests create loaders like crazy, which takes time to scan for namespaces,
     // so this caches that mapping.
@@ -46,7 +60,24 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
         }
     };
 
+    private static FileSystemManager fileMonitorManager;
+    private static DefaultFileMonitor fileMonitor;
+    private static Set<String> monitoredDirs = new HashSet<String>();
+
     static {
+        try {
+            // set up source file monitoring
+            fileMonitorManager = VFS.getManager();
+            fileMonitor = new DefaultFileMonitor(
+                    new FileSourceListener());
+
+            // monitor the base and all child directories
+            fileMonitor.start();
+        } catch (FileSystemException e) {
+            fileMonitorManager = null;
+            fileMonitor = null;
+        }
+
         filters.put(DefType.APPLICATION, new SourceFileFilter(DefType.APPLICATION));
         filters.put(DefType.COMPONENT, new SourceFileFilter(DefType.COMPONENT));
         filters.put(DefType.EVENT, new SourceFileFilter(DefType.EVENT));
@@ -54,8 +85,6 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
         filters.put(DefType.STYLE, new SourceFileFilter(DefType.STYLE));
         filters.put(DefType.LAYOUTS, new SourceFileFilter(DefType.LAYOUTS));
         filters.put(DefType.NAMESPACE, new SourceFileFilter(DefType.NAMESPACE));
-        filters.put(DefType.THEME, new SourceFileFilter(DefType.THEME));
-        filters.put(DefType.DOCUMENTATION, new SourceFileFilter(DefType.DOCUMENTATION));
     }
 
     public FileSourceLoader(File base) {
@@ -67,7 +96,33 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
         this.base = base;
 
         // add the namespace root to the file monitor
-        AuraFileMonitor.addDirectory(base.getAbsolutePath());
+        registerDirMonitor(base.getAbsolutePath());
+
+    }
+
+    /**
+     * Add a root directory to monitor for changes
+     * Synchronized due to updating single static monitor.
+     * This should be called rarely (only on encountering a new namespace) and have no performance impact
+     *
+     * @param dirName - name of a root directory to monitor
+     */
+    private static synchronized void registerDirMonitor(String dirName)
+    {
+        if (fileMonitorManager == null || fileMonitor == null)
+            return;
+        if (monitoredDirs.contains(dirName))
+            return;
+        try {
+            monitoredDirs.add(dirName);
+            FileObject listendir = fileMonitorManager.resolveFile(dirName);
+            logger.info("Added file monitor for directory " + dirName);
+            fileMonitor.setRecursive(true);
+            fileMonitor.addFile(listendir);
+        } catch (Exception ex) {
+            // eat error - monitoring simply won't happen for requested dir, but should never occur
+        }
+
     }
 
     private boolean isFilePresent(File file) {
@@ -106,8 +161,9 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
     }
 
     /**
-     * Returns a list of the namespaces for which this SourceLoader is authoritative. The names of all subdirectories of
-     * the base are included. Empty folders will be skipped.
+     * Returns a list of the namespaces for which this SourceLoader is
+     * authoritative. The names of all subdirectories of the base are included.
+     * Empty folders will be skipped.
      *
      * @return List of names of namespaces that this SourceLoader handles.
      */
@@ -159,10 +215,12 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
     /**
      * Find the set of files that match the filter.
      *
-     * This will recursively walk a set of directories to find all files that matche the filter, in any directory.
+     * This will recursively walk a set of directories to find all files that
+     * matche the filter, in any directory.
      *
      * @param file the base directory to search.
-     * @param files the set of files to return (can be null, in which case we walk, but do not return anything)
+     * @param files the set of files to return (can be null, in which case we
+     *            walk, but do not return anything)
      * @param filter the filter to call on each file/directory.
      */
     protected static void findFiles(File file, Set<File> files, FileFilter filter) {
@@ -225,13 +283,13 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
     /**
      * This is a twisted filter that actually does the work as it progresses.
      *
-     * We need to do this because we don't know a-priory what the types are, and rather than redo all of that work, we
-     * can simply do what we need to here.
+     * We need to do this because we don't know a-priory what the types are, and
+     * rather than redo all of that work, we can simply do what we need to here.
      */
-    protected static class AnyTypeFilter implements FileFilter {
+    private static class AnyTypeFilter implements FileFilter {
         private final DescriptorFilter dm;
-        protected final Set<DefDescriptor<?>> dset;
-        protected String namespace;
+        private final Set<DefDescriptor<?>> dset;
+        private String namespace;
 
         /**
          * The constructor.
@@ -248,7 +306,8 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
         /**
          * Sets the namespace for this instance.
          *
-         * This must be called before this is used as a filter, otherwise it will fail with a null pointer exception.
+         * This must be called before this is used as a filter, otherwise it
+         * will fail with a null pointer exception.
          *
          * @param namespace The namespace.
          */
@@ -303,16 +362,5 @@ public class FileSourceLoader extends BaseSourceLoader implements PrivilegedName
             return fileName.equalsIgnoreCase(name);
         }
 
-    }
-
-    @Override
-    public boolean isPrivilegedNamespace(String namespace) {
-        // All file based namespaces are considered system by default
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return super.toString() + '[' + base.getAbsolutePath() + ']';
     }
 }

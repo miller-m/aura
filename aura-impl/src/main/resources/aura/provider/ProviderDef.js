@@ -31,32 +31,23 @@ ProviderDef.prototype.auraType = "ProviderDef";
 /**
  * Runs the provide method on the component and returns the component definition.
  * Throws an error if the provide method is not found.
- * @param {Component} component 
- * @param {Boolean} localCreation
- * @param {Function} callback
- * @param {Object} ccc Not used currently. Will be included in next round of CCC changes - W-1961207
+ * @param {Object} component
  */
-ProviderDef.prototype.provide = function(component, localCreation, callback, ccc) {
-
+ProviderDef.prototype.provide = function(component, localCreation){
     var provideMethod = this.provideMethod;
     $A.assert(provideMethod, "Provide method not found");
 
-    var providedConfig = provideMethod(component, localCreation);
-
-    if (!providedConfig || $A.util.isString(providedConfig)) {
-        providedConfig = {
-            'componentDef': providedConfig
+    var ret = provideMethod(component, localCreation);
+    if (!ret || $A.util.isString(ret)) {
+        ret = {
+            "componentDef": ret
         };
     }
-
-    if (providedConfig['componentDef']) {
-        var def = componentService.getDef(providedConfig['componentDef']);
-        // set available component def
-        providedConfig['componentDef'] = def;
+    if (ret["componentDef"]) {
+        ret["componentDef"] = componentService.getDef(ret["componentDef"]);
     } else {
-        // no component def provided so set to current component
-        providedConfig['componentDef'] = component.getDef();
+        ret["componentDef"] = component.getDef();
     }
-    callback(providedConfig['componentDef'], providedConfig['attributes']);
+    return ret;
 };
 //#include aura.provider.ProviderDef_export

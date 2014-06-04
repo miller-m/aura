@@ -16,7 +16,6 @@
 package org.auraframework.instance;
 
 import org.auraframework.def.BaseComponentDef;
-import org.auraframework.throwable.quickfix.QuickFixException;
 
 /**
  */
@@ -45,6 +44,4 @@ public interface BaseComponent<D extends BaseComponentDef, I extends BaseCompone
      * @return instance of the model if any, tied to the component
      */
     Model getModel();
-
-    void reinitializeModel() throws QuickFixException;
 }

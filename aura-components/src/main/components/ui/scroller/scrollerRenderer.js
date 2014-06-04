@@ -16,17 +16,17 @@
 ({
     afterRender : function(component, helper) {
         this.superAfterRender();
-        helper.initAfterRender(component);
+        helper.init(component);
     },
 
     rerender : function(component, helper) {
-        var enabled = $A.util.getBooleanValue(component.get("v.enabled"));
-
         this.superRerender();
 
+        var attributes = component.getAttributes();
+        var enabled = attributes.getValue("enabled").getBooleanValue();
         if (enabled) {
-            if (!component._scroller) {
-                helper.initAfterRender(component);
+            if ($A.util.isUndefined(component._scroller)) {
+                helper.init(component);
             }
         } else {
             helper.deactivate(component);
@@ -35,6 +35,7 @@
 
     unrender : function(component, helper) {
         helper.deactivate(component);
+
         this.superUnrender();
     }
 })

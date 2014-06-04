@@ -5,21 +5,27 @@
       "descriptor":"markup://test:text",
       "superDef":{
         "serId":2,
-        "value":"markup://aura:component"
+        "value":{
+          "descriptor":"markup://aura:component"
+        }
       },
       "attributeDefs":[
         {
           "serId":3,
           "value":{
-            "name":"body",
-            "type":"aura://Aura.Component[]"
+            "descriptor":"body",
+            "typeDefDescriptor":"aura://Aura.Component[]",
+            "required":false,
+            "visibility":"PUBLIC"
           }
         },
         {
           "serId":4,
           "value":{
-            "name":"value",
-            "type":"aura://String"
+            "descriptor":"value",
+            "typeDefDescriptor":"aura://String",
+            "required":false,
+            "visibility":"PUBLIC"
           }
         }
       ],
@@ -30,7 +36,9 @@
             {
               "componentDef":{
                 "serId":5,
-                "value":"markup://aura:text"
+                "value":{
+                  "descriptor":"markup://aura:text"
+                }
               },
               "attributes":{
                 "values":{
@@ -46,9 +54,6 @@
                 "serId":6,
                 "value":{
                   "descriptor":"markup://test:parent",
-                  "superDef":{
-                    "serRefId":2
-                  },
                   "styleDef":{
                     "serId":7,
                     "value":{
@@ -56,6 +61,9 @@
                       "code":"",
                       "className":"testParent"
                     }
+                  },
+                  "superDef":{
+                    "serRefId":2
                   },
                   "attributeDefs":[
                     {
@@ -71,35 +79,6 @@
                             "serId":8,
                             "value":{
                               "descriptor":"markup://test:child1",
-                              "modelDef":{
-                                "serId":9,
-                                "value":{
-                                  "descriptor":"java://test.model.TestReinitializeModel",
-                                  "members":[
-                                    {
-                                      "serId":10,
-                                      "value":{
-                                        "name":"itemList",
-                                        "type":"java://java.util.ArrayList"
-                                      }
-                                    },
-                                    {
-                                      "serId":11,
-                                      "value":{
-                                        "name":"value",
-                                        "type":"java://java.lang.String"
-                                      }
-                                    },
-                                    {
-                                      "serId":12,
-                                      "value":{
-                                        "name":"valueParent",
-                                        "type":"java://java.lang.String"
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
                               "superDef":{
                                 "serRefId":2
                               },
@@ -108,10 +87,12 @@
                                   "serRefId":3
                                 },
                                 {
-                                  "serId":13,
+                                  "serId":9,
                                   "value":{
-                                    "name":"attr",
-                                    "type":"aura://String"
+                                    "descriptor":"attr",
+                                    "typeDefDescriptor":"aura://String",
+                                    "required":false,
+                                    "visibility":"PUBLIC"
                                   }
                                 }
                               ],
@@ -121,21 +102,7 @@
                                   "value":[
                                     {
                                       "componentDef":{
-                                        "serId":14,
-                                        "value":"markup://aura:expression"
-                                      },
-                                      "attributes":{
-                                        "values":{
-                                          "value":{
-                                            "descriptor":"value",
-                                            "value":"{!m.value}"
-                                          }
-                                        }
-                                      }
-                                    },
-                                    {
-                                      "componentDef":{
-                                        "serId":15,
+                                        "serId":10,
                                         "value":{
                                           "descriptor":"markup://test:child2",
                                           "superDef":{
@@ -151,8 +118,7 @@
                                     }
                                   ]
                                 }
-                              ],
-                              "hasServerDeps":true
+                              ]
                             }
                           },
                           "attributes":{

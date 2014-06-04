@@ -35,7 +35,7 @@
                 $A.test.assertTrue(typeof value === "object");
                 $A.test.assertEquals(undefined, value.auraType);
                 $A.test.assertTrue(value.componentDef !== undefined);
-                $A.test.assertEquals("markup://ui:button", value.componentDef);
+                $A.test.assertEquals("markup://ui:button", value.componentDef.descriptor);
                 //construct it.
                 $A.componentService.newComponentAsync(
                     this,

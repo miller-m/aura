@@ -15,19 +15,10 @@
  */
 package org.auraframework.service;
 
-import org.auraframework.Aura;
 import org.auraframework.builder.ApplicationDefBuilder;
-import org.auraframework.builder.CacheBuilder;
 import org.auraframework.builder.ComponentDefBuilder;
 import org.auraframework.builder.ComponentDefRefBuilder;
 import org.auraframework.builder.StyleDefBuilder;
-import org.auraframework.builder.ThemeDefBuilder;
-import org.auraframework.def.ApplicationDef;
-import org.auraframework.def.ComponentDef;
-import org.auraframework.def.ComponentDefRef;
-import org.auraframework.def.Definition;
-import org.auraframework.def.StyleDef;
-import org.auraframework.def.ThemeDef;
 import org.auraframework.throwable.quickfix.QuickFixException;
 
 /**
@@ -68,18 +59,4 @@ public interface BuilderService extends AuraService {
      */
     ComponentDefRefBuilder getComponentDefRefBuilder() throws QuickFixException;
 
-    /**
-     * Retrieves a Builder suitable for defining a {@link ThemeDef}
-     * 
-     * @throws QuickFixException
-     */
-    ThemeDefBuilder getThemeDefBuilder() throws QuickFixException;
-
-     /**
-     * Retrieves a Builder suitable for defining a {@link Cache}
-     * @param <K>
-     * 
-     * @throws QuickFixException
-     */
-	<K, V> CacheBuilder<K, V> getCacheBuilder() throws QuickFixException;
 }

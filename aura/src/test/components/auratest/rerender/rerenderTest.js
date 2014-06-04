@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 ({
-	getCounter : function(component) {
-		return $A.test.getText(component.find("counter").find("count").getElement());
-	},
-
-	assertCounter : function(component, count, msg) {
-        $A.test.assertEquals("" + count, this.getCounter(component), msg || "unexpected count");
-	},
-	
     assertChildCounters: function(component, count) {
-    	this.assertCounter(component, count, "unexpected child count");
-    	this.assertCounter(component.getSuper(), count, "unexpected parent count");
-    	this.assertCounter(component.getSuper().getSuper(), count, "unexpected abstract count");
+        count = "" + count;
+        $A.test.assertEquals(count, $A.test.getText(component.find("counter").find("count").getElement()), "unexpected child count");
+        $A.test.assertEquals(count, $A.test.getText(component.getSuper().find("counter").find("count").getElement()), "unexpected parent count");
+        $A.test.assertEquals(count, $A.test.getText(component.getSuper().getSuper().find("counter").find("count").getElement()), "unexpected abstract count");
     },
 
-    assertCounters: function(component, child1count, grandchild1count, child2count, grandchild2count, grandchild2acount, greatgrandchild2count, layoutItemCount){
+    assertCounters: function(component, child1count, grandchild1count, child2count, grandchild2count, layoutItemCount){
         var child1 = component.find("child1");
         this.assertChildCounters(child1, child1count);
         var grandchild1 = component.find("grandchild1");
@@ -37,51 +30,40 @@
         this.assertChildCounters(child2, child2count);
         var grandchild2 = component.find("grandchild2");
         this.assertChildCounters(grandchild2, grandchild2count);
-        var grandchild2a = component.find("grandchild2a");
-        this.assertChildCounters(grandchild2a, grandchild2acount);
-        var greatgrandchild2 = component.find("greatgrandchild2");
-        this.assertChildCounters(greatgrandchild2, greatgrandchild2count);
         if(layoutItemCount){
             var layoutItem = component.find("layoutTarget").get("v.body")[0];
             this.assertChildCounters(layoutItem, layoutItemCount);
         }
     },
 
-    addWaitForCounter : function(component, count) {
-    	var that = this;
-    	var cmp = component;
-        $A.test.addWaitFor("" + count, function(){
-            return that.getCounter(cmp);
-        });
+    assertPlaceholder: function(component) {
+        var body = component.get("v.body");
+        $A.test.assertEquals(1, body.length, "container should only have an expression.cmp");
+        $A.test.assertEquals("markup://aura:expression", body[0].getDef().getDescriptor().getQualifiedName(), "unexpected body component");
+        var element = body[0].getElements().element;
+        $A.test.assertEquals(true, (element !== null) && (element !== undefined), "placeholder is not alone");
+        $A.test.assertEquals(3, element.nodeType, "placeholder not a text node");
+        $A.test.assertEquals("", $A.test.getText(element), "placeholder isn't an empty string");
     },
-    
-    addWaitForLayoutItem : function(component, layoutItemText) {
-    	var cmp = component;
-    	var expected = layoutItemText;
-        $A.test.addWaitFor(true, function(){
-            var t = $A.test.getText(cmp.find("layoutTarget").getElement());
-            return t && (t.indexOf(expected) >= 0);
-        });    	
-    },
-    
-    toggleValue : function(component, targetExpression) {
-        var val = component.getValue(targetExpression);
-        val.setValue(!val.unwrap());
-    },
-    
+
     /**
      * Update attribute from abstract component.
      */
     testAbstractAttributeUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-        		this.addWaitForLayoutItem(component, "def layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("def layout item") >= 0);
+                });
             }, function(component){
                 var child1 = component.find("child1");
                 child1.getSuper().getSuper().find("toggleAbstract").get("e.press").fire();
-                this.addWaitForCounter(child1, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "1", "1", "0", "0", "0", "0", "1");
+                this.assertCounters(component, "1", "1", "0", "0", "1");
             }]
     },
 
@@ -91,13 +73,18 @@
     testAbstractModelUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-        		this.addWaitForLayoutItem(component, "def layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("def layout item") >= 0);
+                });
             }, function(component){
                 var child1 = component.find("child1");
                 child1.getSuper().getSuper().find("toggleAbstractModel").get("e.press").fire();
-                this.addWaitForCounter(child1, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "1", "1", "0", "0", "0", "0", "1");
+                this.assertCounters(component, "1", "1", "0", "0", "1");
             }]
     },
 
@@ -107,13 +94,18 @@
     testInterfaceAttributeUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-        		this.addWaitForLayoutItem(component, "def layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("def layout item") >= 0);
+                });
             }, function(component){
                 var child1 = component.find("child1");
                 child1.getSuper().getSuper().find("toggleInterface").get("e.press").fire();
-                this.addWaitForCounter(child1, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "1", "1", "0", "0", "0", "0", "1");
+                this.assertCounters(component, "1", "1", "0", "0", "1");
             }]
     },
 
@@ -123,13 +115,13 @@
     testParentAttributeUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 var child2 = component.find("child2");
                 child2.getSuper().find("toggleParent").get("e.press").fire();
-                this.addWaitForCounter(child2, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child2.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "0", "0", "1", "1", "1", "1");
+                this.assertCounters(component, "0", "0", "1", "1");
             }]
     },
 
@@ -139,13 +131,13 @@
     testParentModelUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 var child2 = component.find("child2");
                 child2.getSuper().find("toggleParentModel").get("e.press").fire();
-                this.addWaitForCounter(child2, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child2.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "0", "0", "1", "1", "1", "1");
+                this.assertCounters(component, "0", "0", "1", "1");
             }]
     },
 
@@ -155,13 +147,13 @@
     testChildtAttributeUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-				this.addWaitForLayoutItem(component, "def layout item");
-		    }, function(component){
                 var child2 = component.find("child2");
                 child2.find("toggleChild").get("e.press").fire();
-                this.addWaitForCounter(child2, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child2.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "0", "0", "1", "1", "1", "1");
+                this.assertCounters(component, "0", "0", "1", "1");
             }]
     },
 
@@ -171,23 +163,33 @@
     testLayoutChange: {
         attributes : { __layout: "#def" },
         test: [function(component){
-        		this.addWaitForLayoutItem(component, "def layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("def layout item") >= 0);
+                });
             }, function(component){
                 var child1 = component.find("child1");
                 child1.getSuper().getSuper().find("toggleAbstract").get("e.press").fire();
                 child1.getSuper().find("toggleParent").get("e.press").fire();
-                this.addWaitForCounter(child1, "2");
+                $A.test.addWaitFor("2", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "2", "2", "0", "0", "0", "0", "2");
+                this.assertCounters(component, "2", "2", "0", "0", "2");
                 $A.layoutService.layout("death");
-        		this.addWaitForLayoutItem(component, "death layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("death layout item") >= 0);
+                });
             }, function(component){
-                this.assertCounters(component, "2", "2", "0", "0", "0", "0", "0");
+                this.assertCounters(component, "2", "2", "0", "0", "0");
                 var child1 = component.find("child1");
                 child1.find("toggleChild").get("e.press").fire();
-                this.addWaitForCounter(child1, "3");
+                $A.test.addWaitFor("3", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "3", "3", "0", "0", "0", "0", "1");
+                this.assertCounters(component, "3", "3", "0", "0", "1");
             }]
     },
 
@@ -197,164 +199,48 @@
     testLayoutItemAttributeUpdated: {
         attributes : { __layout: "#def" },
         test: [function(component){
-        		this.addWaitForLayoutItem(component, "def layout item");
+                $A.test.addWaitFor(true, function(){
+                    var t = $A.test.getText(component.find("layoutTarget").getElement());
+                    return t && (t.indexOf("def layout item") >= 0);
+                });
             }, function(component){
                 var child1 = component.find("child1");
                 child1.getSuper().getSuper().find("toggleAbstract").get("e.press").fire();
-                this.addWaitForCounter(child1, "1");
+                $A.test.addWaitFor("1", function(){
+                    return $A.test.getText(child1.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "1", "1", "0", "0", "0", "0", "1");
+                this.assertCounters(component, "1", "1", "0", "0", "1");
                 var item = component.find("layoutTarget").get("v.body")[0].getSuper();
                 item.find("toggleParent").get("e.press").fire();
-                this.addWaitForCounter(item, "2");
+                $A.test.addWaitFor("2", function(){
+                    return $A.test.getText(item.find("counter").find("count").getElement());
+                });
             }, function(component){
-                this.assertCounters(component, "1", "1", "0", "0", "0", "0", "2");
+                this.assertCounters(component, "1", "1", "0", "0", "2");
             }]
-    },
-    
-    testRerenderOnceIfContainerRerenderedInEventLoop: {
-        attributes : { __layout: "#def" },
-        test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
-	        	var cmp = component;
-	        	var child2 = cmp.find("child2");
-	            var that = this;
-	            $A.run(function(){
-	            	that.toggleValue(cmp.find("child2"), "v.toggleChild");
-	            	that.toggleValue(cmp.find("grandchild2"), "v.toggleChild");
-	            	that.toggleValue(cmp.find("greatgrandchild2"), "v.toggleChild");
-	            });
-	            $A.test.addWaitFor("1", function(){
-	                return that.getCounter(child2);
-	            });
-	        }, function(component){
-	        	this.assertCounters(component, "0", "0", "1", "1", "1", "1");
-	        }]
-    },
-
-    testRerenderOnceForNonConcreteComponentsIfContainerRerenderedInEventLoop: {
-        attributes : { __layout: "#def" },
-        test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
-	        	var cmp = component;
-	        	var child2 = cmp.find("child2");
-	            var that = this;
-	            $A.run(function(){
-	            	that.toggleValue(cmp.find("greatgrandchild2").getSuper().getSuper(), "v.toggleInterface");
-	            	that.toggleValue(cmp.find("child2").getSuper(), "v.toggleParent");
-	            	that.toggleValue(cmp.find("grandchild2").getSuper().getSuper(), "v.toggleAbstract");
-	            });
-	            $A.test.addWaitFor("1", function(){
-	                return that.getCounter(child2);
-	            });
-	        }, function(component){
-	        	this.assertCounters(component, "0", "0", "1", "1", "1", "1");
-	        }]
-    },
-
-    testRerenderOnceForSetOfEnqueuedClientActions: {
-        attributes : { __layout: "#def" },
-        test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
-	            $A.enqueueAction(component.find("grandchild2").getSuper().get("c.toggleParent"));
-	            $A.enqueueAction(component.find("child2").getSuper().getSuper().get("c.toggleAbstract"));
-	            $A.enqueueAction(component.find("greatgrandchild2").getSuper().getSuper().get("c.toggleInterface"));
-	
-	            $A.run(function(){ /* run queued actions */ });
-	
-	            var child2 = component.find("child2");
-	            var that = this;
-	            $A.test.addWaitFor("1", function(){
-	                return that.getCounter(child2);
-	            });
-	        }, function(component){
-	        	this.assertCounters(component, "0", "0", "1", "1", "1", "1");
-	        }]
-    },
-
-    testRerenderOnceForSetOfEnqueuedClientActionCallbacks: {
-        attributes : { __layout: "#def", whichArray : "" },
-        test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
-	        	var cmp = component;
-	            var that = this;
-	        	var a1 = component.get("c.clear");
-	        	a1.setCallback(this, function(){
-	        		that.toggleValue(cmp.find("child2").getSuper().getSuper(), "v.toggleInterface");
-	        	});
-	        	$A.enqueueAction(a1);
-	        	var a2 = component.get("c.clear");
-	        	a2.setCallback(this, function(){
-	        		that.toggleValue(cmp.find("greatgrandchild2").getSuper(), "v.toggleParent");
-	        	});
-	        	$A.enqueueAction(a2);
-	        	var a3 = component.get("c.clear");
-	        	a3.setCallback(this, function(){
-	        		that.toggleValue(cmp.find("grandchild2").getSuper().getSuper(), "v.toggleAbstract");
-	        	});
-	        	$A.enqueueAction(a3);
-	        	
-	            $A.run(function(){ /* run queued actions */ });
-	
-	            var child2 = component.find("child2");
-	            var that = this;
-	            $A.test.addWaitFor("1", function(){
-	                return that.getCounter(child2);
-	            });
-	        }, function(component){
-	        	this.assertCounters(component, "0", "0", "1", "1", "1", "1");
-	        }]
-    },
-
-    /** Tests rerender ordering. */
-    testRerenderOrder: {
-        attributes : { __layout: "#def" },
-        test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
-	            var child2 = component.find("child2");
-	            var grandchild2a = component.find("grandchild2a");
-	            var grandchild1 = component.find("grandchild1");
-	            // Try to rerender all three of the above, but try to rerender grandchild2a
-	            // before child2.  But rerender should insist on doing child2 before
-	            // grandchild2a (and grandchild1 not in the middle, but before or after both).
-	            Window.rerenderTestOrder = [];  // Reset order tracking
-	            $A.rerender([grandchild2a, grandchild1, child2]);
-	            this.addWaitForCounter(child2, "1");
-	        }, function(component){
-	            // Rerendering of child2 will also rerender grandchild2 (and 2a), thus:
-	            this.assertCounters(component, "0", "1", "1", "1", "1", "1");
-	            var order = Window.rerenderTestOrder;
-	            var strOrder = order.join(",");
-	            if (strOrder != "grandchild1,def layout item,child2,grandchild2,greatgrandchild2,grandchild2a"
-	            	&& strOrder != "child2,grandchild2,greatgrandchild2,grandchild2a,grandchild1,def layout item") {
-	            	$A.test.fail("Unexpected rendering order: " + strOrder);
-	            }
-	        }]
     },
 
     /**
      * Add component to empty array.
      */
-    testAddComponentToEmptyArray: {
+    _testAddComponentToEmptyArray: {
         attributes : { whichArray: "v.emptyArray" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 var cmp = component.find("emptyArrayContainer");
                 this.assertChildCounters(cmp, 0);
+                this.assertCounters(component, "0", "0", "0", "0");
+                this.assertPlaceholder(cmp);
                 component.find("pushComponent").get("e.press").fire();
                 $A.test.addWaitFor("markup://auratest:rerenderChild", function(){
                     var added = cmp.get("v.body")[0].get("v.value")[0];
-                    return added && added.isRendered() && added.getDef().getDescriptor().getQualifiedName();
+                    return added.isRendered() && added.getDef().getDescriptor().getQualifiedName();
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
+                // all components rerendered since array belongs to root
                 this.assertChildCounters(cmp, 1);
+                this.assertCounters(component, "1", "1", "1", "1");
                 var added = cmp.get("v.body")[0].get("v.value")[0];
                 this.assertChildCounters(added, 0);
             }]
@@ -363,11 +249,9 @@
     /**
      * Clear an array.
      */
-    testClearArray: {
+    _testClearArray: {
         attributes : { whichArray: "v.emptyArray" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 component.find("pushText").get("e.press").fire();
                 component.find("pushComponent").get("e.press").fire();
                 $A.test.addWaitFor(true, function(){
@@ -376,19 +260,22 @@
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
-                this.assertChildCounters(cmp, "2");
+                // expecting both events above to get processed at once
+                this.assertChildCounters(cmp, "1");
+                this.assertCounters(component, "1", "1", "1", "1");
                 var added = cmp.get("v.body")[0].get("v.value")[1];
                 this.assertChildCounters(added, 0);
-                var root = component;
-                $A.run(function(){
-                    root.getValue("v.emptyArray").clear();
-                });
+                component.getValue("v.emptyArray").clear();
+                $A.rerender(component);
+                var suite = this;
                 $A.test.addWaitFor(0, function(){
                     return component.find("emptyArrayContainer").get("v.body")[0].get("v.value").length;
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
-                this.assertChildCounters(cmp, "3");
+                this.assertChildCounters(cmp, "2");
+                this.assertCounters(component, "2", "2", "2", "2");
+                this.assertPlaceholder(cmp);
             }]
     },
 
@@ -398,8 +285,6 @@
     _testReverseArray: {
         attributes : { whichArray: "v.emptyArray" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 component.find("pushText").get("e.press").fire();
                 component.find("pushComponent").get("e.press").fire();
                 $A.test.addWaitFor(true, function(){
@@ -408,7 +293,9 @@
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
-                this.assertChildCounters(cmp, "2");
+                // expecting both events above to get processed at once
+                this.assertChildCounters(cmp, "1");
+                this.assertCounters(component, "1", "1", "1", "1");
 
                 // text comp before child comp
                 var textElem = cmp.get("v.body")[0].get("v.value")[0].getElement();
@@ -424,7 +311,8 @@
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
-                this.assertChildCounters(cmp, "3");
+                this.assertChildCounters(cmp, "2");
+                this.assertCounters(component, "2", "2", "2", "2");
 
                 // text comp now after child comp
                 var textElem = cmp.get("v.body")[0].get("v.value")[1].getElement();
@@ -439,11 +327,9 @@
     /**
      * Clear component body.
      */
-    testClearBody: {
+    _testClearBody: {
         attributes : { whichArray: "emptyArrayContainer.super.super.v.body" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 var cmp = component.find("emptyArrayContainer");
                 // quick check elements are alive by checking properties exist
                 $A.test.assertEquals("BUTTON", cmp.find("toggleChild").getElement().tagName.toUpperCase(), "unexpected child element");
@@ -455,17 +341,19 @@
 
                 // clear the array
                 component.find("clear").get("e.press").fire();
-                $A.test.addWaitFor(8, function(){
-                    return cmp.getElement().firstChild.firstChild.nodeType; //wait for placeholder, instead of original div that just got unrendered at this position
+                $A.test.addWaitFor(true, function(){
+                    var elem = cmp.getElement().firstChild.firstChild;
+                    return (elem.nodeType === 3) && ($A.test.getText(elem) == ""); //wait for placeholder, instead of original div that just got unrendered at this position
                 });
             }, function(component){
                 var cmp = component.find("emptyArrayContainer");
 
                 // quick check that elements from original body components are no longer present
-                $A.test.assertEquals(null, cmp.find("toggleChild").getElement(), "child element wasn't unrendered");
-                $A.test.assertEquals(null, cmp.getSuper().find("toggleParent").getElement(), "parent element wasn't unrendered");
+                $A.test.assertEquals(undefined, cmp.find("toggleChild").getElement(), "child element wasn't unrendered");
+                $A.test.assertEquals(undefined, cmp.getSuper().find("toggleParent").getElement(), "parent element wasn't unrendered");
 
-                this.assertCounter(cmp.getSuper().getSuper(), "1", "unexpected abstract count");
+                $A.test.assertEquals("1", $A.test.getText(cmp.getSuper().getSuper().find("counter").find("count").getElement()), "unexpected abstract count");
+                this.assertCounters(component, "0", "0", "0", "0");
             }]
     },
 
@@ -475,8 +363,6 @@
     _testUpdateBody: {
         attributes : { whichArray: "emptyArrayContainer.super.v.body" },
         test: [function(component){
-	    		this.addWaitForLayoutItem(component, "def layout item");
-	        }, function(component){
                 var cmp = component.find("emptyArrayContainer");
                 var children = cmp.getElement().firstChild.firstChild.childNodes;
                 var origCount = children.length;
@@ -494,8 +380,9 @@
                 $A.test.assertTrue($A.util.hasClass(children[0], "boxed"), "unexpected original child");
                 $A.test.assertEquals("PUSHED.", $A.test.getText(children[1]), "unexpected text component");
                 $A.test.assertTrue($A.util.hasClass(children[2], "auratestRerenderChild"), "unexpected child component element");
-                this.assertChildCounters(cmp, 2);
+                this.assertChildCounters(cmp, 1);
                 this.assertChildCounters(cmp.getSuper().get("v.body")[2], 0); // newly added child comp
+                this.assertCounters(component, "0", "0", "0", "0");
 
                 component.find("reverse").get("e.press").fire();
                 component.find("pop").get("e.press").fire();
@@ -515,6 +402,7 @@
                 $A.test.assertEquals("2", $A.test.getText(cmp.getSuper().find("counter").find("count").getElement()), "unexpected parent count");
                 $A.test.assertEquals(undefined, cmp.find("counter").find("count").getElement(), "child count not unrendered");
                 this.assertChildCounters(cmp.getSuper().get("v.body")[0], 1); // moved child comp
+                this.assertCounters(component, "0", "0", "0", "0");
             }]
     }
 })

@@ -15,23 +15,23 @@
  */
 ({
     render: function(component){
+        var body = component.getValue("v.body");
         var rendering = component.getRendering();
-        return rendering ? rendering : $A.render(component.getValue("v.body"));
+        return rendering ? rendering : $A.render(body);
     },
 
     afterRender: function(component){
-        var body = component.get("v.body");
+        var body = component.getAttributes().getValue("body");
         $A.afterRender(body);
     },
 
     rerender: function(component){
-        var body = component.get("v.body");
+        var body = component.getAttributes().getValue("body");
         $A.rerender(body);
     },
 
     unrender : function(component){
-        var body = component.get("v.body");
-        
+        var body = component.getAttributes().getValue("body");
         $A.unrender(body);
 
         var elements = component.getElements();

@@ -16,31 +16,39 @@
 package org.auraframework.impl.root.application;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import org.auraframework.Aura;
 import org.auraframework.builder.ApplicationDefBuilder;
-import org.auraframework.def.*;
+import org.auraframework.def.ActionDef;
+import org.auraframework.def.ApplicationDef;
+import org.auraframework.def.ControllerDef;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.EventDef;
+import org.auraframework.def.LayoutsDef;
+import org.auraframework.def.SecurityProviderDef;
 import org.auraframework.expression.Expression;
 import org.auraframework.expression.PropertyReference;
 import org.auraframework.impl.AuraImpl;
 import org.auraframework.impl.root.component.BaseComponentDefImpl;
 import org.auraframework.impl.system.DefDescriptorImpl;
-import org.auraframework.impl.util.AuraUtil;
 import org.auraframework.impl.util.TextTokenizer;
 import org.auraframework.instance.Action;
 import org.auraframework.system.AuraContext;
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.InvalidDefinitionException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.json.Json;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
 /**
- * The definition of an Application. Holds all information about a given type of application. ApplicationDefs are
- * immutable singletons per type of Application. Once they are created, they can only be replaced, never changed.
+ * The definition of an Application. Holds all information about a given type of
+ * application. ApplicationDefs are immutable singletons per type of
+ * Application. Once they are created, they can only be replaced, never changed.
  */
 public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> implements ApplicationDef {
 
@@ -53,22 +61,28 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
         this.locationChangeEventDescriptor = builder.locationChangeEventDescriptor;
 
         this.layoutsDefDescriptor = builder.layoutsDefDescriptor;
+        String accessName = builder.access;
+        if (accessName == null) {
+            this.access = Access.AUTHENTICATED;
+        } else {
+            this.access = Access.valueOf(accessName.toUpperCase());
+        }
+
+        this.securityProviderDescriptor = builder.securityProviderDescriptor;
         this.isAppcacheEnabled = builder.isAppcacheEnabled;
         this.additionalAppCacheURLs = builder.additionalAppCacheURLs;
         this.isOnePageApp = builder.isOnePageApp;
-        this.overrideThemeDescriptor = builder.overrideThemeDescriptor;
-
-        this.hashCode = AuraUtil.hashCode(super.hashCode(), overrideThemeDescriptor);
     }
 
     public static class Builder extends BaseComponentDefImpl.Builder<ApplicationDef> implements ApplicationDefBuilder {
 
         public DefDescriptor<EventDef> locationChangeEventDescriptor;
         public DefDescriptor<LayoutsDef> layoutsDefDescriptor;
+        public String access;
         public Boolean isAppcacheEnabled;
         public Boolean isOnePageApp;
+        public DefDescriptor<SecurityProviderDef> securityProviderDescriptor;
         public String additionalAppCacheURLs;
-        public DefDescriptor<ThemeDef> overrideThemeDescriptor;
 
         public Builder() {
             super(ApplicationDef.class);
@@ -76,8 +90,13 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
 
         @Override
         public ApplicationDefImpl build() {
-            finish();
             return new ApplicationDefImpl(this);
+        }
+
+        @Override
+        public Builder setAccess(String access) {
+            this.access = access;
+            return this;
         }
 
         @Override
@@ -87,14 +106,19 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
         }
 
         @Override
-        public ApplicationDefBuilder setOverrideThemeDescriptor(DefDescriptor<ThemeDef> overrideThemeDescriptor) {
-            this.overrideThemeDescriptor = overrideThemeDescriptor;
+        public ApplicationDefBuilder setSecurityProviderDescriptor(String securityProviderDescriptor) {
+            if (securityProviderDescriptor != null) {
+                this.securityProviderDescriptor = Aura.getDefinitionService().getDefDescriptor(
+                        securityProviderDescriptor, SecurityProviderDef.class);
+            } else {
+                this.securityProviderDescriptor = null;
+            }
             return this;
         }
     }
 
     @Override
-    public DefDescriptor<ApplicationDef> getDefaultExtendsDescriptor() {
+    protected DefDescriptor<ApplicationDef> getDefaultExtendsDescriptor() {
         return ApplicationDefImpl.PROTOTYPE_APPLICATION;
     }
 
@@ -144,19 +168,17 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
     }
 
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
         super.appendDependencies(dependencies);
 
         if (layoutsDefDescriptor != null) {
             dependencies.add(layoutsDefDescriptor);
         }
+    }
 
-        if (overrideThemeDescriptor != null) {
-            dependencies.add(overrideThemeDescriptor);
-        }
-        if (locationChangeEventDescriptor != null) {
-        	dependencies.add(locationChangeEventDescriptor);
-        }
+    @Override
+    public Access getAccess() {
+        return access;
     }
 
     @Override
@@ -169,14 +191,12 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
         List<String> urls = Collections.emptyList();
 
         if (additionalAppCacheURLs != null) {
-            Expression expression = AuraImpl.getExpressionAdapter().buildExpression(
-                    TextTokenizer.unwrap(additionalAppCacheURLs), null);
+            Expression expression = AuraImpl.getExpressionAdapter().buildExpression(TextTokenizer.unwrap(additionalAppCacheURLs), null);
             if (!(expression instanceof PropertyReference)) {
-                throw new AuraRuntimeException(
-                        "Value of 'additionalAppCacheURLs' attribute must be a reference to a server Action");
+                throw new AuraRuntimeException("Value of 'additionalAppCacheURLs' attribute must be a reference to a server Action");
             }
 
-            PropertyReference ref = (PropertyReference) expression;
+            PropertyReference ref = (PropertyReference)expression;
             ref = ref.getStem();
 
             ControllerDef controllerDef = getControllerDef();
@@ -219,16 +239,13 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
                     locationChangeDef.getDescriptor()), getLocation());
         }
 
-        // the override theme must not be a local theme. otherwise, it would allow users to circumvent var
-        // cross-reference validation (regular themes enforce that cross references are defined in the same file,
-        // but local themes allow cross references to the namespace-default file.)
-        if (overrideThemeDescriptor != null
-                && overrideThemeDescriptor.getDef().isLocalTheme()
-                && overrideThemeDescriptor != getLocalThemeDescriptor()) {
-            throw new InvalidDefinitionException(
-                    String.format("%s must not specify another component's local theme as the overrideTheme", getName()),
-                    getLocation());
+        DefDescriptor<SecurityProviderDef> securityProviderDesc = getSecurityProviderDefDescriptor();
+        if (securityProviderDesc == null) {
+            throw new InvalidDefinitionException(String.format("Security provider is required on application %s",
+                    getName()), getLocation());
         }
+        // Will throw quickfix exception if not found.
+        securityProviderDesc.getDef();
     }
 
     @Override
@@ -242,31 +259,21 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
     }
 
     @Override
-    public DefDescriptor<ThemeDef> getOverrideThemeDescriptor() {
-        return overrideThemeDescriptor;
-    }
-
-    @Override
-    public int hashCode() {
-        return hashCode;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof ApplicationDefImpl) {
-            ApplicationDefImpl other = (ApplicationDefImpl) obj;
-
-            return super.equals(obj)
-                    && Objects.equal(this.overrideThemeDescriptor, other.overrideThemeDescriptor);
+    public DefDescriptor<SecurityProviderDef> getSecurityProviderDefDescriptor() throws QuickFixException {
+        if (securityProviderDescriptor == null && getExtendsDescriptor() != null) {
+            // going to the mdr to avoid security check, since this is used
+            // during security checks and would cause spin
+            return Aura.getContextService().getCurrentContext().getDefRegistry().getDef(getExtendsDescriptor())
+                    .getSecurityProviderDefDescriptor();
         }
-
-        return false;
+        return securityProviderDescriptor;
     }
+
 
     private final DefDescriptor<EventDef> locationChangeEventDescriptor;
     private final DefDescriptor<LayoutsDef> layoutsDefDescriptor;
-    private final DefDescriptor<ThemeDef> overrideThemeDescriptor;
-    private final int hashCode;
+    private final Access access;
+    private final DefDescriptor<SecurityProviderDef> securityProviderDescriptor;
 
     private final Boolean isAppcacheEnabled;
     private final String additionalAppCacheURLs;
@@ -274,5 +281,4 @@ public class ApplicationDefImpl extends BaseComponentDefImpl<ApplicationDef> imp
     private final Boolean isOnePageApp;
 
     private static final long serialVersionUID = 9044177107921912717L;
-
 }

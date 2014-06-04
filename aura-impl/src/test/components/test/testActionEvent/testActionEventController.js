@@ -22,7 +22,7 @@
             paramValue: cmp.get("v.eventParamValue")
         });
         a.setCallback(cmp, function(action){
-            cmp.set("v.response", action);
+            cmp.getAttributes().setValue("response", action);
         });
         $A.enqueueAction(a);
     },
@@ -30,14 +30,14 @@
     showSystemErrorEvent: function(cmp, event) {
         $A.log(cmp);
         $A.log(event);
-        cmp.set("v.event", event.getDef().getDescriptor().getQualifiedName());
-        cmp.set("v.data", event.getParam("message"));
+        cmp.getValue("v.event").setValue(event.getDef().getDescriptor().getQualifiedName());
+        cmp.getValue("v.data").setValue(event.getParam("message"));
     },
 
     showLocalEvent: function(cmp, event) {
         $A.log(cmp);
         $A.log(event);
-        cmp.set("v.event", event.getDef().getDescriptor().getQualifiedName());
-        cmp.set("v.data", event.getParam("msg"));
+        cmp.getValue("v.event").setValue(event.getDef().getDescriptor().getQualifiedName());
+        cmp.getValue("v.data").setValue(event.getParam("msg"));
     }
 })

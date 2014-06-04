@@ -31,7 +31,6 @@ import org.auraframework.def.RegisterEventDef;
 import org.auraframework.def.RootDefinition;
 import org.auraframework.impl.root.RootDefinitionImpl;
 import org.auraframework.impl.util.AuraUtil;
-import org.auraframework.system.MasterDefRegistry;
 import org.auraframework.throwable.AuraUnhandledException;
 import org.auraframework.throwable.quickfix.InvalidDefinitionException;
 import org.auraframework.throwable.quickfix.QuickFixException;
@@ -107,8 +106,9 @@ public class EventDefImpl extends RootDefinitionImpl<EventDef> implements EventD
 
     @Override
     public void validateDefinition() throws QuickFixException {
-        super.validateDefinition();
-
+        if (this.getDescriptor() == null) {
+            throw new InvalidDefinitionException("Descriptor cannot be null for EventDef", getLocation());
+        }
         if (eventType == null) {
             throw new InvalidDefinitionException("EventType cannot be null", getLocation());
         }
@@ -129,18 +129,12 @@ public class EventDefImpl extends RootDefinitionImpl<EventDef> implements EventD
                 throw new InvalidDefinitionException(String.format("Event %s cannot extend %s", getDescriptor(),
                         getExtendsDescriptor()), getLocation());
             }
-            
             if (extended.getEventType() != getEventType()) {
                 throw new InvalidDefinitionException(String.format("Event %s cannot extend %s", getDescriptor(),
                         getExtendsDescriptor()), getLocation());
             }
-            
-            MasterDefRegistry registry = Aura.getDefinitionService().getDefRegistry();
-            registry.assertAccess(descriptor, extended);
-
             // need to resolve duplicated attributes from supers
         }
-        
         for (AttributeDef att : this.attributeDefs.values()) {
             att.validateReferences();
         }
@@ -148,7 +142,6 @@ public class EventDefImpl extends RootDefinitionImpl<EventDef> implements EventD
 
     @Override
     public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
-        super.appendDependencies(dependencies);
         if (extendsDescriptor != null) {
             dependencies.add(extendsDescriptor);
         }

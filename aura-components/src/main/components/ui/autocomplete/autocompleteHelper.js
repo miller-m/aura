@@ -14,39 +14,9 @@
  * limitations under the License.
  */
 ({  
-    fetchData: function(component, event) {
-        // Show loading indicator
-        var listCmp = component.find("list");
-        if (listCmp) {
-            var listHelper = listCmp.getDef().getHelper();
-            listHelper.showLoading(listCmp.getSuper(), true);
-        }
-        // set keyword to list component
-        var options = event.getParam("parameters");
-        var listCmp = component.find("list");
-        if (listCmp) {
-            listCmp.set("v.keyword", options.keyword);
-        }
-        
-        // fire dataProvide event
-        var dataProviders = component.getValue("v.dataProvider");
-        var index = event.getParam("index");
-        if (!index) {
-            index = 0;
-        }
-        var provideEvent = dataProviders.get(index).get("e.provide");
-        provideEvent.setParams({
-            parameters: options
-        });
-        provideEvent.fire();
-    },
-    
     fireInputChangeEvent: function(component, event) {
-    	// Hide the list if it is already visible
-        this.hideList(component);
-             
-        //handling case when there is another element like label in the markup
-        var value = component.getDef().getHelper().getInputElement(component).value;
+        var inputCmp = event.getSource();
+        var value = inputCmp.getElement().value;
         var inputChangeEvt = component.get("e.inputChange");
         if (inputChangeEvt) {
             inputChangeEvt.setParams({
@@ -59,7 +29,7 @@
     hideList: function(component) {
         var list = component.find("list");
         if (list && list.get("v.visible") === true) {
-            list.set("v.visible", false);
+            list.setValue("v.visible", false);
         }
     },
     
@@ -129,7 +99,7 @@
         var listCmp = component.find("list");
         if (inputCmp && listCmp) {
             var elems = inputCmp.getElements();
-            listCmp.set("v.elementsToIgnoreClicking", elems);
+            listCmp.setValue("v.elementsToIgnoreClicking", elems);
         }
     },
     

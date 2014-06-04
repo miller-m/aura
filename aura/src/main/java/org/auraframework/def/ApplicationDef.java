@@ -17,6 +17,7 @@ package org.auraframework.def;
 
 import java.util.List;
 
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.throwable.quickfix.QuickFixException;
 
 /**
@@ -30,21 +31,14 @@ public interface ApplicationDef extends BaseComponentDef {
 
     DefDescriptor<LayoutsDef> getLayoutsDefDescriptor();
 
+    Access getAccess();
+
     DefDescriptor<EventDef> getLocationChangeEventDescriptor() throws QuickFixException;
 
-    Boolean isAppcacheEnabled() throws QuickFixException;
+    DefDescriptor<SecurityProviderDef> getSecurityProviderDefDescriptor() throws QuickFixException;
 
+    Boolean isAppcacheEnabled() throws QuickFixException;
     List<String> getAdditionalAppCacheURLs() throws QuickFixException;
 
     Boolean isOnePageApp() throws QuickFixException;
-
-    /**
-     * Gets the theme override, if present.
-     * 
-     * Note that this differs from the "local theme" ({@link #getLocalThemeDescriptor()}), as this is specifically the
-     * application-wide override theme. In contrast, the local theme is applicable only to its component/app bundle.
-     * However, for applications only, the local theme and override theme may refer to the same {@link ThemeDef} (if the
-     * app override theme is in the app bundle).
-     */
-    DefDescriptor<ThemeDef> getOverrideThemeDescriptor();
 }

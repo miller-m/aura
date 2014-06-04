@@ -32,9 +32,11 @@ var ActionCallbackGroup = function ActionCallbackGroup(actions, scope, callback)
 	this.hold = true; // used to prevent callbacks when we haven't finished.
 
 	for ( var idx = 0; idx < actions.length; idx++) {
-            var action = actions[idx];
-            this.actions.push(action);
-            action.addCallbackGroup(this);
+		var action = actions[idx];
+		if (action.addCallbackGroup !== undefined) {
+			this.actions.push(action);
+			action.addCallbackGroup(this);
+		}
 	}
 	//
 	// This code deals with actions that may have already been complete.
@@ -42,8 +44,10 @@ var ActionCallbackGroup = function ActionCallbackGroup(actions, scope, callback)
 	// without accidentally triggering early.
 	//
 	this.hold = false;
-	if (this.callback && this.actions.length === 0) {
-            this.callback.call(this.scope || window, { "errors" : [] });
+	if (this.actions.length === 0) {
+		this.callback.call(this.scope || window, {
+			"errors" : []
+		});
 	}
 };
 
@@ -56,10 +60,10 @@ var ActionCallbackGroup = function ActionCallbackGroup(actions, scope, callback)
  *            the action to mark as complete.
  */
 ActionCallbackGroup.prototype.completeAction = function(action) {
-	var aidx = $A.util.arrayIndexOf(this.actions, action);
+	var aidx = this.actions.indexOf(action);
 	if (aidx != -1) {
 		this.actions.splice(aidx, 1);
-		if (this.callback && this.actions.length === 0 && !this.hold) {
+		if (this.actions.length === 0 && !this.hold) {
 			this.callback.call(this.scope || window, {
 				"errors" : []
 			});

@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 ({
-	handleClick : function(component) {
-		var current = component.get("v.selected");
-        if (current === false) {
-        	component.set("v.selected", !current);
-        }
-	},
-
     setSelected : function(component) {
         var concreteCmp = component.getConcreteComponent();
         var selected = concreteCmp.get("v.selected");
@@ -31,14 +24,14 @@
                 $A.util.addClass(elem, "selected");
                 elem.setAttribute("aria-checked", "true");
                 // make sure the sibling radioMenuItems are not checked.
-                this.uncheckSiblings(concreteCmp);
+                this.uncheckSiblings(concreteCmp); 
             } else {
                 $A.util.removeClass(elem, "selected");
                 elem.setAttribute("aria-checked", "false");
             }
         }
     },
-
+    
     uncheckSiblings : function(component) {
         var parent = component.getValue("v.parent");
         if (parent && !parent.isEmpty()) {
@@ -46,10 +39,10 @@
             var body = p.getValue("v.childMenuItems");
             for (var i = 0; i < body.getLength(); i++) {
                 var c = body.getValue(i);
-                if (c.isInstanceOf("ui:radioMenuItem") &&
-                    $A.util.getBooleanValue(c.get("v.selected")) &&
+                if (c.isInstanceOf("ui:radioMenuItem") && 
+                    c.getValue("v.selected").getBooleanValue() && 
                     c.getGlobalId() != component.getGlobalId()) {
-                    c.set("v.selected", false);
+                    c.setValue("v.selected", false);     
                     break;
                 }
             }

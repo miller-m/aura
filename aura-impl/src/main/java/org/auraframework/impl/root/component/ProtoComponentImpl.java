@@ -96,12 +96,4 @@ public class ProtoComponentImpl implements Component {
         return null;
     }
 
-    @Override
-    public String getPath() {
-        return null;
-    }
-
-	@Override
-	public void reinitializeModel() {
-	}
 }

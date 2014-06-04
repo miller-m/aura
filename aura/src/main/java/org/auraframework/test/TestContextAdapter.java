@@ -38,17 +38,9 @@ public interface TestContextAdapter {
 	 */
 	TestContext getTestContext(String name);
 
-	/**
-	 * release current testContext, ALSO remove it from context map 
-	 * this function calls clear().
-	 */
-	void release();
 
 	/**
-	 * clear current TestContext.
-	 * Aura.get(TestContextAdapter.class).getTestContext() will return null after this.
-	 * but testContext for the current test is still in the context map, which means we can get it by getTextContext(testname).
-	 * if we want current testContex to be removed from the map, call release() instead.
+	 * Stop persisting the current TestContext.
 	 */
-	void clear();
+    void release();
 }
