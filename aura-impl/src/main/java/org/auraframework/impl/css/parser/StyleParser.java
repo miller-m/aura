@@ -21,12 +21,7 @@ import org.auraframework.Aura;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
 import org.auraframework.def.Definition;
-import org.auraframework.def.ResourceDef;
 import org.auraframework.def.StyleDef;
-import org.auraframework.impl.clientlibrary.handler.ResourceDefHandler;
-import org.auraframework.impl.css.parser.CssPreprocessor.ParserResult;
-import org.auraframework.impl.css.parser.phloc.CssParserPhloc;
-import org.auraframework.impl.css.parser.phloc.CssParserStrategy;
 import org.auraframework.impl.css.style.StyleDefImpl;
 import org.auraframework.system.Client;
 import org.auraframework.system.Parser;
@@ -36,16 +31,16 @@ import org.auraframework.throwable.quickfix.StyleParserException;
 import org.auraframework.util.AuraTextUtil;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.css.compiler.ast.GssParserException;
 
 /**
  */
 public class StyleParser implements Parser {
 
-    private static final StyleParser instance = new StyleParser(true);
-    private static final StyleParser nonValidatingInstance = new StyleParser(false);
+    private static StyleParser instance = new StyleParser(true);
+    private static StyleParser nonValidatingInstance = new StyleParser(false);
 
-    public static final Set<String> allowedConditions;
-    private final boolean doValidation;
+    private static Set<String> allowedConditions;
 
     // build list of conditional permutations and allowed conditionals
     static {
@@ -64,12 +59,10 @@ public class StyleParser implements Parser {
         return nonValidatingInstance;
     }
 
+    private final boolean doValidation;
+
     protected StyleParser(boolean doValidation) {
         this.doValidation = doValidation;
-    }
-
-    public boolean shouldValidate(String name) {
-        return name.toLowerCase().endsWith("template") ? false : doValidation;
     }
 
     @SuppressWarnings("unchecked")
@@ -77,41 +70,40 @@ public class StyleParser implements Parser {
     public <D extends Definition> D parse(DefDescriptor<D> descriptor, Source<?> source) throws StyleParserException,
             QuickFixException {
 
-        DefDescriptor<StyleDef> styleDefDesc = (DefDescriptor<StyleDef>) descriptor;
-
         if (descriptor.getDefType() == DefType.STYLE) {
             String className = descriptor.getNamespace() + AuraTextUtil.initCap(descriptor.getName());
             StyleDefImpl.Builder builder = new StyleDefImpl.Builder();
-            builder.setDescriptor(styleDefDesc);
+            builder.setDescriptor((DefDescriptor<StyleDef>) descriptor);
             builder.setLocation(source.getSystemId(), source.getLastModified());
             builder.setClassName(className);
-            builder.setOwnHash(source.getHash());
+            CSSParser parser;
 
-            if (CssParserStrategy.omakase()) {
-                ParserResult result = CssPreprocessor
-                        .initial()
-                        .source(source.getContents())
-                        .resourceName(source.getSystemId())
-                        .componentClass(className, shouldValidate(descriptor.getName()))
-                        .allowedConditions(allowedConditions)
-                        .themes(styleDefDesc)
-                        .parse();
-
-                builder.setContent(result.content());
-                builder.setThemeExpressions(result.themeExpressions());
+            if (descriptor.getName().toLowerCase().endsWith("template")) {
+                parser = new CSSParser(descriptor.getNamespace(), false, className, source.getContents(),
+                        allowedConditions);
             } else {
-                /* TODONM remove */
-                CssParserPhloc parser = new CssParserPhloc(descriptor.getNamespace(), descriptor.getName(),
-                        shouldValidate(descriptor.getName()), className, source.getContents(), allowedConditions,
-                        source.getSystemId());
-                builder.setComponents(parser.parse());
-                builder.setThemeExpressions(parser.getThemeReferences());
+                parser = new CSSParser(descriptor.getNamespace(), doValidation, className,
+                        source.getContents(), allowedConditions);
             }
 
+            StyleParserResultHolder resultHolder;
+            try {
+                resultHolder = parser.parse();
+            } catch (GssParserException e) {
+                throw new StyleParserException(e.getMessage(), builder.getLocation());
+            }
+
+            // scram if we found errors
+            if (parser.hasErrors()) {
+                throw new StyleParserException(parser.getErrorMessage(), builder.getLocation());
+            }
+
+            builder.setCode(resultHolder.getDefaultCss());
+            builder.setCode(resultHolder.getBrowserCssMap());
+            builder.setImageURLs(resultHolder.getImageURLs());
+            builder.setOwnHash(source.getHash());
+
             return (D) builder.build();
-        } else if (descriptor.getDefType() == DefType.RESOURCE) {
-            return (D) new ResourceDefHandler<ResourceDef>((DefDescriptor<ResourceDef>) descriptor,
-                    (Source<ResourceDef>) source).createDefinition();
         }
 
         return null;

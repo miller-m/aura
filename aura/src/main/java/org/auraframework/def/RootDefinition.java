@@ -71,6 +71,4 @@ public interface RootDefinition extends Definition {
     ProviderDef getLocalProviderDef() throws QuickFixException;
 
     SupportLevel getSupport();
-    
-    DocumentationDef getDocumentationDef() throws QuickFixException;
 }

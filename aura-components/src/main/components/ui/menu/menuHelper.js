@@ -28,9 +28,7 @@
         if(!$A.util.isUndefinedOrNull(cmpName)){
 	        for (var i = 0; i < body.getLength(); i++) {
 	            var c = body.getValue(i);
-	            if (c.isInstanceOf('ui:scroller')) {
-	            	return this.getComponent(c, cmpName);
-	            } else if (c.isInstanceOf(cmpName)) {
+	            if (c.isInstanceOf(cmpName)) {
 	                return c;
 	            }
 	        }
@@ -38,10 +36,6 @@
     },
     
     isElementInComponent : function(component, targetElem) {
-    	if (!component || !targetElem) {
-    		return false;
-    	}
-    	
         var componentElements = [];
 
         //grab all the siblings
@@ -135,19 +129,17 @@
                     return;
                 }
             
-                if (component.get('v.closeOnClickOutside')) {
-	                var menuComponent = helper.getMenuComponent(component);
-	                var triggerComponent = helper.getTriggerComponent(component);
-	                if (!helper.isElementInComponent(menuComponent, event.target) && 
-	                        !helper.isElementInComponent(triggerComponent, event.target)) {
-	                    // Collapse the menu
-	                	 menuComponent.set("v.visible", false); 
-	                     var divCmp = helper.findMenuListDiv(menuComponent);
-	                     if (divCmp) {
-	                         var elem = divCmp.getElement();
-	                         $A.util.removeClass(elem, "visible");
-	                     }
-	                }
+                var menuComponent = helper.getMenuComponent(component);
+                var triggerComponent = helper.getTriggerComponent(component);
+                if (!helper.isElementInComponent(menuComponent, event.target) && 
+                        !helper.isElementInComponent(triggerComponent, event.target)) {
+                    // Collapse the menu
+                    menuComponent.setValue("v.visible", false); 
+                    var divCmp = helper.findMenuListDiv(menuComponent);
+                    if (divCmp) {
+                        var elem = divCmp.getElement();
+                        $A.util.removeClass(elem, "visible");
+                    }
                 }
             };
             component._onClickEndFunc = f;
@@ -179,11 +171,10 @@
         return this.getOnClickEventProp.cache[prop];
     },
     
-    toggleMenuVisible : function(component, index, event) {
+    toggleMenuVisible : function(component, index) {
     	var c = this.getMenuComponent(component);
-        c.set("v.focusItemIndex", index);
-        c.set("v.referenceElement", event.getSource().getElement());
+        c.setValue("v.focusItemIndex", index);
         var menuVisible = c.get("v.visible");
-        c.set("v.visible", !menuVisible);
+        c.setValue("v.visible", !menuVisible);
     }
 })

@@ -15,14 +15,21 @@
  */
 package org.auraframework.impl.root.parser.handler;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.auraframework.Aura;
 import org.auraframework.builder.RootDefinitionBuilder;
-import org.auraframework.def.*;
+import org.auraframework.def.AttributeDef;
+import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.InterfaceDef;
+import org.auraframework.def.ProviderDef;
+import org.auraframework.def.RegisterEventDef;
 import org.auraframework.impl.root.AttributeDefImpl;
 import org.auraframework.impl.root.event.RegisterEventDefImpl;
 import org.auraframework.impl.root.intf.InterfaceDefImpl;
@@ -42,10 +49,8 @@ public class InterfaceDefHandler extends RootTagHandler<InterfaceDef> {
     private static final String ATTRIBUTE_PROVIDER = "provider";
     private static final String ATTRIBUTE_EXTENDS = "extends";
 
-    protected static final Set<String> ALLOWED_ATTRIBUTES = ImmutableSet.of(ATTRIBUTE_EXTENDS,
-            RootTagHandler.ATTRIBUTE_DESCRIPTION, ATTRIBUTE_ACCESS);
-	private static final Set<String> PRIVILEGED_ALLOWED_ATTRIBUTES = new ImmutableSet.Builder<String>().add(
-			RootTagHandler.ATTRIBUTE_SUPPORT, ATTRIBUTE_PROVIDER).addAll(ALLOWED_ATTRIBUTES).build();
+    protected final static Set<String> ALLOWED_ATTRIBUTES = ImmutableSet.of(ATTRIBUTE_PROVIDER, ATTRIBUTE_EXTENDS,
+            RootTagHandler.ATTRIBUTE_SUPPORT, RootTagHandler.ATTRIBUTE_DESCRIPTION);
 
     private final InterfaceDefImpl.Builder builder = new InterfaceDefImpl.Builder();
 
@@ -56,15 +61,13 @@ public class InterfaceDefHandler extends RootTagHandler<InterfaceDef> {
     public InterfaceDefHandler(DefDescriptor<InterfaceDef> descriptor, Source<?> source, XMLStreamReader xmlReader) {
         super(descriptor, source, xmlReader);
         builder.events = new HashMap<String, RegisterEventDef>();
-        if (source != null) {
-            builder.setOwnHash(source.getHash());
-        }
+        builder.setOwnHash(source.getHash());
         builder.extendsDescriptors = new HashSet<DefDescriptor<InterfaceDef>>();
     }
 
     @Override
     public Set<String> getAllowedAttributes() {
-        return isInPrivilegedNamespace ? PRIVILEGED_ALLOWED_ATTRIBUTES : ALLOWED_ATTRIBUTES;
+        return ALLOWED_ATTRIBUTES;
     }
 
     @Override
@@ -75,7 +78,7 @@ public class InterfaceDefHandler extends RootTagHandler<InterfaceDef> {
             builder.addAttributeDef(DefDescriptorImpl.getInstance(attributeDef.getName(), AttributeDef.class),
                     attributeDef);
         } else if (RegisterEventHandler.TAG.equalsIgnoreCase(tag)) {
-            RegisterEventDefImpl regDef = new RegisterEventHandler<InterfaceDef>(this, xmlReader, source).getElement();
+            RegisterEventDefImpl regDef = new RegisterEventHandler(xmlReader, source).getElement();
             builder.events.put(regDef.getAttributeName(), regDef);
         } else {
             error("Found unexpected tag %s", tag);
@@ -85,7 +88,7 @@ public class InterfaceDefHandler extends RootTagHandler<InterfaceDef> {
     @Override
     protected void readAttributes() throws QuickFixException {
         super.readAttributes();
-        Aura.getContextService().getCurrentContext().setCurrentCaller(getDefDescriptor());
+        Aura.getContextService().getCurrentContext().setCurrentNamespace(getDefDescriptor().getNamespace());
         String extendsNames = getAttributeValue(ATTRIBUTE_EXTENDS);
         if (extendsNames != null) {
             for (String extendsName : AuraTextUtil.splitSimple(",", extendsNames)) {
@@ -108,8 +111,6 @@ public class InterfaceDefHandler extends RootTagHandler<InterfaceDef> {
                 builder.addProvider(apexDescriptor.getQualifiedName());
             }
         }
-        
-        builder.setAccess(readAccessAttribute());
     }
 
     @Override

@@ -88,7 +88,7 @@ public class ComponentDefRefArrayTypeDef extends DefinitionImpl<TypeDef> impleme
     }
 
     @Override
-    public void appendDependencies(Object instance, Set<DefDescriptor<?>> deps) {
+    public void appendDependencies(Object instance, Set<DefDescriptor<?>> deps) throws QuickFixException {
         @SuppressWarnings("unchecked")
         List<ComponentDefRef> value = (List<ComponentDefRef>) instance;
         for (ComponentDefRef componentDefRef : value) {

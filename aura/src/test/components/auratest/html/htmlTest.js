@@ -106,11 +106,11 @@
     },
 
     assertClassUpdate : function(component, newValue) {
-        component.set("v.classValue", newValue);
-        $A.rerender(component);
-        $A.test.assertEquals(newValue ? newValue : "", component.find("hasClass").getElement().className);
+		component.getValue("v.classValue").setValue(newValue);
+		$A.rerender(component);
+		$A.test.assertEquals(newValue ? newValue : "", component.find("hasClass").getElement().className);
     },
-
+    
     /**
      * class attribute will be rerendered when initially not set
      */
@@ -127,104 +127,69 @@
     testRerenderUpdatedClassAttribute: {
     	attributes: { classValue : "upper" },
     	test: function(component) {
-            $A.test.assertEquals("upper", component.find("hasClass").getElement().className, "initial class not set");
-            this.assertClassUpdate(component, "");
-            this.assertClassUpdate(component, "middle");
-            this.assertClassUpdate(component, null);
-            this.assertClassUpdate(component, "lower");
-            this.assertClassUpdate(component);
+    		$A.test.assertEquals("upper", component.find("hasClass").getElement().className, "initial class not set");
+	    	this.assertClassUpdate(component, "");
+	    	this.assertClassUpdate(component, "middle");
+	    	this.assertClassUpdate(component, null);
+	    	this.assertClassUpdate(component, "lower");
+	    	this.assertClassUpdate(component);
     	}
     },
-
     /**
      * Verify rerender of special html attributes
      * type, href, style and data attributes must be set by using setAttribute() on dom elements
      */
     testRerenderSpecialHtmlAttributes:{
-        test:function(component){
-            var input = component.find("specialAttributes_input").getElement();
-            var styleText;
-
-            $A.test.assertEquals("textElement" , input.getAttribute("data-name"), "Failed to render data attribute");
-
-            //
-            // Warning! IE7 returns an object for style, so this first attempt fails because replace doesn't exist.
-            //
-            try {
-                styleText = input.getAttribute("style").replace(/[ ;]/g,"").toLowerCase();
-            } catch (e) {
-                styleText = input.style.cssText.replace(/[ ;]/g,"").toLowerCase();
-            }
-            $A.test.assertEquals("color:blue" , styleText);
-
-            var a = component.find("specialAttributes_a").getElement();
-            $A.test.assertTrue($A.test.contains(a.getAttribute("href"), "http://bazinga.com/"), 
-                "Failed to render href attribute for 'http://bazinga.com'");
-
-            component.set("v.style", "color:green");
-            component.set("v.dataName", "inputElement");
-            component.set("v.href", "http://bbt.com/");
-
-            $A.rerender(component);
-            input = component.find("specialAttributes_input").getElement();
-            $A.test.assertEquals("inputElement" , input.getAttribute("data-name"), "Failed to rerender data attribute");
-
-            //
-            // Warning! IE7 returns an object for style, so this first attempt fails because replace doesn't exist.
-            //
-            try {
-                styleText = input.getAttribute("style").replace(/[ ;]/g,"").toLowerCase();
-            } catch (e) {
-                styleText = input.style.cssText.replace(/[ ;]/g,"").toLowerCase();
-            }
-            $A.test.assertEquals("color:green" , styleText);
-
-            a = component.find("specialAttributes_a").getElement();
-            $A.test.assertTrue($A.test.contains(a.getAttribute("href"), "http://bbt.com/"), 
-                "Failed to render href attribute for 'http://bbt.com'");
-        }
+	test:function(component){
+	    var input = component.find("specialAttributes_input").getElement();
+	    $A.log(input.getAttribute("style"));
+	    $A.test.assertEquals("textElement" , input.dataset.name, "Failed to render data attribute");
+	    $A.test.assertEquals("color:blue;text-align:center" , input.getAttribute("style"), "Failed to render style attribute");
+	    $A.test.assertEquals("text" , input.getAttribute("type"), "Failed to render type attribute");
+	    
+	    var a = component.find("specialAttributes_a").getElement();
+	    $A.test.assertEquals("http://bazinga.com/" , a.getAttribute("href"), "Failed to render href attribute");
+	    
+	    component.getAttributes().setValue("type", "input");
+	    component.getAttributes().setValue("style", "color:green;");
+	    component.getAttributes().setValue("dataName", "inputElement");
+	    component.getAttributes().setValue("href", "http://bbt.com/");
+	    
+	    $A.rerender(component);
+	    input1 = component.find("specialAttributes_input").getElement();
+	    $A.test.assertEquals("inputElement" , input.dataset.name, "Failed to rerender data attribute");
+	    $A.test.assertEquals("color:green;" , input.getAttribute("style"), "Failed to rerender style attribute");
+	    $A.test.assertEquals("input" , input.getAttribute("type"), "Failed to rerender type attribute");
+	    
+	    a = component.find("specialAttributes_a").getElement();
+	    $A.test.assertEquals("http://bbt.com/" , a.getAttribute("href"), "Failed to rerender href attribute");
+	}
     },
-
-    /**
-     * Change type of input element (non-IE)
-     */
-    testChangeTypeOfInputElement:{
-    	browsers: ["-IE7","-IE8","-IE9"],
-        test:function(component){
-            var input = component.find("specialAttributes_input").getElement();
-            $A.test.assertEquals("text" , input.getAttribute("type"), "Failed to render type attribute");
-            component.set("v.type", "input");
-            $A.rerender(component);
-            input = component.find("specialAttributes_input").getElement();
-            $A.test.assertEquals("input" , input.getAttribute("type"), "Failed to rerender type attribute");
-        }
-    },
-
     /**
      * Verify that touchend event handlers is used if present before using onclick.
      * Automation for W-1564377
      */
     testTouchEndHandlerUsedWhenPresent:{
-	browsers:["IPAD", "IPAD_IOS_DRIVER"],
-	labels : ["UnAdaptableTest"],
+	browsers:["IPAD"],
+	testLabels : ["UnAdaptableTest"],
 	test: [
-	  //Both click handler and touch end handler defined
+	  //Both click handler and touch end handler defined     
 	  function(component){
 	    component._TouchEndHandler = false;
 	    component._OnClickHandler = false;
 	    var targetElement = component.find("bothTouchEndAndClickHandlers").getElement();
 	    this.fireTouchEndEventOnElement(component, targetElement);
-	    $A.test.addWaitFor(true,
+	    $A.test.addWaitFor(true, 
 		    function(){return component._TouchEndHandler},
 		    function(){ $A.test.assertFalse(component._OnClickHandler); });
 	},
-	  //Both touch end handler defined
+	  //Both touch end handler defined     
 	  function(component){
 	    var targetElement = component.find("onlyTouchEndHandler").getElement();
 	    this.fireTouchEndEventOnElement(component, targetElement);
 	    $A.test.addWaitFor(true, function(){return component._TouchEndHandler;},
 		    function(){$A.test.assertFalse(component._OnClickHandler);})
-	}
+	},
 	 //Only click handler defined
 //	 function(component){
 //	    var targetElement = component.find("onlyClickHandler").getElement();

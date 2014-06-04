@@ -16,14 +16,7 @@
 ({
     afterRender : function(cmp){
         if (!cmp.codeMirror) {
-        	if (!window.CodeMirror) {
-        		$A.util.includeScript("/auraFW/resources/codemirror/js/codemirror.js",
-        				function () {
-        					cmp.getDef().getHelper().createCodeMirror(cmp)
-        				});
-        	} else {
-        		cmp.getDef().getHelper().createCodeMirror(cmp);
-        	}
+            cmp.getDef().getHelper().createCodeMirror(cmp);
         }
     }
 })

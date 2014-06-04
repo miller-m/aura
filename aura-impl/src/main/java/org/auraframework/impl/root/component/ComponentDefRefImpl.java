@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.auraframework.Aura;
 import org.auraframework.builder.ComponentDefRefBuilder;
 import org.auraframework.def.AttributeDef;
 import org.auraframework.def.AttributeDef.SerializeToType;
@@ -39,11 +38,10 @@ import org.auraframework.impl.system.DefinitionImpl;
 import org.auraframework.impl.util.AuraUtil;
 import org.auraframework.instance.BaseComponent;
 import org.auraframework.instance.Component;
-import org.auraframework.system.AuraContext;
-import org.auraframework.system.MasterDefRegistry;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.AttributeNotFoundException;
 import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
+import org.auraframework.throwable.quickfix.InvalidDefinitionException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.json.Json;
@@ -108,13 +106,12 @@ public class ComponentDefRefImpl extends DefinitionImpl<ComponentDef> implements
      * @throws QuickFixException
      */
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
-        super.appendDependencies(dependencies);
-    	if (intfDescriptor != null) {
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
+        if (intfDescriptor != null) {
             dependencies.add(intfDescriptor);
         } else {
             dependencies.add(descriptor);
-    	}
+        }
         for (AttributeDefRef attributeDefRef : attributeValues.values()) {
             attributeDefRef.appendDependencies(dependencies);
         }
@@ -124,18 +121,10 @@ public class ComponentDefRefImpl extends DefinitionImpl<ComponentDef> implements
     public void validateReferences() throws QuickFixException {
         RootDefinition rootDef = getComponentDef();
         if (rootDef == null) {
-            throw new DefinitionNotFoundException(descriptor);
+            throw new DefinitionNotFoundException(getDescriptor());
         }
-        
-        AuraContext context = Aura.getContextService().getCurrentContext();
-        DefDescriptor<?> referencingDesc = context.getCurrentCaller();
-    	if (referencingDesc != null) {
-	        MasterDefRegistry registry = Aura.getDefinitionService().getDefRegistry();
-	    	registry.assertAccess(referencingDesc, getComponentDef());
-    	}
 
-        validateAttributesValues(referencingDesc);
-
+        validateAttributesValues();
         // validateMissingAttributes();
 
         // TODO LOTS of validation here folks #W-689596
@@ -150,11 +139,10 @@ public class ComponentDefRefImpl extends DefinitionImpl<ComponentDef> implements
      * @param rootDef the element being instantiated
      * @param specifiedAttributes the attributes specified in the comp
      */
-    private void validateAttributesValues(DefDescriptor<?> referencingDesc) throws QuickFixException, AttributeNotFoundException {
+    private void validateAttributesValues() throws QuickFixException, AttributeNotFoundException {
         RootDefinition rootDef = getComponentDef();
         Map<DefDescriptor<AttributeDef>, AttributeDef> atts = rootDef.getAttributeDefs();
         Map<String, RegisterEventDef> registeredEvents = rootDef.getRegisterEventDefs();
-        MasterDefRegistry registry = Aura.getDefinitionService().getDefRegistry();
         for (Entry<DefDescriptor<AttributeDef>, AttributeDefRef> entry : getAttributeValues().entrySet()) {
             DefDescriptor<AttributeDef> attributeDefDesc = entry.getKey();
             AttributeDef attributeDef = atts.get(attributeDefDesc);
@@ -166,18 +154,14 @@ public class ComponentDefRefImpl extends DefinitionImpl<ComponentDef> implements
                     throw new AttributeNotFoundException(rootDef.getDescriptor(), attributeDefDesc.getName(),
                             getLocation());
                 }
-                
-            	registry.assertAccess(referencingDesc, registeredEvent);
             } else {
-            	if (referencingDesc != null) {
-	            	// Validate that the referencing component has access to the attribute
-	            	registry.assertAccess(referencingDesc, attributeDef);
-            	}
-            	
+                if (attributeDef.getVisibility() == Visibility.PRIVATE) {
+                    throw new InvalidDefinitionException(String.format("Attribute '%s' is specified as private",
+                            attributeDef.getDescriptor()), getLocation());
+                }
                 // so it was an attribute, make sure to parse it
                 entry.getValue().parseValue(attributeDef.getTypeDef());
             }
-            
             entry.getValue().validateReferences();
             // heres where some type validation would go
         }
@@ -264,8 +248,8 @@ public class ComponentDefRefImpl extends DefinitionImpl<ComponentDef> implements
 
     @Override
     public List<Component> newInstance(BaseComponent<?, ?> valueProvider) throws QuickFixException {
-        Component component = new ComponentImpl(getDescriptor(), getAttributeValueList(), valueProvider, localId);
-		return Lists.<Component> newArrayList(component);
+        return Lists.<Component> newArrayList(new ComponentImpl(getDescriptor(), getAttributeValueList(),
+                valueProvider, localId));
     }
 
     public static class Builder extends DefinitionImpl.RefBuilderImpl<ComponentDef, ComponentDefRef> implements

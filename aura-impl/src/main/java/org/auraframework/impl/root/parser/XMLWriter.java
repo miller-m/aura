@@ -39,9 +39,7 @@ import org.auraframework.impl.root.parser.handler.EventHandlerDefHandler;
 import org.auraframework.impl.root.parser.handler.ForEachDefHandler;
 import org.auraframework.impl.root.parser.handler.InterfaceDefHandler;
 import org.auraframework.impl.root.parser.handler.RegisterEventHandler;
-import org.auraframework.impl.root.parser.handler.ThemeDefHandler;
 import org.auraframework.impl.root.parser.handler.XMLHandler;
-import org.auraframework.impl.root.theme.ThemeDefImpl;
 import org.auraframework.system.Source;
 import org.auraframework.throwable.AuraRuntimeException;
 
@@ -53,8 +51,7 @@ public class XMLWriter implements org.auraframework.system.SourceWriter {
 
     private static final XMLWriter instance = new XMLWriter();
 
-    private final Map<Class<? extends Definition>, XMLHandler<?>> handlers = Maps
-            .newHashMap();
+    private final Map<Class<? extends Definition>, XMLHandler<?>> handlers = Maps.newHashMap();
 
     @SuppressWarnings("rawtypes")
     public XMLWriter() {
@@ -68,7 +65,6 @@ public class XMLWriter implements org.auraframework.system.SourceWriter {
         handlers.put(ForEachDefImpl.class, new ForEachDefHandler());
         handlers.put(InterfaceDefImpl.class, new InterfaceDefHandler());
         handlers.put(RegisterEventDefImpl.class, new RegisterEventHandler());
-        handlers.put(ThemeDefImpl.class, new ThemeDefHandler());
     }
 
     /**

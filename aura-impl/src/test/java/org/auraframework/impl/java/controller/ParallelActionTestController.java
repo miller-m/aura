@@ -32,15 +32,7 @@ public class ParallelActionTestController {
 	public static void executeInForeground() {
 		
 	}
-
-    @AuraEnabled
-    public static Record errorInForeground() {
-        int foo[] = new int[2];
-        // Throw our error:
-        foo[42] = 42;
-        return null;
-    }
-
+	
 	@AuraEnabled
 	@BackgroundAction
 	public static void executeInBackground() {

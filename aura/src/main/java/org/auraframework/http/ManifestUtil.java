@@ -17,11 +17,13 @@ package org.auraframework.http;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.HttpHeaders;
 import org.auraframework.Aura;
 import org.auraframework.def.ApplicationDef;
 import org.auraframework.def.BaseComponentDef;
@@ -33,8 +35,6 @@ import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
-
-import com.google.common.net.HttpHeaders;
 
 /**
  * A set of static http servlet utilities.
@@ -78,11 +78,13 @@ public abstract class ManifestUtil {
      * Check to see if we allow appcache on the current request.
      */
     public static boolean isManifestEnabled(HttpServletRequest request) {
-    	final String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-        if (userAgent != null && !userAgent.toLowerCase().contains("applewebkit")) {
+        //
+        // TODO: this is rather bogus.
+        //
+        final String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        if (userAgent != null && !userAgent.contains("AppleWebKit")) {
             return false;
         }
-
         return isManifestEnabled();
     }
 
@@ -96,6 +98,11 @@ public abstract class ManifestUtil {
 
         AuraContext context = Aura.getContextService().getCurrentContext();
         DefDescriptor<? extends BaseComponentDef> appDefDesc = context.getApplicationDescriptor();
+        Set<String> preloads = context.getPreloads();
+
+        if (preloads == null || preloads.isEmpty()) {
+            return false;
+        }
 
         if (appDefDesc != null && appDefDesc.getDefType().equals(DefType.APPLICATION)) {
             try {

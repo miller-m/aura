@@ -18,8 +18,6 @@
  * @constructor
  */
 var AuraExpressionService = function AuraExpressionService(){
-	var propertyRefCache = {};
-
     var expressionService = {
         setValue : function(valueProvider, expression, value){
             if (expression.getValue) {
@@ -43,49 +41,31 @@ var AuraExpressionService = function AuraExpressionService(){
          * @public
          * @memberOf AuraExpressionService
          */
-        getValue: function(valueProvider, expression, callback){
+        getValue: function(valueProvider, expression){
             if (aura.util.isString(expression)) {
-            	var cached = propertyRefCache[expression];
-            	if (!cached) {
-	                cached = valueFactory.parsePropertyReference(expression);
-	                propertyRefCache[expression] = cached;
-
-	            	//console.debug("ExpressionService.getValue() cache property ref", [expression, propertyRefCache]);
-            	}
-
-                expression = cached;
-            } else if ($A.util.instanceOf(expression, FunctionCallValue)) {
+                expression = valueFactory.parsePropertyReference(expression);
+            }
+            if (expression.toString() === "FunctionCallValue") {
+                // TODO: bleh need better test here
                 return expression.getValue(valueProvider);
             }
 
-            if (!$A.util.instanceOf(expression, PropertyReferenceValue)){
-                return null;
-            }
-
+            var gvp = $A.getContext().getGlobalValueProviders();
             // use gvp; supports existing usage of $A.get and $A.expressionService.get
-            if (expression.getRoot().charAt(0) === '$'){
-                var gvp = $A.getGlobalValueProviders();
-                return gvp.getValue(expression, valueProvider, callback);
+            if( gvp.isGlobalValueExp(expression) ){
+                return gvp.getValue(expression, valueProvider);
             }
 
             var propRef = expression;
             var value = valueProvider;
-            while (propRef) {
+            while (!aura.util.isUndefinedOrNull(propRef)) {
                 var root = propRef.getRoot();
-
                 value = value.getValue(root);
-
                 if (!value) {
                     // still nothing, time to die
                     break;
                 }
-
                 propRef = propRef.getStem();
-            }
-
-            // handle PropertyReferenceValue. get its value.
-            if ($A.util.instanceOf(value, PropertyReferenceValue)) {
-                value = this.getValue(valueProvider, value);
             }
 
             return value;
@@ -95,18 +75,14 @@ var AuraExpressionService = function AuraExpressionService(){
          * Get the raw value referenced using property syntax. Use <code>Component.get()</code> if you are retrieving the value of a component.
          * @param {Object} valueProvider The value provider
          * @param {String} expression The expression to be evaluated
-         * @param {Function} callback The method to call if a server trip is expected
          * @public
          * @memberOf AuraExpressionService
          */
-        get : function(valueProvider, expression, callback){
-            return $A.unwrap(this.getValue(valueProvider, expression, $A.util.isFunction(callback)?function(value){
-                callback($A.unwrap(value));
-            }:null));
+        get : function(valueProvider, expression){
+            return $A.unwrap(this.getValue(valueProvider, expression));
         },
 
         /**
-         * @deprecated JBUCH
          * @private
          */
         create : function(valueProvider, config){

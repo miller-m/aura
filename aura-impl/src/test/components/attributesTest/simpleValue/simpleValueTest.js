@@ -17,7 +17,7 @@
     testSimpleValueProperties:{
         attributes:{intAttribute:3},
         test:function(cmp){
-            var valueObj = cmp.getValue('v.strAttribute');
+            var valueObj = cmp.getAttributes().getValue('strAttribute');
             $A.test.assertTruthy(valueObj, "Simple attribute is not defined by a value object.");
             $A.test.assertEquals('SimpleValue', valueObj.toString(),
                     "Simple attribute should be represented using SimpleValue");
@@ -25,30 +25,16 @@
                     "Simple value object has wrong value for auraType attribute");
             $A.test.assertFalsy(valueObj.getValue(), "Uninitialized simple attribute should be represented as undefined.");
 
-            $A.test.assertTruthy(cmp.get('v.intAttribute'),
+            $A.test.assertTruthy(cmp.getAttributes().getValue('intAttribute'),
                     "Initialized simple attribute should not be represented as undefined.");
-            $A.test.assertEquals(3, cmp.get('v.intAttribute'),
+            $A.test.assertEquals(3, cmp.getAttributes().getValue('intAttribute').getValue(),
             "Simple value object failed to retrieve assigned value.");
         }
     },
-
-    testSimpleValueIsValid: {
-        test:function(cmp){
-            $A.test.assertTruthy(cmp.isValid('v.strAttribute'));
-        }
-    },
-
-    testSimpleValueSetUnValid: {
-        test:function(cmp){
-            var valueObj = cmp.getValue('v.strAttribute');
-            valueObj.setValid(false);
-            $A.test.assertTruthy(!valueObj.isValid());
-        }
-    },
-
+    
     testDerivedTypes:{
         test: function(cmp) {
-            var valueObj = cmp.getValue('v.strAttribute');
+            var valueObj = cmp.getAttributes().getValue('strAttribute');
             var mval = $A.expressionService.create(null,
                      {"string":"something","integer":23,"boolean":true});
             // Because the types aren't exported, getting the constructors is a bit awkward:
@@ -63,18 +49,19 @@
             }
             $A.test.assertTrue($A.util.instanceOf(valueObj, simpleValue),
                      "$A.util.instanceOf says strAttribute is not a SimpleValue");
+            debugger;
             $A.test.assertTrue($A.util.instanceOf(valueObj, attributeValue),
                     "$A.util.instanceOf says strAttribute is not an AttributeValue");
             $A.test.assertFalse($A.util.instanceOf(valueObj, mapValue),
                     "$A.util.instanceOf says strAttribute is a MapValue");
         }
     },
-
+    
     testErrorFunctionsOnSimpleValueObject:{
         attributes:{intAttribute:3},
         test:function(cmp){
             //Attribute with no default value
-            var valueObj = cmp.getValue('v.strAttribute');
+            var valueObj = cmp.getAttributes().getValue('strAttribute');
             valueObj.clearErrors();
             this.verifyErrors(valueObj,[]);
 
@@ -85,7 +72,7 @@
             this.verifyErrors(valueObj,[]);
 
             //Attribute with default value
-            valueObj = cmp.getValue('v.intAttribute');
+            valueObj = cmp.getAttributes().getValue('intAttribute');
             valueObj.clearErrors();
 
             //Add 1 valid error message
@@ -105,7 +92,7 @@
             $A.test.assertTrue( $A.util.isObject(err[0]));
         }
     },
-
+    
     // dirty value in action should not get overwritten in rerender when evaluating functions
     testMakeDirtyIndirectly:{
     	attributes:{intAttribute:100},
@@ -117,7 +104,7 @@
     		var label = button.getValue("v.label");
     		$A.test.assertEquals(false, label.isDirty());
     		$A.test.assertEquals(100, label.unwrap());
-
+    		
     		button.get("e.press").fire();
     		$A.test.assertEquals(false, val.isDirty());
     		$A.test.assertEquals(101, val.unwrap());
@@ -131,7 +118,7 @@
     		$A.test.assertEquals(102, label.unwrap());
     	}
     },
-
+    
     verifyErrors:function(valueObj, expectedErrors){
         var err = valueObj.getErrors();
         $A.test.assertTrue($A.util.isArray(err));

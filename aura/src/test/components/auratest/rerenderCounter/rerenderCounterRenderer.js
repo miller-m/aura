@@ -16,8 +16,7 @@
 ({
     rerender : function(cmp){
         var e = cmp.find("count").getElement();
-        var newCount = parseInt($A.util.getText(e)) + 1;
-        cmp.set("v.count", newCount);
-        this.superRerender();
+        var count = parseInt($A.test.getText(e)) + 1;
+        e.innerHTML = count;
     }
 })

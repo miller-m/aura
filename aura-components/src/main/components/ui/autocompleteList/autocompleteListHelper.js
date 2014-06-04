@@ -28,32 +28,13 @@
         }
         return -1;
     },
-
-    /**
-     * Notify that the matching is done.
-     */
-    fireMatchDoneEvent: function(component, items) {
-        var size = 0;
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].visible === true) {
-                size++;
-            }
-        }
-        var evt = component.get("e.matchDone");
-        if (evt) {
-            evt.setParams({
-                size: size
-            });
-            evt.fire();
-        }
-    },
-
+    
     getEventSourceComponent: function(component, event) {
         var element = event.target || event.srcElement;
         var htmlCmp = $A.componentService.getRenderingComponentForElement(element);
-        return htmlCmp.getComponentValueProvider().getConcreteComponent();
+        return htmlCmp.getAttributes().getComponentValueProvider().getConcreteComponent();
     },
-
+    
     getNextVisibleOption: function(iters, k) {
         var next = -1;
         var start = k >= iters.getLength() - 1 ? 0 : k + 1;
@@ -75,14 +56,14 @@
         }
         return next;
     },
-
+    
     getOnClickEndFunction : function(component) {
         if ($A.util.isUndefined(component._onClickEndFunc)) {
             var helper = this;
             var f = function(event) {
                 // ignore gestures/swipes; only run the click handler if it's a click or tap
                 var clickEndEvent;
-
+            
                 if (helper.getOnClickEventProp("isTouchDevice")) {
                     var touchIdFound = false;
                     for (var i = 0; i < event.changedTouches.length; i++) {
@@ -92,21 +73,21 @@
                             break;
                         }
                     }
-
+                
                     if (helper.getOnClickEventProp("isTouchDevice") && !touchIdFound) {
                         return;
                     }
                 } else {
                     clickEndEvent = event;
                 }
-
+            
                 var startX = component._onStartX, startY = component._onStartY;
                 var endX = clickEndEvent.clientX, endY = clickEndEvent.clientY;
 
                 if (Math.abs(endX - startX) > 0 || Math.abs(endY - startY) > 0) {
                     return;
                 }
-
+            
                 var listElems = component.getElements();
                 var ignoreElements = component.get("v.elementsToIgnoreClicking");
                 var clickOutside = true;
@@ -132,14 +113,14 @@
                 }
                 if (clickOutside === true) {
                     // Collapse the menu
-                    component.set("v.visible", false);
+                    component.setValue("v.visible", false);
                 }
             };
             component._onClickEndFunc = f;
         }
         return component._onClickEndFunc;
     },
-
+    
     getOnClickEventProp: function(prop) {
         // create the cache
         if ($A.util.isUndefined(this.getOnClickEventProp.cache)) {
@@ -163,7 +144,7 @@
         }
         return this.getOnClickEventProp.cache[prop];
     },
-
+    
     getOnClickStartFunction: function(component) {
         if ($A.util.isUndefined(component._onClickStartFunc)) {
             var helper = this;
@@ -183,7 +164,7 @@
         }
         return component._onClickStartFunc;
     },
-
+    
     getPrevVisibleOption: function(iters, k) {
         var prev = iters.getLength();
         var start = k <= 0 ? iters.getLength() - 1 : k - 1;
@@ -205,17 +186,11 @@
         }
         return prev;
     },
-
-    handleDataChange: function(component, event) {
-        var concreteCmp = component.getConcreteComponent();
-        concreteCmp.set("v.items", event.getParam("data"));
-        this.matchText(concreteCmp);
-    },
-
+    
     handleEsckeydown: function(component, event) {
-        component.set("v.visible", false);
+        component.setValue("v.visible", false);
     },
-
+    
     handleKeydown: function(component, event) {
         var keyCode = event.keyCode;
         if (event.keyCode === 39 || event.keyCode === 40) {  // right or down arrow key
@@ -231,7 +206,7 @@
             this.handleTabkeydown(component, event);
         }
     },
-
+    
     handleListHighlight: function(component, event) {
         var activeIndex = -1;
         var iterCmp = component.find("iter");
@@ -248,15 +223,15 @@
             }
             if (activeIndex >= 0 && activeIndex < iters.getLength() && activeIndex != highlightedIndex) {
                 if (highlightedIndex >= 0) {
-                    iters.getValue(highlightedIndex).set("v.highlighted", false);
+                    iters.getValue(highlightedIndex).setValue("v.highlighted", false);
                 }
                 var highlightedCmp = iters.getValue(activeIndex);
-                highlightedCmp.set("v.highlighted", true);
+                highlightedCmp.setValue("v.highlighted", true);
                 this.updateAriaAttributes(component, highlightedCmp);
             }
         }
     },
-
+    
     handlePressOnHighlighted: function(component, event) {
         var iterCmp = component.find("iter");
         if (iterCmp) {
@@ -272,11 +247,11 @@
             }
         }
     },
-
+    
     handleTabkeydown: function(component, event) {
-        component.set("v.visible", false);
+        component.setValue("v.visible", false);
     },
-
+    
     /**
      * Checks if the object is an HTML element.
      * @param {Object} obj
@@ -289,7 +264,7 @@
             return typeof obj === "object" && obj.nodeType === 1 && typeof obj.nodeName==="string";
         }
     },
-
+    
     matchText: function(component) {
         var keyword = component.get("v.keyword");
         var propertyToMatch = component.get("v.propertyToMatch");
@@ -313,12 +288,10 @@
                 items[i].visible = false;
             }
         }
-        component.set("v.items", items);
-        this.fireMatchDoneEvent(component, items);
+        component.setValue("v.items", items);
         this.toggleListVisibility(component, items);
-        this.showLoading(component, false);
     },
-
+    
     toggleListVisibility: function(component, items) {
         var hasVisibleOption = false;
         for (var i = 0; i < items.length; i++) {
@@ -327,9 +300,9 @@
                 break;
             }
         }
-        component.set("v.visible", hasVisibleOption);
+        component.setValue("v.visible", hasVisibleOption);
     },
-
+    
     updateAriaAttributes: function(component, highlightedCmp) {
         var optionCmp = highlightedCmp.find("option");
         var elem = optionCmp ? optionCmp.getElement() : null;

@@ -19,7 +19,7 @@
         var el = searchCmp.getElement();
         if (el) {
             el.value = "";
-            component.set("v.value", "");
+            component.getValue("v.value").setValue("");
             helper.toggleClearButton(component);
         }
         var e = component.getEvent("search");
@@ -28,7 +28,7 @@
         });
         e.fire();
     },
-
+    
     input: function(component, event, helper) {
         helper.toggleClearButton(component);
     }

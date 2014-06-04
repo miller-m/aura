@@ -27,8 +27,7 @@
                                  +"' to be initially represented by a placeholder.");
         }
         waitIds = $A.util.isArray(waitIds) ? waitIds : [waitIds];
-        var id;
-        for(id = 0; id < waitIds.length; id++) {
+        for(var id in waitIds) {
             this.resumeGateId(cmp, waitIds[id]);
         }
         //Wait till all specified facets marked with aura:load are replaced by actual components,

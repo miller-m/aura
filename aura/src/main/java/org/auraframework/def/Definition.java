@@ -26,57 +26,21 @@ import org.auraframework.util.json.JsonSerializable;
 
 /**
  * Define something.
- *
- * Notes to implementors.
- * 
- * Exceptions should not be thrown except where explicitly declared during the validation
- * process. This means that no exceptions should be thrown in a constructor or in
- * {@link #appendDependencies()}. You can use {@link #validateDefinition()} and
- * {@link #validateReferences()} to throw exceptions as a {@link QuickFixException}.
- *
- * Also note that as part of the contract, you may not call any routine intended to get
- * a definition until {@link #validateReferences()}. This includes the constructor,
- * {@link #appendDependencies()} and {@link #validateDefinition()}.
  */
 public interface Definition extends JsonSerializable, Serializable {
 
     /**
-     * First pass validation, validates this definition locally.
-     *
-     * You may not validate any references, or make any calls that would get
-     * a definition from aura. If there are any captured errors from the build
-     * phase, they will be thrown here.
-     *
-     * Also note, you MUST call Definition.validateDefinition() from any overrides.
-     *
-     * @throws QuickFixException if there is a problem with the local definition.
+     * First pass validation, validates this definition locally, without
+     * validating any of its references to other definitions.
      */
     void validateDefinition() throws QuickFixException;
 
     /**
-     * Adds all the descriptors for all definitions this depends on to the set.
-     *
-     * This function MUST append descriptors for any dependencies that will be
-     * fetched in validateReferences(). If they are not appended here, an exception
-     * will be thrown during the compile.
-     *
-     * This is always called before validateReferences.
-     *
-     * @param dependencies the set to which we should append.
-     */
-    void appendDependencies(Set<DefDescriptor<?>> dependencies);
-
-    /**
      * Second pass validation, which validates any references to other
-     * definitions which might not be in the cache yet.
-     *
-     * Any definitions needed can be fetched here, and arbitrary validation
-     * may be performed. Anything referenced here must have been included
-     * in the dependencies above. Note that anything in the dependencies
-     * does not need a recursive call to validateReferences, since the compile
-     * will take care of that.
-     * 
-     * @throws QuickFixException if there is a problem with a reference
+     * definitions which might not be in the cache yet. This method can never
+     * call to the AuraContext, it should get any defs it needs to validate
+     * itself from the passed in registry, which contains both compiling defs
+     * and the cached defs
      */
     void validateReferences() throws QuickFixException;
 
@@ -95,6 +59,11 @@ public interface Definition extends JsonSerializable, Serializable {
     boolean isValid();
 
     /**
+     * Adds all the descriptors for all definitions this depends on to the list
+     */
+    void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException;
+
+    /**
      * @return the name of this definition, not necessarily unique
      */
     String getName();
@@ -104,15 +73,11 @@ public interface Definition extends JsonSerializable, Serializable {
      */
     Location getLocation();
 
-    // Visibility is deprecated: replaced by ACCESS=global/public/private
-    @Deprecated
     public enum Visibility{
         PRIVATE,PUBLIC,INVALID
     };
 
     Visibility getVisibility();
-    
-    DefinitionAccess getAccess(); 
 
     /**
      * Get the descriptor. Note that this _should_ be non-null, but it is not,
@@ -160,7 +125,7 @@ public interface Definition extends JsonSerializable, Serializable {
     String getOwnHash();
 
     /**
-     * Adds supers of this definition to the list.
+     * Adds supers of this definition to the list
      */
     void appendSupers(Set<DefDescriptor<?>> supers) throws QuickFixException;
 }

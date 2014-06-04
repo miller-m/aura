@@ -61,7 +61,9 @@ public class ComponentDefHandler extends BaseComponentDefHandler<ComponentDef> {
     }
 
     @Override
-    protected void handleChildTag() throws XMLStreamException, QuickFixException {
+    protected void handleChildTag() throws XMLStreamException,
+            QuickFixException {
+
         super.handleChildTag();
     }
 
@@ -80,5 +82,4 @@ public class ComponentDefHandler extends BaseComponentDefHandler<ComponentDef> {
             throw new AuraError(x);
         }
     }
-    
 }

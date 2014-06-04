@@ -88,7 +88,7 @@ public class AttributeDefRefImpl extends DefinitionImpl<AttributeDef> implements
     }
 
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
         Object v = this.getValue();
         if (v instanceof Definition) {
             Definition def = (Definition) v;

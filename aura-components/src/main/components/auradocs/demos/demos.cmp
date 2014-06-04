@@ -15,16 +15,6 @@
     limitations under the License.
 
 -->
-<aura:component extends="auradocs:demoPanel">
-    <aura:set attribute="title" value="Aura Demos"/>
-    
-    <p>Here you can find demos of some of Aura's out-of-the-box components.	
-    Start from the sidebar to view the demos.</p>
-    <p>For a full list of components, see the <ui:outputURL value="/auradocs#reference" label="component reference"/>.</p>
-    <p>Demos for Aura Note and TodoMVC app are available on GitHub.
-    <ul>
-    <li><ui:outputURL value="https://github.com/forcedotcom/aura-todomvc" label="Aura TodoMVC app"/></li>
-    <li><ui:outputURL value="https://github.com/forcedotcom/aura-note" label="Aura Note"/></li>
-    </ul>
-    </p>
+<aura:component>
+    TODO: aurawww:demos
 </aura:component>

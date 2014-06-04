@@ -37,15 +37,6 @@ var AuraStorage = function AuraStorage(config) {
     	this.adapter.clear();
     }
     
-    // work around the obfuscation logic to allow external Adapters to properly plug in
-    this.adapter.clear = this.adapter.clear || this.adapter["clear"];
-    this.adapter.getExpired = this.adapter.getExpired || this.adapter["getExpired"];
-    this.adapter.getItem = this.adapter.getItem || this.adapter["getItem"];
-    this.adapter.getName = this.adapter.getName || this.adapter["getName"];
-    this.adapter.getSize = this.adapter.getSize || this.adapter["getSize"];
-    this.adapter.removeItem = this.adapter.removeItem || this.adapter["removeItem"];
-    this.adapter.setItem = this.adapter.setItem || this.adapter["setItem"];  
-    
     //#if {"excludeModes" : ["PRODUCTION", "PRODUCTIONDEBUG"]}
     	this.adapter["getItem"] = this.adapter.getItem;
     	this["adapter"] = this.adapter;
@@ -53,8 +44,8 @@ var AuraStorage = function AuraStorage(config) {
 };
 
 /**
- * Returns the name of the storage type. For example, "smartStore", "websql", or "memory".
- * @returns {String} The storage type.
+ * Returns the storage name. 
+ * @returns {String} The storage name.
  */
 AuraStorage.prototype.getName = function() {
 	return this.adapter.getName();
@@ -94,26 +85,24 @@ AuraStorage.prototype.clear = function() {
 /**
  * Gets an item from storage corresponding to the specified key.
  * <p>See Also: <a href="#help?topic=auraStorageService">Aura Storage Service</a></p>
- * @param {String} key The item key. This is the key used when the item was added to storage using put().
- * @param {Function} resultCallback The function that will be called asynchronously with the item that was fetched from the storage as its parameter.
+ * @param {String} key The item key. This is the key used when the item was added to storage using put(). 
  * @returns {Object} An item from storage.
  */
 AuraStorage.prototype.get = function(key, resultCallback) {
-    this.sweep();
+	this.sweep();
 
-    // This needs to also be asynchronous (callback) based to map to IndexedDB, WebSQL, SmartStore that are all async worlds
-    var that = this;
-    this.adapter.getItem(key, function(item) {
-        var value, isExpired;
-        if (item && item.value) {
-            value = item.value;
-            isExpired = (new Date().getTime() > item.expires);
-            
-            that.log("AuraStorage.get(): using action found in " + that.getName() + " storage", [key, item]);
-        }
-    
-        resultCallback(value, isExpired);
-    });
+	// This needs to also be asynchronous (callback) based to map to IndexedDB, WebSQL, SmartStore that are all async worlds
+	var that = this;
+	this.adapter.getItem(key, function(item) {
+		var value;
+		if (item && item.value) {
+			value = item.value;
+			
+			that.log("AuraStorage.get(): using action found in " + that.getName() + " storage", [key, item]);
+		}
+	
+		resultCallback(value);
+	});
 };
 
 /**
@@ -159,7 +148,7 @@ AuraStorage.prototype.sweep = function() {
 	if (!this._sweepingSuspended) {
 		// Check simple expirations
 		var removedSomething;
-		// var now = new Date().getTime();
+		var now = new Date().getTime();
 		var that = this;
 		this.adapter.getExpired(function(expired) {
 			for (var n = 0; n < expired.length; n++) {
@@ -178,7 +167,7 @@ AuraStorage.prototype.sweep = function() {
 };
 
 /**
- * Suspends sweeping. The storage adapter is removed if it is expired but sweeping can be suspended if the connection goes offline.
+ * Suspends sweeping. The storage adapter is removed if it is expired but sweeping can be suspended if the connection is lost.
  */
 AuraStorage.prototype.suspendSweeping = function() {
 	this.log("AuraStorage.suspendSweeping()");
@@ -201,7 +190,7 @@ AuraStorage.prototype.resumeSweeping = function() {
  */
 AuraStorage.prototype.log = function() {
 	if (this.debugLoggingEnabled) {
-		$A.logInternal(arguments[0], arguments.length > 1 ? arguments[1] : undefined);
+		$A.log(arguments[0], arguments.length > 1 ? arguments[1] : undefined);
 	}
 };
 

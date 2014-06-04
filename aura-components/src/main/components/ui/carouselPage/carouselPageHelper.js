@@ -14,109 +14,95 @@
  * limitations under the License.
  */
 
-({
+{
 	updateSize: function(cmp, width, height) {
-		var w=width || cmp.get('v.priv_width'),
-			h=height || cmp.get('v.priv_height'),
-			el = cmp.getElement();
+		var width = width || cmp.get('v.priv_width'),
+			height = height || cmp.get('v.priv_height');			
+		
+		var style = [width ? ('width:' + width + 'px;') : '', height ? ('height:' + height + 'px;') : ''].join('');
 
-		if (!el) {
-			if ($A.util.isNumber(w)) {
-				cmp.set('v.priv_width', w);
-			}
-
-			if ($A.util.isNumber(h)) {
-				cmp.set('v.priv_height', h);
-			}
-
-			return;
-		}
-
-		if ($A.util.isNumber(w)) {
-			el.style.width = w + 'px';
-		}
-		if ($A.util.isNumber(h)) {
-			el.style.height = h + 'px';
+		if (style.length > 0) {
+			cmp.getValue('v.priv_pageStyle').setValue(style);
 		}
 	},
-
-	selectPage: function(cmp, evt) {
+	
+	selectPage: function(cmp, evt) {		
 		var selectedPage = evt.getParam('pageIndex'),
 			curPage = cmp.get('v.pageIndex'),
-			selectedItemCss = 'carousel-page-selected';
-
-		if (selectedPage === curPage) {
-			cmp.set('v.isSelected', true);
+			selectedItemCss = 'carousel-page-selected',
+			hiddenCssClass = 'hidden';
+				    
+		if (selectedPage == curPage) {
+			var isCacheable = cmp.get('v.isCacheable');
+				parent = cmp.get('v.parent'),
+				pageModel = cmp.get('v.pageModel');
+				
+			cmp.getValue('v.isSelected').setValue(true);
+			cmp.getValue("v.priv_ariaExpanded").setValue(true);
 			$A.util.addClass(cmp.getElement(), selectedItemCss);
-			this.showPage(cmp, selectedPage);
+			$A.util.removeClass(cmp.getElement(), hiddenCssClass);
+							
+			var e = parent[0].get('e.loadPage');    			
+			e.setParams({pageModel: pageModel, pageIndex: curPage});    			
+			e.fire();			
 		} else {
-			cmp.set('v.isSelected', false);
+			cmp.getValue('v.isSelected').setValue(false);
+			cmp.getValue("v.priv_ariaExpanded").setValue(false);
 			$A.util.removeClass(cmp.getElement(), selectedItemCss);
 		}
 	},
-
+	
 	/**
 	 * Update page content
 	 */
-	updatePage: function(cmp, pageBody) {
-		var pageContainer = cmp.find('pageContainer').getValue('v.body');
-
-		if (!pageContainer.isEmpty()) {
-			pageContainer.destroy(true);
-        }
-
-		if (pageBody) {
-			pageContainer.setValue(pageBody);
+	updatePage: function(cmp, evt) {
+		var pageCmp = evt.getParam("pageComponent");
+		if (pageCmp) {
+			var pageContainer = cmp.find('pageContainer').getValue('v.body');
+			if (!pageContainer.isEmpty()) {
+				pageContainer.destroy();
+	        }
+			pageContainer.setValue(pageCmp);
 		}
 	},
-
+	
 	/**
-	 * Set page is visible or not when displayed
+	 * Set page is visible or not when displayed 
 	 */
 	setVisibility: function(cmp) {
 		var isVisible = cmp.get('v.priv_visible'),
 			strClass = cmp.get('v.class') || '';
 
-		if (!isVisible) {
-			cmp.set('v.class', strClass + ' hidden');
+		if (!isVisible) {			
+			cmp.getValue('v.class').setValue(strClass + ' hidden');
 		}
-
-		if (!cmp.get('v.priv_continuousFlow')) {
-			var snap = cmp.get('v.priv_snap');
+		
+		if (cmp.get('v.priv_continuousFlow')) {								
+			cmp.getValue('v.priv_ariaExpanded').setValue(true);		 
+		} else {
+			var snap = cmp.get('v.priv_snap');			
 			if (snap && snap.indexOf('.') != -1) {
-				cmp.set('v.priv_snap', snap.substring(snap.indexOf('.') + 1));
+				cmp.getValue('v.priv_snap').setValue(snap.substring(snap.indexOf('.') + 1));
 			}
 		}
 	},
-
+	
 	showPage: function(cmp, pageIndex) {
-		var curPage = cmp.get('v.pageIndex'),
-			isVisible = $A.util.getBooleanValue(cmp.get('v.priv_visible')),
+		var curPage = cmp.get('v.pageIndex'),			
 			hiddenClass = 'hidden';
-
-		if (pageIndex == curPage && !isVisible) {
-			$A.util.removeClass(cmp.getElement(), hiddenClass);
-			cmp.getElement().setAttribute('aria-expanded', 'true');
-			cmp.set('v.priv_visible', true);
-		}
+			
+		if (pageIndex == curPage) {
+			$A.util.removeClass(cmp.getElement(), hiddenClass);			
+		}		
 	},
-
+	
 	hidePage: function(cmp, pageIndex) {
-
-		var curPage = cmp.get('v.pageIndex'),
-			isVisible = $A.util.getBooleanValue(cmp.get('v.priv_visible')),
+		
+		var curPage = cmp.get('v.pageIndex'),			
 			hiddenClass = 'hidden';
-
-		if (pageIndex == curPage && isVisible) {
+		
+		if (pageIndex == curPage) {			
 			$A.util.addClass(cmp.getElement(), hiddenClass);
-			cmp.getElement().setAttribute('aria-expanded', 'false');
-			cmp.set('v.priv_visible', false);
-		}
-	},
-
-	setDefaultAttributes: function(cmp) {
-		if (!cmp.get('v.priv_continuousFlow')) {
-			cmp.getElement().setAttribute('aria-expanded', 'false');
 		}
 	}
-})
+}

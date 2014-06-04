@@ -15,11 +15,9 @@
  */
 package org.auraframework.system;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.auraframework.def.ClientLibraryDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.Definition;
 import org.auraframework.def.DescriptorFilter;
@@ -36,6 +34,9 @@ import org.auraframework.throwable.quickfix.QuickFixException;
  * The GUID referenced here is a globally unique ID for the top level definition
  * passed in. This ID is used to ensure that the client version matches the
  * local version.
+ *
+ * TODO: To handle global invalidates (e.g. a filesystem watcher or DB update watcher),
+ * there will be a callback mechanism that clears out the global cache.
  */
 public interface MasterDefRegistry {
     /**
@@ -101,14 +102,9 @@ public interface MasterDefRegistry {
     boolean namespaceExists(String ns);
 
     /**
-     * assert that the referencingDescriptor has access to the definition.
+     * assert that we have access to the definition given by a descriptor.
      */
-    <D extends Definition> void assertAccess(DefDescriptor<?> referencingDescriptor, D def) throws QuickFixException;
-    
-    /**
-     * Returns null if the referencingDescriptor has access to the definition otherwise a specific access violation reason.
-     */
-    <D extends Definition> String hasAccess(DefDescriptor<?> referencingDescriptor, D def);    
+    void assertAccess(DefDescriptor<?> desc) throws QuickFixException;
 
     /**
      * Filter our loaded set of dependencies on the preloads.
@@ -153,17 +149,21 @@ public interface MasterDefRegistry {
      * 
      * @param uid the UID for the definition (must have called {@link #getUid(String, DefDescriptor<?>)}).
      */
-    long getLastMod(String uid);
+    <T extends Definition> long getLastMod(String uid);
 
     /**
      * Get the dependencies for a descriptor.
-     *
-     * This set is guaranteed to be in order of 'use' in that a component should come before
-     * all components that use it or depend on it.
      * 
      * @param uid the UID for the definition (must have called {@link #getUid(String, DefDescriptor<?>)}).
      */
-    Set<DefDescriptor<?>> getDependencies(String uid);
+    <T extends Definition> Set<DefDescriptor<?>> getDependencies(String uid);
+
+    /**
+     * Get the dependencies map for an UID.
+     *
+     * @param uid the UID for the definition (must have called {@link #getUid(String, DefDescriptor<?>)}).
+     */
+    <T extends Definition> Map<DefDescriptor<?>, Integer> getDependenciesMap(String uid);
 
     /**
      * Get a named string from the cache for a def.
@@ -172,7 +172,7 @@ public interface MasterDefRegistry {
      * @param descriptor the descriptor.
      * @param key the key.
      */
-    String getCachedString(String uid, DefDescriptor<?> descriptor, String key);
+    <T extends Definition> String getCachedString(String uid, DefDescriptor<?> descriptor, String key);
 
     /**
      * Put a named string in the cache for a def.
@@ -182,13 +182,5 @@ public interface MasterDefRegistry {
      * @param key the key (must be unique).
      * @param key the value to store.
      */
-    void putCachedString(String uid, DefDescriptor<?> descriptor, String key, String value);
-
-    /**
-     * Returns list of client libraries for given uid
-     *
-     * @param uid uid of app or cmp
-     * @return list of client libraries for uid
-     */
-    List<ClientLibraryDef> getClientLibraries(String uid);
+    <T extends Definition> void putCachedString(String uid, DefDescriptor<?> descriptor, String key, String value);
 }

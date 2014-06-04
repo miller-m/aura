@@ -22,11 +22,47 @@ var AuraLayoutService = function(){
 
     //#include aura.AuraLayoutService_private
 
+    var skipLocationChangeHandlerSemaphore = 0;
+    var markName = "";
+
     var layoutService = {
+        // Call this method to make use of the layoutHandler override and pass in params that override the existing URL params
+            /**
+             * Changes the location with new URL and parameters. <p>Example:</p>
+             * <code>$A.layoutService.changeLocation(location, {<br />
+             * &nbsp;&nbsp;renderAll : false<br />
+             * });</code>
+             * @param {Object} newLocation The new location set to the hash of the URL
+             * @param {Object} overrideParams The parameters that override the existing URL parameters
+             * @memberOf AuraLayoutService
+             * @public
+             */
+        changeLocation : function(newLocation, overrideParams) {
+            var newHash = '#' + newLocation;
+            if (!window.location || !window.location.hash || (newHash != window.location.hash)) {
+                // The hash is changing so handleLocationChange will be called. Tell it to short-circuit.
+                skipLocationChangeHandlerSemaphore++;
+            }
+
+            window.location = newHash;
+
+            overrideParams = overrideParams || {};
+            overrideParams["token"] = newLocation;
+
+            if (!overrideParams || !overrideParams["noLayout"]) {
+                layoutService.layout(newLocation, overrideParams);
+            }
+        },
+
         /**
          * @private
          */
         handleLocationChange : function(event){
+            if (skipLocationChangeHandlerSemaphore > 0) {
+                skipLocationChangeHandlerSemaphore--;
+                return;
+            }
+
             //Always having a hash means that the page won't reload when we go back this point.
             if(window.location.toString()["indexOf"]("#") == -1){
                 window.location.replace(window.location + "#");
@@ -40,14 +76,14 @@ var AuraLayoutService = function(){
             }
 
             // The presence of a semaphore in here makes me think a class-level markName might cause trouble, but...
-            $A.Perf.mark("LayoutService.handleLocationChange (" + token + ")");
-            $A.Perf.mark("Container Action Callback Initiated");
-          //  $A.Perf.mark("Container Action Callback Initiated: " + item.getContainer());
-            //$A.Perf.mark("Giving control to aura:layoutHandler (" + layoutHandler.toString() + ")");
-            $A.Perf.mark("Giving control to aura:layoutHandler");
-            $A.Perf.mark("Layout Actions Callback Complete");
-           // $A.Perf.mark("Container Layout Complete: "+ layoutItem.getContainer());
-            $A.Perf.mark("Container Layout Complete");
+            $A.mark("LayoutService.handleLocationChange (" + token + ")");
+            $A.mark("Container Action Callback Initiated");
+          //  $A.mark("Container Action Callback Initiated: " + item.getContainer());
+            //$A.mark("Giving control to aura:layoutHandler (" + layoutHandler.toString() + ")");
+            $A.mark("Giving control to aura:layoutHandler");
+            $A.mark("Layout Actions Callback Complete");
+           // $A.mark("Container Layout Complete: "+ layoutItem.getContainer());
+            $A.mark("Container Layout Complete");
 
             var curr = priv.peek();
 
@@ -64,7 +100,7 @@ var AuraLayoutService = function(){
                     // The params are the same - we're already where we need to be.
                     $A.finishInit();
                     priv.fireOnload();
-                    $A.Perf.endMark("LayoutService.handleLocationChange (" + token + ")");
+                    $A.endMark("LayoutService.handleLocationChange (" + token + ")");
                     return;
                 }
             }
@@ -92,6 +128,9 @@ var AuraLayoutService = function(){
             if (priv.history.length > 1) {
                 this.pop();
                 this.refreshLayout();
+                // We've just handled the re-layout. Update the history but
+                // don't double-layout.
+                skipLocationChangeHandlerSemaphore++;
                 historyService.back();
             }else{
                 historyService.set(priv.layouts.getDefault().getName());
@@ -155,8 +194,8 @@ var AuraLayoutService = function(){
                             }
 
                             action.setCallback(this, function(a){
-                                //$A.Perf.endMark("Container Action Callback Initiated: " + item.getContainer());
-                                $A.Perf.endMark("Container Action Callback Initiated");
+                                //$A.endMark("Container Action Callback Initiated: " + item.getContainer());
+                                $A.endMark("Container Action Callback Initiated");
                                 if (a.getState() === "SUCCESS") {
                                     var ret = a.getReturnValue();
                                     layoutService.layoutCallback(ret ? componentService.newComponentDeprecated(ret, null, false, true) : null, item, layout, params, noTrack);
@@ -189,8 +228,8 @@ var AuraLayoutService = function(){
                                 "defaultAction": defaultAction
                             });
 
-                            //$A.Perf.endMark("Giving control to aura:layoutHandler (" + layoutHandler.toString() + ")");
-                            $A.Perf.endMark("Giving control to aura:layoutHandler");
+                            //$A.endMark("Giving control to aura:layoutHandler (" + layoutHandler.toString() + ")");
+                            $A.endMark("Giving control to aura:layoutHandler");
 
                             event.fire();
                         } else {
@@ -216,7 +255,7 @@ var AuraLayoutService = function(){
                     if(!msg["errors"] || msg["errors"].length === 0) {
                         priv.fireLayoutChangeEvent();
                     }
-                    $A.Perf.endMark("Layout Actions Callback Complete");
+                    $A.endMark("Layout Actions Callback Complete");
 
                     $A.finishInit();
                     priv.fireOnload();
@@ -264,8 +303,8 @@ var AuraLayoutService = function(){
                 defaultAction();
             }
 
-            //$A.Perf.endMark("Container Layout Complete: "+ layoutItem.getContainer());
-            $A.Perf.endMark("Container Layout Complete");
+            //$A.endMark("Container Layout Complete: "+ layoutItem.getContainer());
+            $A.endMark("Container Layout Complete");
         },
 
         /**

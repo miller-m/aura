@@ -40,7 +40,6 @@ public class ResourceJavascriptSourceLoader extends ResourceSourceLoader {
         extensions.put(DefType.PROVIDER, "Provider.js");
         extensions.put(DefType.HELPER, "Helper.js");
         extensions.put(DefType.MODEL, "Model.js");
-        extensions.put(DefType.RESOURCE, "Resource.js");
     }
 
     public ResourceJavascriptSourceLoader(String basePackage) {
@@ -64,10 +63,5 @@ public class ResourceJavascriptSourceLoader extends ResourceSourceLoader {
     @Override
     public Set<String> getPrefixes() {
         return PREFIXES;
-    }
-
-    @Override
-    public Set<DefType> getDefTypes() {
-        return extensions.keySet();
     }
 }

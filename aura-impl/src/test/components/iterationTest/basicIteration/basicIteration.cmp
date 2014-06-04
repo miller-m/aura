@@ -29,5 +29,4 @@
             {!idx + ':' + var + ','}
         </aura:iteration>
     </aura:renderIf>
-
 </aura:component>

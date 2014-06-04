@@ -16,11 +16,10 @@
 package org.auraframework.archetype;
 
 import com.google.common.collect.ImmutableList;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
-import org.auraframework.test.AuraHttpTestCase;
+import org.auraframework.test.IntegrationTestCase;
 import org.auraframework.test.annotation.UnAdaptableTest;
 import org.auraframework.util.IOUtil;
 
@@ -43,7 +42,7 @@ import java.util.List;
  * @since 0.0.178
  */
 @UnAdaptableTest
-public class AuraArchetypeSimpleTestMANUAL extends AuraHttpTestCase {
+public class AuraArchetypeSimpleTestMANUAL extends IntegrationTestCase {
     private static class MavenArtifact {
         private final String artifactId;
         private final String groupId;
@@ -58,8 +57,8 @@ public class AuraArchetypeSimpleTestMANUAL extends AuraHttpTestCase {
 
     private final static String ARCHETYPE_VERSION = "1.2.001";
     private final static String END_BUILD = "BUILD SUCCESS";
-    private final static String archRepo = "http://repo.auraframework.org/repo";
-    private final static String archCatalog = "http://repo.auraframework.org/libs-release-local/archetype-catalog.xml";
+    private final static String archRepo = "http://maven.auraframework.org/repo";
+    private final static String archCatalog = "http://maven.auraframework.org/libs-release-local/archetype-catalog.xml";
     private final MavenArtifact archetype;
     private final MavenArtifact project;
     private final String projectPackage;

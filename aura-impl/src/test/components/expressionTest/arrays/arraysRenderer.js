@@ -15,7 +15,7 @@
  */
 ({
     render : function(cmp, helper){
-        cmp.set("v.arrayAsObject", ["red","green","blue"]);
+        cmp.getAttributes().setValue("arrayAsObject", ["red","green","blue"]);
         return this.superRender();
     }
 })

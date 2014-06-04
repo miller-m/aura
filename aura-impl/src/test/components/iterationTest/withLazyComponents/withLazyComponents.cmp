@@ -34,5 +34,4 @@
             <aura:expression value="{!var}" aura:id="lazyWithAttributes" aura:load="lazy"/>
         </aura:iteration>
     </aura:if>
-
 </aura:component>

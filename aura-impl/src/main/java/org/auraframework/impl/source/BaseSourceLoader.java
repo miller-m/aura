@@ -19,15 +19,17 @@ import java.util.EnumMap;
 import java.util.Set;
 
 import org.auraframework.Aura;
-import org.auraframework.def.*;
+import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
+import org.auraframework.def.Definition;
 import org.auraframework.system.SourceLoader;
 import org.auraframework.util.AuraTextUtil;
 
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Abstract superclass to {@link SourceLoader} implementations, providing common descriptor and filename utilities.
+ * Abstract superclass to {@link SourceLoader} implementations, providing common
+ * descriptor and filename utilities.ß
  */
 public abstract class BaseSourceLoader implements SourceLoader {
 
@@ -43,9 +45,7 @@ public abstract class BaseSourceLoader implements SourceLoader {
         extensions.put(DefType.STYLE, ".css");
         extensions.put(DefType.LAYOUTS, "Layouts.xml");
         extensions.put(DefType.NAMESPACE, ".xml");
-        extensions.put(DefType.THEME, ".theme");
         extensions.put(DefType.TESTSUITE, "Test.js");
-        extensions.put(DefType.DOCUMENTATION, ".auradoc");
     }
 
     protected String getPath(DefDescriptor<?> descriptor) {

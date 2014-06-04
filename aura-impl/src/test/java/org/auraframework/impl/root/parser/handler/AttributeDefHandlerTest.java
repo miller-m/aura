@@ -24,11 +24,11 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.auraframework.Aura;
 import org.auraframework.def.AttributeDef;
-import org.auraframework.def.AttributeDef.SerializeToType;
 import org.auraframework.def.AttributeDefRef;
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.ComponentDefRef;
 import org.auraframework.def.DefDescriptor;
+import org.auraframework.def.AttributeDef.SerializeToType;
 import org.auraframework.def.Definition.Visibility;
 import org.auraframework.expression.PropertyReference;
 import org.auraframework.impl.AuraImplTestCase;
@@ -103,19 +103,29 @@ public class AttributeDefHandlerTest extends AuraImplTestCase {
     }
 
     public void testInvalidSystemAttributeName() throws Exception {
+        StringSource<AttributeDef> attributeSource = new StringSource<AttributeDef>(desc,
+                "<aura:attribute foo='bar' name='mystring' type='java://String' default='{!blah.some.expression}'/>",
+                "myID", Format.XML);
+        XMLStreamReader attributeXmlReader = getXmlReader(attributeSource);
+
         try {
-            getElement("<aura:attribute foo='bar' name='mystring' type='java://String' default='{!blah.some.expression}'/>");
+            new AttributeDefHandler<ComponentDef>(cdh, attributeXmlReader, attributeSource);
             fail("Expected InvalidSystemAttributeException to be thrown");
-        } catch (Exception t) {
+        } catch (Throwable t) {
             assertExceptionMessageEndsWith(t, InvalidSystemAttributeException.class, "Invalid attribute \"foo\"");
         }
     }
 
     public void testInvalidSystemAttributePrefix() throws Exception {
+        StringSource<AttributeDef> attributeSource = new StringSource<AttributeDef>(desc,
+                "<aura:attribute name='mystring' type='java://String' other:default='{!blah.some.expression}'/>",
+                "myID", Format.XML);
+        XMLStreamReader attributeXmlReader = getXmlReader(attributeSource);
+
         try {
-            getElement("<aura:attribute name='mystring' type='java://String' other:default='{!blah.some.expression}'/>");
+            new AttributeDefHandler<ComponentDef>(cdh, attributeXmlReader, attributeSource);
             fail("Expected InvalidSystemAttributeException to be thrown");
-        } catch (Exception t) {
+        } catch (Throwable t) {
             assertExceptionMessageEndsWith(t, InvalidSystemAttributeException.class,
                     "Invalid attribute \"other:default\"");
         }
@@ -167,7 +177,7 @@ public class AttributeDefHandlerTest extends AuraImplTestCase {
             ad.getTypeDef();
             fail("Expected Exception to be thrown when attribute is a non-existent java type");
         } catch (Throwable t) {
-            assertExceptionMessage(t, DefinitionNotFoundException.class, "No TYPE named java://invalid found");
+            assertExceptionMessage(t, AuraRuntimeException.class, "java.lang.ClassNotFoundException: invalid");
         }
     }
 

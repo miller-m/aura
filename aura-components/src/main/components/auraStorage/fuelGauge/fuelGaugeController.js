@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
+{
     update : function(cmp, event, helper){
     	helper.update(cmp);
-    },
-    
-    showStats : function(cmp, event, helper){
-    	alert("Storage name: " + cmp.get("v.storageName") + "\nImplementation: " + cmp.get("v.implementation"));
     }
-})
+}

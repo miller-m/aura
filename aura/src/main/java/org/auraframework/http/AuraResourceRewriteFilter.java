@@ -36,26 +36,19 @@ import org.auraframework.util.AuraTextUtil;
 
 public class AuraResourceRewriteFilter implements Filter {
 
-    public static final String FORMAT_PARAM = "aura.format";
-    public static final String CONTEXT_PARAM = "aura.context";
-    public static final String TYPE_PARAM = "aura.type";
-
     private ServletContext servletContext;
 
-    private static final String uriPattern = "/auraResource?%s=%s&%s=%s&%s=%s";
+    private static final String uriPattern = "/auraResource?aura.format=%s&aura.context=%s";
 
-    private static final Pattern pattern = Pattern.compile("^/l/([^/]*)/(app|resources).?(.*)$");
+    private static final Pattern pattern = Pattern.compile("^/l/([^/]*)/app.?(.*)$");
 
     @Override
     public void destroy() {
 
     }
 
-    private static String createURI(String context, String format, String type) {
-        return String.format(uriPattern,
-                FORMAT_PARAM, format,
-                CONTEXT_PARAM, AuraTextUtil.urldecode(context),
-                TYPE_PARAM, type);
+    private static String createURI(String context, String format) {
+        return String.format(uriPattern, format, AuraTextUtil.urldecode(context));
     }
 
     @Override
@@ -69,7 +62,7 @@ public class AuraResourceRewriteFilter implements Filter {
         String newUri = null;
         Matcher matcher = pattern.matcher(path);
         if (matcher.matches()) {
-            newUri = createURI(matcher.group(1), matcher.group(3), matcher.group(2));
+            newUri = createURI(matcher.group(1), matcher.group(2));
             // Sometimes original request URI can be useful: Eg: manifast in
             // AuraResourceServlet
             request.setAttribute(AuraResourceServlet.ORIG_REQUEST_URI,

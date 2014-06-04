@@ -21,16 +21,8 @@
         var outputCmp = component.find("span");
         var elem = outputCmp ? outputCmp.getElement() : null;
         if (elem) {
-            elem.textContent = elem.innerText = $A.localizationService.translateToLocalizedDigits(displayValue);
+            elem.textContent = elem.innerText = displayValue;
         }
-    },
-    
-    getFormat: function(component) {
-        return component.get("v.format");
-    },
-
-    getTimeZone: function(component) {
-        return component.get("v.timezone");
     },
     
     formatDateTime: function(component) {
@@ -42,13 +34,12 @@
             return;
         }
         
-        var format = _helper.getFormat(concreteCmp);
+        var format = concreteCmp.get("v.format");;
         var langLocale = concreteCmp.get("v.langLocale");
-        var d = $A.localizationService.parseDateTimeISO8601(value);
-        var timezone = _helper.getTimeZone(concreteCmp);
+        var d = new Date(value);
+        var timezone = concreteCmp.get("v.timezone");
         $A.localizationService.UTCToWallTime(d, timezone, function(walltime) {
             try {
-                walltime = $A.localizationService.translateToOtherCalendar(walltime);
                 var displayValue = $A.localizationService.formatDateTimeUTC(walltime, format, langLocale);
                 _helper.displayDateTime(concreteCmp, displayValue);
             } catch (e) {

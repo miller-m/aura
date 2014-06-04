@@ -22,6 +22,9 @@ import org.auraframework.system.Annotations.Provider;
 
 /**
  * An interface provider used for testing.
+ * 
+ * 
+ * @since 0.0.263
  */
 @Provider
 public class TestProviderThrowsDuringProvide implements ComponentDescriptorProvider {
@@ -30,5 +33,4 @@ public class TestProviderThrowsDuringProvide implements ComponentDescriptorProvi
     public DefDescriptor<ComponentDef> provide() {
         throw new RuntimeException("out of stock");
     }
-
 }

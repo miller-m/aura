@@ -16,7 +16,13 @@
 package org.auraframework.impl.java.model;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.auraframework.Aura;
 import org.auraframework.def.ComponentDef;
@@ -96,7 +102,7 @@ public class TestModelWithAuraTypeAnnotation {
     @AuraEnabled
     @Type("aura://Set<String>")
     public Set<String> getStringSet() {
-        return new HashSet<String>();
+        return new TreeSet<String>();
     }
 
     // Array of basic data type
@@ -119,7 +125,7 @@ public class TestModelWithAuraTypeAnnotation {
     @Type("aura://Set<Map>")
     public Set<Map<String, String>> getSetOfMaps() {
         Map<String, String> m = new HashMap<String, String>();
-        Set<Map<String, String>> s = new HashSet<Map<String, String>>();
+        Set<Map<String, String>> s = new TreeSet<Map<String, String>>();
         s.add(m);
         return s;
     }
@@ -137,7 +143,7 @@ public class TestModelWithAuraTypeAnnotation {
     @Type("aura://Set<List>")
     public Set<List<String>> getSetOfList() {
         List<String> l = new ArrayList<String>();
-        Set<List<String>> s = new HashSet<List<String>>();
+        Set<List<String>> s = new TreeSet<List<String>>();
         s.add(l);
         return s;
     }
@@ -145,7 +151,7 @@ public class TestModelWithAuraTypeAnnotation {
     @AuraEnabled
     @Type("aura://List<Set>")
     public List<Set<String>> getListOfSet() {
-        Set<String> s = new HashSet<String>();
+        Set<String> s = new TreeSet<String>();
         List<Set<String>> l = new ArrayList<Set<String>>();
         l.add(s);
         return l;
@@ -154,8 +160,8 @@ public class TestModelWithAuraTypeAnnotation {
     @AuraEnabled
     @Type("aura://Set<Set>")
     public Set<Set<String>> getSetOfSet() {
-        Set<String> s = new HashSet<String>();
-        Set<Set<String>> ss = new HashSet<Set<String>>();
+        Set<String> s = new TreeSet<String>();
+        Set<Set<String>> ss = new TreeSet<Set<String>>();
         ss.add(s);
         return ss;
     }

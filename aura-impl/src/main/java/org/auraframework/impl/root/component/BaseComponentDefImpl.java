@@ -33,7 +33,6 @@ import org.auraframework.builder.BaseComponentDefBuilder;
 import org.auraframework.def.AttributeDef;
 import org.auraframework.def.AttributeDefRef;
 import org.auraframework.def.BaseComponentDef;
-import org.auraframework.def.ClientLibraryDef;
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.ControllerDef;
 import org.auraframework.def.DefDescriptor;
@@ -47,11 +46,9 @@ import org.auraframework.def.ModelDef;
 import org.auraframework.def.ProviderDef;
 import org.auraframework.def.RegisterEventDef;
 import org.auraframework.def.RendererDef;
-import org.auraframework.def.ResourceDef;
 import org.auraframework.def.RootDefinition;
 import org.auraframework.def.StyleDef;
 import org.auraframework.def.TestSuiteDef;
-import org.auraframework.def.ThemeDef;
 import org.auraframework.expression.PropertyReference;
 import org.auraframework.impl.root.AttributeDefRefImpl;
 import org.auraframework.impl.root.RootDefinitionImpl;
@@ -61,7 +58,6 @@ import org.auraframework.impl.util.AuraUtil;
 import org.auraframework.instance.GlobalValueProvider;
 import org.auraframework.instance.ValueProviderType;
 import org.auraframework.system.AuraContext;
-import org.auraframework.system.MasterDefRegistry;
 import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.throwable.AuraUnhandledException;
 import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
@@ -90,9 +86,7 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
     private final DefDescriptor<StyleDef> styleDescriptor;
     private final List<DefDescriptor<RendererDef>> rendererDescriptors;
     private final List<DefDescriptor<HelperDef>> helperDescriptors;
-    private final List<DefDescriptor<ResourceDef>> resourceDescriptors;
     private final DefDescriptor<ControllerDef> compoundControllerDescriptor;
-    private final DefDescriptor<ThemeDef> localThemeDescriptor;
 
     private final Set<DefDescriptor<InterfaceDef>> interfaces;
     private final List<DefDescriptor<ControllerDef>> controllerDescriptors;
@@ -106,7 +100,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
     private final WhitespaceBehavior whitespaceBehavior;
 
     private final List<DependencyDef> dependencies;
-    private final List<ClientLibraryDef> clientLibraries;
 
     private final int hashCode;
 
@@ -134,28 +127,27 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         this.styleDescriptor = builder.styleDescriptor;
         this.rendererDescriptors = builder.rendererDescriptors;
         this.helperDescriptors = builder.helperDescriptors;
-        this.resourceDescriptors = builder.resourceDescriptors;
         this.isAbstract = builder.isAbstract;
         this.isExtensible = builder.isExtensible;
         this.isTemplate = builder.isTemplate;
         this.testSuiteDefDescriptor = builder.testSuiteDefDescriptor;
         this.facets = AuraUtil.immutableList(builder.facets);
         this.dependencies = AuraUtil.immutableList(builder.dependencies);
-        this.clientLibraries = AuraUtil.immutableList(builder.clientLibraries);
-        this.render = builder.renderType;
+
+        String renderName = builder.render;
+        if (renderName == null) {
+            this.render = RenderType.AUTO;
+        } else {
+            this.render = RenderType.valueOf(renderName.toUpperCase());
+        }
+
         this.whitespaceBehavior = builder.whitespaceBehavior;
-        this.localThemeDescriptor = builder.localThemeDescriptor;
 
         this.expressionRefs = AuraUtil.immutableSet(builder.expressionRefs);
-        if (getDescriptor() != null) { 
-            this.compoundControllerDescriptor = DefDescriptorImpl.getAssociateDescriptor(getDescriptor(),
-                    ControllerDef.class, DefDescriptor.COMPOUND_PREFIX);
-        } else {
-            this.compoundControllerDescriptor = null;
-        }
+        this.compoundControllerDescriptor = DefDescriptorImpl.getAssociateDescriptor(getDescriptor(),
+                ControllerDef.class, DefDescriptor.COMPOUND_PREFIX);
         this.hashCode = AuraUtil.hashCode(super.hashCode(), events, controllerDescriptors, modelDefDescriptor,
-                extendsDescriptor, interfaces, rendererDescriptors, helperDescriptors, resourceDescriptors,
-                localThemeDescriptor);
+                extendsDescriptor, interfaces, rendererDescriptors, helperDescriptors);
     }
 
     /**
@@ -212,11 +204,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                         getLocation());
             }
         }
-
-        // validate all client libraries
-        for (ClientLibraryDef def : this.clientLibraries) {
-            def.validateDefinition();
-        }
     }
 
     @Override
@@ -249,8 +236,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             return;
         }
 
-        // TODONM should themeDescriptor be added here?(but in app def impl not here)
-
         if (providerDescriptors != null) {
             boolean hasRemote = providerDescriptors.isEmpty();
             for (DefDescriptor<ProviderDef> providerDescriptor : providerDescriptors) {
@@ -282,7 +267,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         for (DependencyDef def : dependencies) {
             def.validateReferences();
         }
-        
         for (AttributeDef att : this.attributeDefs.values()) {
             att.validateReferences();
         }
@@ -292,7 +276,7 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         }
 
         // TODO: lots more validation an stuff!!!!!!! #W-689596
-        MasterDefRegistry registry = Aura.getDefinitionService().getDefRegistry();
+
         if (extendsDescriptor != null) {
             T parentDef = extendsDescriptor.getDef();
 
@@ -310,8 +294,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                         "%s cannot extend non-extensible component %s", getDescriptor(), extendsDescriptor),
                         getLocation());
             }
-            
-            registry.assertAccess(descriptor, parentDef);
 
             SupportLevel support = getSupport();
             DefDescriptor<T> extDesc = extendsDescriptor;
@@ -323,7 +305,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                                     getDescriptor(),
                                     support, extDesc, extDef.getSupport()), getLocation());
                 }
-                
                 extDesc = (DefDescriptor<T>) extDef.getExtendsDescriptor();
             }
         }
@@ -333,14 +314,10 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             if (interfaze == null) {
                 throw new DefinitionNotFoundException(intf, getLocation());
             }
-            
-            registry.assertAccess(descriptor, interfaze);
         }
-        
         for (RegisterEventDef def : events.values()) {
             def.validateReferences();
         }
-        
         for (EventHandlerDef def : eventHandlers) {
             def.validateReferences();
         }
@@ -348,11 +325,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         // have to do all sorts of craaaazy checks here for dupes and matches
         // and bah
         validateExpressionRefs();
-
-        for (ClientLibraryDef def : this.clientLibraries) {
-            def.validateReferences();
-            registry.assertAccess(descriptor, def);
-        }
     }
 
     /**
@@ -429,9 +401,7 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
      * @throws QuickFixException
      */
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
-        super.appendDependencies(dependencies);
-
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
         for (AttributeDefRef facet : this.facets) {
             facet.appendDependencies(dependencies);
         }
@@ -452,6 +422,10 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             handler.appendDependencies(dependencies);
         }
 
+        if (providerDescriptors != null) {
+            dependencies.addAll(providerDescriptors);
+        }
+
         if (controllerDescriptors != null) {
             dependencies.addAll(controllerDescriptors);
         }
@@ -468,20 +442,12 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             dependencies.addAll(helperDescriptors);
         }
 
-        if (resourceDescriptors != null) {
-            dependencies.addAll(resourceDescriptors);
-        }
-
         if (styleDescriptor != null) {
             dependencies.add(styleDescriptor);
         }
 
         if (templateDefDescriptor != null) {
             dependencies.add(templateDefDescriptor);
-        }
-
-        if (localThemeDescriptor != null) {
-            dependencies.add(localThemeDescriptor);
         }
 
         for (DependencyDef dep : this.dependencies) {
@@ -498,23 +464,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         for (DefDescriptor<InterfaceDef> interfaze : getInterfaces()) {
             supers.add(interfaze);
         }
-    }
-
-    @Override
-    public void addClientLibs(List<ClientLibraryDef> clientLibs) {
-        clientLibs.addAll(this.clientLibraries);
-    }
-
-    @Override
-    public Set<ResourceDef> getResourceDefs() throws QuickFixException {
-        Set<ResourceDef> resourceDefs = Sets.newHashSet();
-        for (DefDescriptor<ResourceDef> resourceDesc : this.resourceDescriptors) {
-            if (resourceDesc.getDef() != null) {
-                resourceDefs.add(resourceDesc.getDef());
-            }
-        }
-
-        return resourceDefs;
     }
 
     /**
@@ -639,11 +588,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
     }
 
     @Override
-    public DefDescriptor<ThemeDef> getLocalThemeDescriptor() {
-        return localThemeDescriptor;
-    }
-
-    @Override
     public boolean isAbstract() {
         return isAbstract;
     }
@@ -704,8 +648,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                                     .equals(other.modelDefDescriptor))
                     && (extendsDescriptor == null ? other.extendsDescriptor == null
                             : extendsDescriptor.equals(other.extendsDescriptor))
-                    && (localThemeDescriptor == null ? other.localThemeDescriptor == null
-                            : localThemeDescriptor.equals(other.localThemeDescriptor))
                     && events.equals(other.events)
                     && getLocation().equals(other.getLocation());
         }
@@ -733,12 +675,10 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             boolean preloaded = context.isPreloaded(getDescriptor());
             boolean preloading = context.isPreloading();
 
-            if (preloaded) {
-                json.writeValue(descriptor);
-            } else {
-                json.writeMapBegin();
-                json.writeMapEntry("descriptor", descriptor);
-                context.setCurrentCaller(descriptor);
+            json.writeMapBegin();
+            json.writeMapEntry("descriptor", getDescriptor());
+            if (!preloaded) {
+                context.setCurrentNamespace(descriptor.getNamespace());
                 RendererDef rendererDef = getRendererDef();
                 if (rendererDef != null && !rendererDef.isLocal()) {
                     json.writeMapEntry("rendererDef", rendererDef);
@@ -749,13 +689,10 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                     json.writeMapEntry("helperDef", helperDef);
                 }
 
-                
+                json.writeMapEntry("styleDef", getStyleDef());
                 json.writeMapEntry("controllerDef", getControllerDef());
                 json.writeMapEntry("modelDef", getModelDef());
                 json.writeMapEntry("superDef", getSuperDef());
-
-                json.writeMapEntry("styleDef", getStyleDef());
-
                 if (preloading) {
                     json.writeMapEntry("isCSSPreloaded", preloading);
                 }
@@ -764,31 +701,25 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                 if (!attrDefs.isEmpty()) {
                     json.writeMapEntry("attributeDefs", attrDefs);
                 }
-                
                 Set<DefDescriptor<InterfaceDef>> allInterfaces = getAllInterfaces();
                 if (allInterfaces != null && !allInterfaces.isEmpty()) {
                     json.writeMapEntry("interfaces", allInterfaces);
                 }
-                
                 Collection<RegisterEventDef> regevents = getRegisterEventDefs().values();
                 if (!regevents.isEmpty()) {
                     json.writeMapEntry("registerEventDefs", regevents);
                 }
-                
                 Collection<EventHandlerDef> handlers = getHandlerDefs();
                 if (!handlers.isEmpty()) {
                     json.writeMapEntry("handlerDefs", handlers);
                 }
-                
                 if (!facets.isEmpty()) {
                     json.writeMapEntry("facets", facets);
                 }
-                
                 boolean local = hasLocalDependencies();
                 if (local) {
                     json.writeMapEntry("hasServerDeps", true);
                 }
-                
                 if (isAbstract) {
                     json.writeMapEntry("isAbstract", isAbstract);
                 }
@@ -805,10 +736,10 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                 if (mode.equals(Mode.AUTOJSTEST)) {
                     json.writeMapEntry("testSuiteDef", getTestSuiteDef());
                 }
-                
                 serializeFields(json);
-                json.writeMapEnd();
             }
+
+            json.writeMapEnd();
         } catch (QuickFixException e) {
             throw new AuraUnhandledException("unhandled exception", e);
         }
@@ -902,7 +833,7 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
     @Override
     public ModelDef getModelDef() throws QuickFixException {
         AuraContext context = Aura.getContextService().getCurrentContext();
-        context.setCurrentCaller(descriptor);
+        context.setCurrentNamespace(descriptor.getNamespace());
         return modelDefDescriptor == null ? null : modelDefDescriptor.getDef();
     }
 
@@ -923,11 +854,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         return ret;
     }
 
-    @Override
-    public List<ClientLibraryDef> getClientLibraries() {
-        return clientLibraries;
-    }
-
     public static abstract class Builder<T extends BaseComponentDef> extends
             RootDefinitionImpl.Builder<T> implements BaseComponentDefBuilder<T> {
 
@@ -944,10 +870,8 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         public DefDescriptor<ComponentDef> templateDefDescriptor;
         public DefDescriptor<TestSuiteDef> testSuiteDefDescriptor;
         public DefDescriptor<StyleDef> styleDescriptor;
-        public DefDescriptor<ThemeDef> localThemeDescriptor;
         public List<DefDescriptor<RendererDef>> rendererDescriptors;
         public List<DefDescriptor<HelperDef>> helperDescriptors;
-        public List<DefDescriptor<ResourceDef>> resourceDescriptors;
         public List<AttributeDefRef> facets;
 
         public Set<DefDescriptor<InterfaceDef>> interfaces;
@@ -958,8 +882,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         public String render;
         public WhitespaceBehavior whitespaceBehavior;
         List<DependencyDef> dependencies;
-        public List<ClientLibraryDef> clientLibraries;
-        private RenderType renderType;
 
         @Override
         public Builder<T> setFacet(String key, Object value) {
@@ -987,13 +909,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
                 this.helperDescriptors = Lists.newArrayList();
             }
             this.helperDescriptors.add(DefDescriptorImpl.getInstance(name, HelperDef.class));
-        }
-
-        public void addResource(String name) {
-            if (this.resourceDescriptors == null) {
-                this.resourceDescriptors = Lists.newArrayList();
-            }
-            this.resourceDescriptors.add(DefDescriptorImpl.getInstance(name, ResourceDef.class));
         }
 
         @Override
@@ -1078,27 +993,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
             this.styleDescriptor = styleDef.getDescriptor();
             return this;
         }
-
-        @Override
-        public Builder<T> addClientLibrary(ClientLibraryDef clientLibrary) {
-            if (this.clientLibraries == null) {
-                this.clientLibraries = Lists.newArrayList();
-            }
-            this.clientLibraries.add(clientLibrary);
-            return this;
-        }
-
-        protected void finish() {
-            if (render == null) {
-                this.renderType = RenderType.AUTO;
-            } else {
-                try {
-                    this.renderType = RenderType.valueOf(render.toUpperCase());
-                } catch (Exception e) {
-                    setParseError(e);
-                }
-            }
-        }
     }
 
     /**
@@ -1155,11 +1049,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         if (helperDescriptors != null) {
             ret.addAll(helperDescriptors);
         }
-        
-        if (documentationDescriptor != null) {
-        	ret.add(documentationDescriptor);
-        }
-        
         return ret;
     }
 
@@ -1270,7 +1159,6 @@ public abstract class BaseComponentDefImpl<T extends BaseComponentDef> extends
         return whitespaceBehavior;
     }
 
-    @Override
-    public abstract DefDescriptor<T> getDefaultExtendsDescriptor();
+    protected abstract DefDescriptor<T> getDefaultExtendsDescriptor();
 
 }

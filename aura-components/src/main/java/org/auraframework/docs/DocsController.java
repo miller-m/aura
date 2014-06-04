@@ -40,13 +40,6 @@ public class DocsController {
     }
 
     @AuraEnabled
-    public static Component getDemo(@Key("demo") String demo) throws QuickFixException {
-        Map<String, Object> attributes = Maps.newHashMap();
-        attributes.put("demo", demo);
-        return Aura.getInstanceService().getInstance("auradocs:demoPanel", ComponentDef.class, attributes);
-    }
-
-    @AuraEnabled
     public static Component getReference(@Key("topic") String topic, @Key("descriptor") String descriptor,
             @Key("defType") String defType) throws QuickFixException {
 

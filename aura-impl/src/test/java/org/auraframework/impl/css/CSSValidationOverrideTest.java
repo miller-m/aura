@@ -78,7 +78,8 @@ public class CSSValidationOverrideTest extends AuraImplTestCase {
     private void getInvalidStyleDef(boolean expectException) {
         try {
             StyleParser.getInstance().parse(styleDefDesc, getSource(styleDefDesc));
-            if (expectException) fail("Expected CSS validation to be turned on and catch the invalid CSS");
+            if (expectException)
+                fail("Expected CSS validation to be turned on and catch the invalid CSS");
         } catch (StyleParserException expected) {
             if (!expectException) {
                 fail("Did not expect to encounter CSS validation exception.");
@@ -86,7 +87,7 @@ public class CSSValidationOverrideTest extends AuraImplTestCase {
                 assertTrue(
                         "Unexpected error message in StyleParserException",
                         expected.getMessage().contains(
-                                "CSS selector must begin with"));
+                                "Issue(s) found by Parser:CSS selectors must include component class:"));
             }
         } catch (QuickFixException e) {
             fail("Test setup failed. Looking for component test.testInValidCSS with invalid CSS");

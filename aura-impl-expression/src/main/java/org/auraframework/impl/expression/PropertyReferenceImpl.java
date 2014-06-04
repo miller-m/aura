@@ -19,21 +19,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import org.auraframework.Aura;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.TypeDef;
 import org.auraframework.expression.ExpressionType;
 import org.auraframework.expression.PropertyReference;
 import org.auraframework.instance.ValueProvider;
-import org.auraframework.instance.ValueProviderType;
-import org.auraframework.system.AuraContext;
 import org.auraframework.system.Location;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.json.Json;
 import org.auraframework.util.json.JsonSerializer.NoneSerializer;
-
-import com.google.common.collect.ImmutableList;
 
 /**
  * an expression in aura
@@ -51,10 +46,6 @@ public class PropertyReferenceImpl implements PropertyReference {
         this(AuraTextUtil.splitSimple(".", expr), l);
     }
 
-    public PropertyReferenceImpl(Iterable<String> pieces, Location l) {
-        this(ImmutableList.copyOf(pieces), l);
-    }
-
     protected PropertyReferenceImpl(List<String> pieces, Location l) {
         this.pieces = pieces;
         this.l = l;
@@ -67,18 +58,7 @@ public class PropertyReferenceImpl implements PropertyReference {
 
     @Override
     public Object evaluate(ValueProvider vp) throws QuickFixException {
-        Object ret = null;
-        if (vp != null) {
-            ret = vp.getValue(this);
-        } else {
-            String root = getRoot();
-            AuraContext lc = Aura.getContextService().getCurrentContext();
-            ValueProviderType vpt = ValueProviderType.getTypeByPrefix(root);
-            if (vpt != null) {
-                ret = lc.getGlobalProviders().get(vpt).getValue(getStem());
-            }
-        }
-        return ret;
+        return vp.getValue(this);
     }
 
     @Override
@@ -111,11 +91,6 @@ public class PropertyReferenceImpl implements PropertyReference {
     }
 
     @Override
-    public String getLeaf() {
-        return pieces.get(pieces.size() - 1);
-    }
-
-    @Override
     public int size() {
         return pieces.size();
     }
@@ -130,6 +105,7 @@ public class PropertyReferenceImpl implements PropertyReference {
         return toString(false);
     }
 
+    // curly bang no more?
     public String toString(boolean curlyBang) {
         return AuraTextUtil.collectionToString(pieces, ".", null, curlyBang ? "{!" : null, curlyBang ? "}" : null);
     }
@@ -159,8 +135,11 @@ public class PropertyReferenceImpl implements PropertyReference {
     private static class Serializer extends NoneSerializer<PropertyReferenceImpl> {
         @Override
         public void serialize(Json json, PropertyReferenceImpl value) throws IOException {
-            json.writeString(value.toString(true));
+            // json.writeString(value.toString(true));
+            json.writeMapBegin();
+            json.writeMapEntry("exprType", value.getExpressionType());
+            json.writeMapEntry("path", value.pieces);
+            json.writeMapEnd();
         }
     }
-
 }

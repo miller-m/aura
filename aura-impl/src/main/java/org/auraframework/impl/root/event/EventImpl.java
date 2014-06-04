@@ -25,7 +25,6 @@ import org.auraframework.impl.root.AttributeSetImpl;
 import org.auraframework.instance.AttributeSet;
 import org.auraframework.instance.BaseComponent;
 import org.auraframework.instance.Event;
-import org.auraframework.instance.InstanceStack;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.json.Json;
@@ -34,17 +33,12 @@ public class EventImpl implements Event {
 
     private final DefDescriptor<EventDef> eventDefDescriptor;
     private final AttributeSet attributeSet;
-    private final String path;
 
     public EventImpl(DefDescriptor<EventDef> eventDefDescriptor, Map<String, Object> attributes,
             BaseComponent<?, ?> valueProvider) throws QuickFixException {
-    	InstanceStack iStack = Aura.getContextService().getCurrentContext().getInstanceStack();
-    	iStack.pushInstance(this);
-        this.path = iStack.getPath();
         this.eventDefDescriptor = eventDefDescriptor;
-        this.attributeSet = new AttributeSetImpl(eventDefDescriptor, valueProvider, this);
+        this.attributeSet = new AttributeSetImpl(eventDefDescriptor, valueProvider);
         this.attributeSet.set(attributes);
-        iStack.popInstance(this);
     }
 
     public EventImpl(DefDescriptor<EventDef> eventDefDescriptor, Map<String, Object> attributes)
@@ -89,8 +83,4 @@ public class EventImpl implements Event {
         return attributeSet;
     }
 
-    @Override
-    public String getPath() {
-        return path;
-    }
 }

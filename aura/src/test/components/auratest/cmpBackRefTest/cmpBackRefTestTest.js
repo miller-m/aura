@@ -15,32 +15,32 @@
  */
 ({
     testBackRefsAreCorrect:{
-        labels: ["auraSanity"],
+        testLabels: ["auraSanity"],
         test:function(cmp){
             var element = document.getElementById("ifDiv");
-            var component = $A.services.component.getRenderingComponentForElement(element).getAttributeValueProvider();
+            var component = $A.services.component.getRenderingComponentForElement(element).getAttributes().getValueProvider();
             $A.test.assertEquals(cmp, component, "call to $A.services.component.getRenderingComponentForElement(elm) should have returned this component");
 
 
             element = document.getElementById("elseDiv");
-            component = $A.services.component.getRenderingComponentForElement(element).getAttributeValueProvider();
+            component = $A.services.component.getRenderingComponentForElement(element).getAttributes().getValueProvider();
             $A.test.assertEquals(cmp, component, "call to $A.services.component.getRenderingComponentForElement(elm) should have returned this component");
 
             element = document.getElementById("burriedDiv");
-            component = $A.services.component.getRenderingComponentForElement(element).getAttributeValueProvider();
+            component = $A.services.component.getRenderingComponentForElement(element).getAttributes().getValueProvider();
             $A.test.assertEquals(cmp, component, "call to $A.services.component.getRenderingComponentForElement(elm) should have returned this component");
 
             var burriedOutputTextCmp = cmp.find("burriedOutputText");
-            component = $A.services.component.getRenderingComponentForElement(burriedOutputTextCmp.getElement()).getAttributeValueProvider();
+            component = $A.services.component.getRenderingComponentForElement(burriedOutputTextCmp.getElement()).getAttributes().getValueProvider();
 
             $A.test.assertEquals(burriedOutputTextCmp, component, "call to $A.services.component.getRenderingComponentForElement(elm) should have returned outputText component");
 
             element = document.getElementById("leftBlockDiv");
-            component = $A.services.component.getRenderingComponentForElement(element).getAttributeValueProvider();
+            component = $A.services.component.getRenderingComponentForElement(element).getAttributes().getValueProvider();
             $A.test.assertEquals(cmp, component, "call to $A.services.component.getRenderingComponentForElement(elm) should have returned this component");
 
             element = document.getElementById("bodyBlockDiv");
-            component = $A.services.component.getRenderingComponentForElement(element).getAttributeValueProvider();
+            component = $A.services.component.getRenderingComponentForElement(element).getAttributes().getValueProvider();
             $A.test.assertEquals(cmp, component, "call to $A.services.component.getComponentForElement(elm) should have returned this component");
 
         }

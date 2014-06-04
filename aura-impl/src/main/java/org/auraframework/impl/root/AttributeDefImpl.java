@@ -78,10 +78,6 @@ public final class AttributeDefImpl extends DefinitionImpl<AttributeDef> impleme
         return typeDefDescriptor.getDef();
     }
 
-    public DefDescriptor<TypeDef> getTypeDesc() {
-        return typeDefDescriptor;
-    }
-
     /**
      * @return The default value to be used for instances of this AttributeDef that do not have a Value explicitly set
      */
@@ -110,27 +106,20 @@ public final class AttributeDefImpl extends DefinitionImpl<AttributeDef> impleme
     @Override
     public void serialize(Json json) throws IOException {
         json.writeMapBegin();
-        json.writeMapEntry("name", descriptor);
-        json.writeMapEntry("type", typeDefDescriptor);
-        
-        if (defaultValue != null) {
-        	json.writeMapEntry("default", defaultValue.getValue());
-        }
-        
-        if (required) {
-        	json.writeMapEntry("required", true);
-        }
-        
+        json.writeMapEntry("descriptor", descriptor);
+        json.writeMapEntry("typeDefDescriptor", typeDefDescriptor);
+        json.writeMapEntry("defaultValue", defaultValue);
+        json.writeMapEntry("required", required);
+        json.writeMapEntry("serializeTo", serializeTo);
+        json.writeMapEntry("visibility",visibility);
         json.writeMapEnd();
     }
 
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
         if (defaultValue != null) {
             defaultValue.appendDependencies(dependencies);
         }
-        
-        dependencies.add(typeDefDescriptor);
     }
 
     @Override

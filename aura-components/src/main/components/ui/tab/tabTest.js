@@ -46,7 +46,7 @@
             aura.test.assertEquals('none', this.getComputedStyle(tabBody.getElement())['display'], "Tabbody should not be displayed if tab is inactive");
 
             //Make the tab active and verify that CSS rule makes the tabBody Visible
-            cmp.set('v.active',true);
+            cmp.getAttributes().setValue('active',true);
             $A.renderingService.rerender(cmp);
             tabBody = cmp.find('tabBody');
             aura.test.assertEquals('block', this.getComputedStyle(tabBody.getElement())['display'], "tabbody should be displayed if tab is active");

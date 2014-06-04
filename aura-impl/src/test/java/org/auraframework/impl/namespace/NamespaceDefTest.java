@@ -22,6 +22,7 @@ import org.auraframework.def.StyleDef;
 import org.auraframework.impl.AuraImplTestCase;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.service.DefinitionService;
+import org.auraframework.system.Client.Type;
 import org.auraframework.system.MasterDefRegistry;
 import org.auraframework.system.Source;
 import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
@@ -65,14 +66,11 @@ public class NamespaceDefTest extends AuraImplTestCase {
         assertEquals("red", def.getStyleTokens().get("FOO"));
     }
 
-    /* tokens functionality deprecated by themes */
-    public void _testStyleTokens() throws Exception {
+    public void testStyleTokens() throws Exception {
         DefinitionService defService = Aura.getDefinitionService();
         StyleDef styleDef = defService.getDefinition("namespaceDefTest.testStyleTokens", StyleDef.class);
         assertEquals(
-                ".namespaceDefTestTestStyleTokens {background-color:red; color:FOOL; border-color:black; " +
-                        "background:-webkit-linear-gradient(top, hsl(0, 80%, 70%), #bada55); " +
-                        "background:linear-gradient(to bottom, hsl(0, 80%, 70%), #bada55)}",
-                styleDef.getCode());
+                ".namespaceDefTestTestStyleTokens {\n  background-color: red;\n  color: FOOL;\n  border-color: black;\n}\n",
+                styleDef.getCode(Type.WEBKIT));
     }
 }

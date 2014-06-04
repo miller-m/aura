@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.auraframework</groupId>
         <artifactId>aura-framework</artifactId>
-        <version>0.996-SNAPSHOT</version>
+        <version>0.146-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <dependencies>
@@ -23,10 +23,6 @@
                 <includes>
                     <include>**/*</include>
                 </includes>
-                <excludes>
-                    <exclude>**/jsdoc/*.html</exclude>
-                    <exclude>**/jsdoc/symbols</exclude>
-                </excludes>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>
@@ -72,7 +68,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <java classname="org.auraframework.tools.javascript.GenerateJavascript" classpathref="maven.runtime.classpath" fork="true" maxmemory="512m" failonerror="true">
+                                <java classname="org.auraframework.tools.javascript.GenerateJavascript" classpathref="maven.runtime.classpath" fork="true" failonerror="true">
                                     <jvmarg value="-Daura.home=${basedir}/.." />
                                 </java>
                             </target>

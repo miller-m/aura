@@ -15,8 +15,8 @@
  */
 ({
     updateHref: function(cmp){
-        if (cmp.getValue("v.value")) {
-            var value = cmp.get("v.value");
+        if (cmp.getAttributes().getValue("value")) {
+            var value = cmp.getAttributes().getValue("value").getValue();
 
             if (value) {
                 var link = cmp.find("link");
@@ -33,7 +33,7 @@
         }
     },
     /*
-     ** Remove spaces (if there is any) in value and return the no-space result.
+     ** Remove spaces (if there is any) in value and return the no-space result. 
      */
     removeSpaces: function(value) {
         return (value || "").replace(/\s/g, "");

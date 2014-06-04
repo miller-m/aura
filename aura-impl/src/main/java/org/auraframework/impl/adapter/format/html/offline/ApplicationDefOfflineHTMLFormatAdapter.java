@@ -15,32 +15,21 @@
  */
 package org.auraframework.impl.adapter.format.html.offline;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.auraframework.Aura;
-import org.auraframework.def.ApplicationDef;
-import org.auraframework.def.ComponentDef;
-import org.auraframework.def.DefDescriptor;
-import org.auraframework.def.StyleDef;
+import org.auraframework.def.*;
+import org.auraframework.http.AuraResourceServlet;
 import org.auraframework.http.AuraServlet;
 import org.auraframework.instance.Application;
 import org.auraframework.instance.Component;
-import org.auraframework.service.ContextService;
-import org.auraframework.service.InstanceService;
-import org.auraframework.service.RenderingService;
-import org.auraframework.system.AuraContext;
-import org.auraframework.system.AuraContext.Authentication;
-import org.auraframework.system.AuraContext.Format;
-import org.auraframework.system.AuraContext.Mode;
+import org.auraframework.service.*;
+import org.auraframework.system.*;
+import org.auraframework.system.AuraContext.*;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.IOUtil;
@@ -89,9 +78,6 @@ public class ApplicationDefOfflineHTMLFormatAdapter extends OfflineHTMLFormatAda
 
         Writer htmlWriter = new FileWriter(html);
         try {
-            String uid = context.getDefRegistry().getUid(null, def.getDescriptor());
-            Set<DefDescriptor<?>> dependencies = context.getDefRegistry().getDependencies(uid);
-
             ComponentDef templateDef = def.getTemplateDef();
             Map<String, Object> attributes = Maps.newHashMap();
 
@@ -102,7 +88,7 @@ public class ApplicationDefOfflineHTMLFormatAdapter extends OfflineHTMLFormatAda
             File css = new File(outputDir, String.format("%s.css", appName));
             FileWriter cssWriter = new FileWriter(css);
             try {
-                Aura.getServerService().writeAppCss(dependencies, cssWriter);
+                AuraResourceServlet.writeCss(cssWriter);
             } finally {
                 cssWriter.close();
             }
@@ -137,7 +123,7 @@ public class ApplicationDefOfflineHTMLFormatAdapter extends OfflineHTMLFormatAda
             File js = new File(outputDir, String.format("%s.js", appName));
             FileWriter jsWriter = new FileWriter(js);
             try {
-                Aura.getServerService().writeDefinitions(dependencies, jsWriter);
+                AuraResourceServlet.writeDefinitions(jsWriter);
 
                 // Write the app at the bottom of the same file
 
@@ -147,7 +133,9 @@ public class ApplicationDefOfflineHTMLFormatAdapter extends OfflineHTMLFormatAda
                 auraInit.put("token", AuraServlet.getToken());
                 auraInit.put("host", context.getContextPath());
 
-                contextService.startContext(Mode.PROD, Format.HTML, Authentication.AUTHENTICATED, def.getDescriptor());
+                context.addPreload("aura");
+
+                contextService.startContext(Mode.PROD, Format.HTML, Access.AUTHENTICATED, def.getDescriptor());
                 auraInit.put("context", contextService.getCurrentContext());
                 jsWriter.append("\n$A.initConfig($A.util.json.resolveRefs(");
                 Json.serialize(auraInit, jsWriter, context.getJsonSerializationContext());
@@ -160,7 +148,8 @@ public class ApplicationDefOfflineHTMLFormatAdapter extends OfflineHTMLFormatAda
 
             DefDescriptor<StyleDef> styleDefDesc = templateDef.getStyleDescriptor();
             if (styleDefDesc != null) {
-                attributes.put("auraInlineStyle", styleDefDesc.getDef().getCode());
+                Client.Type type = context.getClient().getType();
+                attributes.put("auraInlineStyle", styleDefDesc.getDef().getCode(type));
             }
 
             attributes.put("autoInitialize", false);

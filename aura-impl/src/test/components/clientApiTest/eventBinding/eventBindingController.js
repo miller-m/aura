@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 ({
-    focus : function(cmp, event, helper) {
-        cmp.set("v.focusEvent", "true");
+    click : function(cmp, event, helper) {
+        cmp.getAttributes().setValue("clickEvent", "true");
     },
 
-    blur : function (cmp) {
-        cmp.set("v.blurEvent", "true");
+    focus : function(cmp, event, helper) {
+        cmp.getAttributes().setValue("focusEvent", "true")
     }
 })

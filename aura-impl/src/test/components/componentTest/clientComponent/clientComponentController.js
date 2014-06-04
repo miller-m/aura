@@ -3,7 +3,7 @@
         $A.componentService.newComponentAsync(
             this,
             function(newCmp) {
-                cmp.set("v.outputValue", newCmp.getValue("v.value").value);
+                cmp.getValue("v.outputValue").setValue(newCmp.getValue("v.value").value);
             },
             {
                 componentDef: {

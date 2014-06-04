@@ -16,7 +16,7 @@
 ({
     render : function(cmp){
         var ret = this.superRender();
-        if ($A.util.getBooleanValue(cmp.get("v.disabled"))) {
+        if (cmp.getAttributes().getValue("disabled").getBooleanValue()) {
             var link = cmp.find("link");
             if (link) {
                 var element = link.getElement();
@@ -28,11 +28,12 @@
 
     rerender : function(cmp){
         this.superRerender();
-        if (cmp.isDirty("v.disabled")) {
+        var disabledAttr = cmp.getAttributes().getValue("disabled");
+        if (disabledAttr.isDirty()) {
             var link = cmp.find("link");
             if (link) {
                 var element = link.getElement();
-                if($A.util.getBooleanValue(cmp.get("v.disabled"))){
+                if(disabledAttr.getBooleanValue()){
                     $A.util.addClass(element, "disabled");
                 }else{
                     $A.util.removeClass(element, "disabled");

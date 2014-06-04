@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.THIS .uiTabset.subtabs {
-	height: 600px;
+.THIS .uiTabset.subtabs{
+	height: 400px;
 }
-
-.THIS .uiTabset .tabLabels {
-	background: none;
+.THIS .uiTabset .tabLabels{
+  background: none;
 }
-
-.THIS .uiTabset .uiTab .auradocsRefTab{
-	border: 1px solid #cecece;
-	border-radius: 0;
-	box-shadow: inset 1px 0 1px #fff;
+.THIS .uiTabset .uiTab{
+  border: 1px solid #cecece;
+  border-radius: 0;
+  box-shadow: inset 1px 0 1px #fff;
 }
-
-.THIS .uiTabset .uiTab:first-child  .auradocsRefTab:first-child{
-	border-radius: 5px 0 0 5px;
+.THIS .uiTabset .uiTab > a{
+  padding: 15px;
+}
+.THIS .uiTabset .uiTab:first-child{
+	border-radius: 5px 0 0 5px;	
 	box-shadow: none;
 }
-
-.THIS .uiTabset .uiTab:last-child .auradocsRefTab:last-child{
+.THIS .uiTabset .uiTab:last-child{
 	border-radius: 0 5px 5px 0;
 }
-
-.THIS .uiTabset .uiTab .tabBody .auradocsRefTab{
+.THIS .uiTabset .uiTab .tabBody{
 	border: none;
 	top: 50px;
+	bottom: 20px;
 }

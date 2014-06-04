@@ -17,20 +17,12 @@ package org.auraframework;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.auraframework.adapter.BeanAdapter;
 import org.auraframework.adapter.ConfigAdapter;
-import org.auraframework.adapter.DefinitionParserAdapter;
 import org.auraframework.adapter.ExceptionAdapter;
 import org.auraframework.adapter.LocalizationAdapter;
-import org.auraframework.adapter.StyleAdapter;
-import org.auraframework.clientlibrary.ClientLibraryService;
 import org.auraframework.def.ApplicationDef;
-import org.auraframework.def.Definition;
 import org.auraframework.instance.Application;
-import org.auraframework.instance.Component;
-import org.auraframework.instance.Instance;
 import org.auraframework.service.BuilderService;
-import org.auraframework.service.CachingService;
 import org.auraframework.service.ClientService;
 import org.auraframework.service.ContextService;
 import org.auraframework.service.DefinitionService;
@@ -41,8 +33,7 @@ import org.auraframework.service.LoggingService;
 import org.auraframework.service.RenderingService;
 import org.auraframework.service.SerializationService;
 import org.auraframework.service.ServerService;
-import org.auraframework.system.AuraContext;
-import org.auraframework.system.AuraContext.Authentication;
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.system.AuraContext.Format;
 import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.util.ServiceLocator;
@@ -69,43 +60,49 @@ public class Aura {
     }
 
     /**
-     * Get the Context Service: for creating or interacting with a {@link AuraContext} A AuraContext must be started
-     * before working using any other service.
+     * Get the Context Service: for creating or interacting with a
+     * {@link AuraContext} A AuraContext must be started before working using
+     * any other service.
      */
     public static ContextService getContextService() {
         return Aura.get(ContextService.class);
     }
 
     /**
-     * Get the Definition Service: for loading, finding or interacting with a {@link Definition}
+     * Get the Definition Service: for loading, finding or interacting with a
+     * {@link Definition}
      */
     public static DefinitionService getDefinitionService() {
         return Aura.get(DefinitionService.class);
     }
 
     /**
-     * Get the Logging Service: Provides Aura with a top-level Logging handler from the host environments
+     * Get the Logging Service: Provides Aura with a top-level Logging handler
+     * from the host environments
      */
     public static LoggingService getLoggingService() {
         return Aura.get(LoggingService.class);
     }
 
     /**
-     * Get the Instance Service: for constructing an {@link Instance} of a {@link Definition}
+     * Get the Instance Service: for constructing an {@link Instance} of a
+     * {@link Definition}
      */
     public static InstanceService getInstanceService() {
         return Aura.get(InstanceService.class);
     }
 
     /**
-     * Get the Rendering Service: for rendering a {@link Component} or {@link Application}
+     * Get the Rendering Service: for rendering a {@link Component} or
+     * {@link Application}
      */
     public static RenderingService getRenderingService() {
         return Aura.get(RenderingService.class);
     }
 
     /**
-     * Get the Serialization Service: for serializing things into format specified in the current {@link AuraContext}
+     * Get the Serialization Service: for serializing things into format
+     * specified in the current {@link AuraContext}
      */
     public static SerializationService getSerializationService() {
         return Aura.get(SerializationService.class);
@@ -119,14 +116,16 @@ public class Aura {
     }
 
     /**
-     * Get the Config Adapter: Provides Aura with configuration from the host environment
+     * Get the Config Adapter: Provides Aura with configuration from the host
+     * environment
      */
     public static ConfigAdapter getConfigAdapter() {
         return Aura.get(ConfigAdapter.class);
     }
 
     /**
-     * Get the Localization Adapter: Provides Aura with Localization configuration from the host environments
+     * Get the Localization Adapter: Provides Aura with Localization
+     * configuration from the host environments
      */
     public static LocalizationAdapter getLocalizationAdapter() {
         return Aura.get(LocalizationAdapter.class);
@@ -140,73 +139,40 @@ public class Aura {
     }
 
     /**
-     * Get the Exception Adapter: Provides Aura with a top-level Exception handler from the host environments
+     * Get the Exception Adapter: Provides Aura with a top-level Exception
+     * handler from the host environments
      */
     public static ExceptionAdapter getExceptionAdapter() {
         return Aura.get(ExceptionAdapter.class);
     }
 
     /**
-     * Get the Source Control Adapter : Allows interaction with the source control system.
+     * Get the Source Control Adapter : Allows interaction with the source
+     * control system.
      */
     public static SourceControlAdapter getSourceControlAdapter() {
         return Aura.get(SourceControlAdapter.class);
     }
 
     /**
-     * Get the Style Adapter: Used to provide CSS/Style specific functionality.
-     */
-    public static StyleAdapter getStyleAdapter() {
-        return Aura.get(StyleAdapter.class);
-    }
-
-    /**
-     * Get the Definition Parser Adapter: hooks for host environment to interact with definition parsing
-     */
-    public static DefinitionParserAdapter getDefinitionParserAdapter() {
-        return Aura.get(DefinitionParserAdapter.class);
-    }
-
-    /**
-     * Gets the Integration Service: Service that makes integrating into other containers easy.
+     * Gets the Integration Service: Service that makes integrating into other
+     * containers easy.
      */
     public static IntegrationService getIntegrationService() {
         return Aura.get(IntegrationService.class);
     }
 
-    /**
-     * Gets {@link ClientLibraryService}: service for including external client libraries (CSS or JS)
-     */
-    public static ClientLibraryService getClientLibraryService() {
-        return Aura.get(ClientLibraryService.class);
-    }
-
-    
-    /**
-     * Gets the caching service: a general service for setting and getting arbitrary blobs based on a key
-     * Encapsulates the access to aura's known caches.
-     */
-    public static CachingService getCachingService() {
-        return Aura.get(CachingService.class);
-    }
-
-    /**
-     * Get the bean adapter for aura to create controller/model beans.
-     */
-    public static BeanAdapter getBeanAdapter() {
-        return Aura.get(BeanAdapter.class);
-    }
-    
     public static <T> T get(Class<T> type) {
         return ServiceLocator.get().get(type);
     }
 
     /**
-     * Pass in the name of a Aura ApplicationDef, and it will be rendered to Standard Out
+     * Pass in the name of a Aura ApplicationDef, and it will be rendered to
+     * Standard Out
      */
     public static void main(String[] args) {
         try {
-            Aura.getContextService().startContext(Mode.PROD, Format.HTML, Authentication.UNAUTHENTICATED);
+            Aura.getContextService().startContext(Mode.PROD, Format.HTML, Access.PUBLIC);
             String tag = args[0];
             Application app = Aura.getInstanceService().getInstance(tag, ApplicationDef.class);
             Aura.getRenderingService().render(app, System.out);

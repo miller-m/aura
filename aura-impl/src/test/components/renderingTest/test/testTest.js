@@ -104,7 +104,7 @@
                     var conditionalRendering = cmp.find('conditionalRendering');
                     $A.test.assertTruthy(conditionalRendering);
 
-                    cmp.set('v.flag', true);
+                    cmp.getAttributes().setValue('flag', true);
                     // Verify that expression evaluates to provide component
                     // array as attribute value
                     $A.test.assertEquals(cmp.get('v.cmps'),

@@ -21,18 +21,17 @@ package org.auraframework.service;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Currency;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import com.ibm.icu.util.Currency;
 
 /**
  * <p>
  * Service for handling locale-specific data.
  * </p>
  * <p>
- * Instances of all AuraServices should be retrieved from {@link AuraService}
+ * Instances of all AuraServices should be retrieved from {@link Aura}
  * </p>
  */
 public interface LocalizationService extends AuraService {

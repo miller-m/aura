@@ -111,25 +111,25 @@ var AuraDevToolService = function() {
 
         "views" : {
             "component" : function(){
-                return flattenRegistry($A.services.component.indexes.globalId);
+                return flattenRegistry($A.services.component.priv.indexes.globalId);
             },
             "componentDef" : function(){
-                return flattenRegistry($A.services.component.registry.componentDefs);
+                return flattenRegistry($A.services.component.priv.registry.componentDefs);
             },
             "controllerDef" : function(){
-                return flattenRegistry($A.services.component.controllerDefRegistry.controllerDefs);
+                return flattenRegistry($A.services.component.priv.controllerDefRegistry.controllerDefs);
             },
             "modelDef" : function(){
-                return flattenRegistry($A.services.component.modelDefRegistry.modelDefs);
+                return flattenRegistry($A.services.component.priv.modelDefRegistry.modelDefs);
             },
             "providerDef" : function(){
-                return flattenRegistry($A.services.component.providerDefRegistry.providerDefs);
+                return flattenRegistry($A.services.component.priv.providerDefRegistry.providerDefs);
             },
             "rendererDef" : function(){
-                return flattenRegistry($A.services.component.rendererDefRegistry.rendererDefs);
+                return flattenRegistry($A.services.component.priv.rendererDefRegistry.rendererDefs);
             },
             "helperDef" : function(){
-                return flattenRegistry($A.services.component.helperDefRegistry.helperDefs);
+                return flattenRegistry($A.services.component.priv.helperDefRegistry.helperDefs);
             }
 //#if {"modes" : ["STATS"]}
             ,
@@ -165,9 +165,6 @@ var AuraDevToolService = function() {
                     }
                 }
                 return flattenRegistry(ret);
-            },
-            "rerenderings" : function(){
-                return renderingService.getRerenderingIndex();
             }
 //#end
         },
@@ -404,7 +401,7 @@ var AuraDevToolService = function() {
         	}
         	
                 for(var j =0; j<labels.length; j++){
-                    atrib = $A.util.getElementAttributeValue(labels[j], attribute);
+                    atrib = labels[j].getAttribute(attribute);
             	    if(!aura.util.isUndefinedOrNull(atrib)){
             	       dict[atrib] = true;
             	    }
@@ -417,23 +414,24 @@ var AuraDevToolService = function() {
              * @param   imgErrorMsg                - Default error message telling user why they should set alt tag
              * @param   infoMsg                    - Error message for Informational tag
              * @param   decoMsg                    - Error message for Decorative tag
+             * @param   imgTypeNotDefinedMsg       - Error message for imageType attribute not set
              * @returns String                   - String concatenation of all error messages
              */
-            findAllImgTags:function (allImgTags, imgErrorMsg, infoMsg, decoMsg, altError){
+            findAllImgTags:function (imgErrorMsg, infoMsg, decoMsg, imgTypeNotDefinedMsg){
         	 var accessAideFuncs = aura.devToolService.accessbilityAide;
-               	
+        	
+        	 var allImgTags = document.getElementsByTagName("img");
         	 var data_aura_rendered_by = "";
-        	 var nonAuraImg = [];
+        	 var imgTypeNotDefinedErrorArray = [];
         	 var informationErrorArray = [];
         	 var decorationalErrorArray  = [];
-        	 var wrongAltErrorArray  = [];
         	 var errorMsg = "No component information Available";
-        	 
+        	 var nonAuraImg = [];
         	 var imgType = "";
         	 var alt = "";
         	
         	 for(var index = 0; index < allImgTags.length; index++){
-        	     data_aura_rendered_by = $A.util.getElementAttributeValue(allImgTags[index], "data-aura-rendered-by");
+        	     data_aura_rendered_by = allImgTags[index].getAttribute("data-aura-rendered-by");
         	     
         	    // Will more than likely have a rendered by value but double checking 
          	    if(data_aura_rendered_by === null || data_aura_rendered_by === "" ){
@@ -442,43 +440,12 @@ var AuraDevToolService = function() {
          	    else{
          		imgType = $A.getCmp(data_aura_rendered_by).getAttributes().getValueProvider().get('v.imageType');	
          		alt     = $A.getCmp(data_aura_rendered_by).getAttributes().getValueProvider().get('v.alt');
-         		htmlAlt = $A.util.getElementAttributeValue(allImgTags[index], "alt");
-         		
-         		/**
-         		 * For the case that we are not looking at a ui:image component the imageType attribute will be undefined
-         		 * This if block will replace the alt with the html attributes alt tag or the empty string. By default we 
-         		 * are going to assume that every tag that is not through ui:image is going to be of type informational.
-         		 * 
-         		 * Once we have the item set, we will make sure that everything is stripped of spaces, and lowercased to make
-         		 * all of the data flat. 
-         		 * 
-         		 * Then three checks
-         		 * 1) make sure that the keywords "undefined", "null", "empty" are not the sole value of the alt
-         		 * 2) if the item is of type informational, make sure that the alt is not the empty string
-         		 * 3) if the item is of type decorative, make sure that the alt is the empty string.
-         		 * 
-         		 */
+ 
+         		//ImageType is currently set to null, if it is still null it is an error
          		if($A.util.isUndefinedOrNull(imgType)){
-         		    
-         		    imgType = "informational";
-         		    if($A.util.isUndefinedOrNull(htmlAlt)){
-         			alt="";
-         		    }
-         		    else{
-         			alt = htmlAlt;
-         		    }         		    
+         		   imgTypeNotDefinedErrorArray.push(allImgTags[index]);
          		}
-         		
-         		if($A.util.isUndefinedOrNull(alt)){
-         		    alt="";
-         		}
-         		
-         		alt = alt.toLowerCase().replace(/[\s\t\r\n]/g,'');
-         		
-         		if(alt==="undefined" || alt==="null" || alt ==="empty"){
-         		        wrongAltErrorArray.push(allImgTags[index]);
-         		}
-         		else if(imgType === "informational" &&  ($A.util.isUndefinedOrNull(alt) || alt === "")){
+         		else if((imgType === "informational" || $A.util.isUndefinedOrNull(imgType)) && ($A.util.isUndefinedOrNull(alt) || alt === "")){
          			informationErrorArray.push(allImgTags[index]);
          		}
          		else if(imgType === "decorative" && (!$A.util.isUndefinedOrNull(alt) && alt !== "")){
@@ -488,7 +455,7 @@ var AuraDevToolService = function() {
         	 }
         	 
         	 errorMsg = accessAideFuncs.formatOutput(errorMsg, nonAuraImg);
-        	 errorMsg = errorMsg + accessAideFuncs.formatOutput(imgErrorMsg+altError, wrongAltErrorArray);
+        	 errorMsg = errorMsg + accessAideFuncs.formatOutput(imgErrorMsg+imgTypeNotDefinedMsg, imgTypeNotDefinedErrorArray);
         	 errorMsg = errorMsg + accessAideFuncs.formatOutput(imgErrorMsg+infoMsg, informationErrorArray);
         	 errorMsg = errorMsg + accessAideFuncs.formatOutput(imgErrorMsg+decoMsg, decorationalErrorArray);
         	 
@@ -496,41 +463,24 @@ var AuraDevToolService = function() {
             },
             /**
              * Function that goes through all labels and check for either the for attribute and the label id, or if a parent tag is a label
-             * This function skips over several input types: submit, reset, image, hidden, and button. All of these have labels associated
-             * with them in different ways 
-             * 
              * @param   lbls       - All of the labels to
              * @param   inputTags  - The attribute that is being sought (for, id, title, etc)
              * @returns array     - All errornous tags
              */
             inputLabelAide : function(lbls, inputTags){
         	var errorArray = [];
-	        var lblIsPres  = true;
-	        var inputTag   = null;
-  	        var type       = null;
-  	        var inputTypes = "hidden button submit reset";
-	        var accessAideFuncs = aura.devToolService.accessbilityAide;
+	        var lblIsPres = true;
+	        var inputTag = null;
+  	        var accessAideFuncs = aura.devToolService.accessbilityAide;
   	        
   	        var lblDict = accessAideFuncs.getDictFromTags(lbls, "for");
   	        
   	        for (var index = 0; index < inputTags.length; index++){
   	            inputTag = inputTags[index];
-  	            type = $A.util.getElementAttributeValue(inputTag, "type");
-  	            if(!$A.util.isUndefinedOrNull(type) && inputTypes.indexOf(type)> -1){
-	        	continue;
-	            }
-	            else if (type == "image"){
-	        	var alt = $A.util.getElementAttributeValue(inputTag, "alt");
-	        	if($A.util.isUndefinedOrNull(alt) || alt.replace(/[\s\t\r\n]/g,'') === ""){
-	        	  errorArray.push(inputTag); 
-       		        }
-	            }
-	            else{  
-    	               lblIsPres = ((inputTag.id in lblDict) || (accessAideFuncs.checkParentMatchesTag(inputTag, "LABEL")));
-    	               if(!lblIsPres){
-    	        	   errorArray.push(inputTag);
-    	               }
-	            }
+  	            lblIsPres = ((inputTag.id in lblDict) || (accessAideFuncs.checkParentMatchesTag(inputTag, "LABEL")));
+  	            if(!lblIsPres){
+  	        	errorArray.push(inputTag);
+  	            }
   	        }
   	        return errorArray;
             },
@@ -548,7 +498,7 @@ var AuraDevToolService = function() {
 	        var atrib ="";
 	        
 	        for(var i=0; i<tags.length; i++){
-	                atrib = $A.util.getElementAttributeValue(tags[i], attribute);
+	                atrib = tags[i].getAttribute(attribute);
 	        	if(aura.util.isUndefinedOrNull(atrib) || evalFunc(atrib.toLowerCase(), errorVal)){
 	        	    errorArray.push(tags[i]);
 	        	}
@@ -576,65 +526,7 @@ var AuraDevToolService = function() {
         	}
         	return strAttrib;
             },
-            /**
-             * Method that looks at the given tag and will look print out the next two parents components names
-             * @param   tag     - The initial tag to find the parents of
-             * @param   spacing - The amount of spacing that we want per item
-             * @returns String  - The string representation of the the cmp stack trace 
-             */
-            getStackTrace : function(tag, spacing){
-	            var cmp = null;
-                    var cmpInfo = {};
-                    var cmpNameArray = [];
-                    var cmpName = "";
-                    var spaces = "";
-                    
-                    //Keep going up until we hit the either the BODY or HTML tag
-                    while(!$A.util.isUndefinedOrNull(tag) && tag.tagName.toLowerCase() !== "body" && tag.tagName.toLowerCase() !== "html"){
-                         data_aura_rendered_by = $A.util.getElementAttributeValue(tag, "data-aura-rendered-by");
-        
-                         //Make sure it has a rendered by value
-                         if(!$A.util.isUndefinedOrNull(data_aura_rendered_by) && data_aura_rendered_by !== "" ){
-                             cmp = $A.getCmp(data_aura_rendered_by);
-                             if(!$A.util.isUndefinedOrNull(cmp)){
-                                 cmp = cmp.getAttributes().getValueProvider();
-                                 if("getDef" in cmp){
-                                	 cmp = cmp.getDef().getDescriptor();
-                                     cmpName = cmp.getNamespace()+":"+cmp.getName();
-
-                                     //Making sure that we have unique components
-                                     if(!(cmpName in cmpInfo)){
-                                     	cmpInfo[cmpName] = "";
-                                     	cmpNameArray.push(cmpName);
-                                     }
-                                 }
-                             }
-                         }
-                         tag = tag.parentNode;
-                     }
-                    
-                     spaces = spacing;
-                     cmpName = "";
-                     for(var index=cmpNameArray.length-1; index>=0; index--){
-                     	cmpName = cmpName + spaces+ cmpNameArray[index]+"\n";
-                     	spaces = spaces+"   ";
-                     }
-                     
-                     return cmpName;
-	        },
-	     /**
-	      * Method that checks to that an element has the necessary functions to be able to grab data from it and format correct.
-	      * The only thing that this will stop is the ability to say which component rendered it.
-	      * @param elm        - component that we are making sure contains all of the necessary informaiton.
-	      * @return boolean   - True if all functions exist. False otherwise
-	      */
-	     containsNecessaryFunctions : function(elm){
-	         var checkExists = $A.util.isUndefinedOrNull;
-	         return  (!checkExists(elm)) && 
-		         ("getAttributes" in elm) && !checkExists(elm.getAttributes()) &&
-		         ("getValueProvider" in elm.getAttributes() && !checkExists(elm.getAttributes().getValueProvider())) && 
-		         ("getDef" in elm.getAttributes().getValueProvider() && !checkExists(elm.getAttributes().getValueProvider().getDef()));
-	     },   
+            
             /**
              * Method grabs everything from the given array and prints out the error and the tag(s) that are the issue
              * @param   tagError - The error message for the given tag
@@ -642,481 +534,169 @@ var AuraDevToolService = function() {
              * @returns String - Either the empty string or a string representation of the error
              */
             formatOutput : function(tagError, errArray){
-                    if(errArray.length === 0){
-                        return "";
+        	if(errArray.length === 0){
+        	    return "";
+        	}
+        	
+        	var len = errArray.length;
+        	var data_aura_rendered_by = "";
+        	var compThatRenderedCmp = "";
+        	var cmpInfo = "";
+        	var cmpDesc = "";
+        	var nodeName = "";
+        	var cmp = "";
+        	var errStr = "\nIssue: "+tagError+"\n";
+
+        	var accessAideFuncs = aura.devToolService.accessbilityAide;
+        	accessAideFuncs.errorCount = len + accessAideFuncs.errorCount; 
+        	for(var i = 0; i<len; i++){
+        	    nodeName = errArray[i].nodeName.toLowerCase();
+        	    data_aura_rendered_by = errArray[i].getAttribute("data-aura-rendered-by");
+        	    
+        	    //Make sure it has a rendered by value
+        	    if(aura.util.isUndefinedOrNull(data_aura_rendered_by) || data_aura_rendered_by === "" ){
+        		nodeName = errArray[i].nodeName.toLowerCase();
+        		cmpInfo = "No Aura information available";
+        		compThatRenderedCmp = cmpInfo;
         	    }
-                    var len = errArray.length;
-                    var data_aura_rendered_by = "";
-                    var compThatRenderedCmp = "";
-                    var cmpInfo = "";
-                    var cmpDesc = "";
-                    var nodeName = "";
-                    var cmp = "";
-                    var errStr = "\nIssue: "+tagError+"\n";
-                    var accessAideFuncs = aura.devToolService.accessbilityAide;
-                    accessAideFuncs.errorCount = len + accessAideFuncs.errorCount; 
-                    
-                    for(var i = 0; i<len; i++){
-                	nodeName = errArray[i].nodeName.toLowerCase();
-                	data_aura_rendered_by = $A.util.getElementAttributeValue(errArray[i], "data-aura-rendered-by");
-                	cmpInfo = "";
-                	cmpDesc = "";
-                	
-                	//Make sure it has a rendered by value
-                	if($A.util.isUndefinedOrNull(data_aura_rendered_by) || data_aura_rendered_by === "" ){
-                	    nodeName = errArray[i].nodeName.toLowerCase();
-                	    cmpInfo = "No Aura information available";
-                	    compThatRenderedCmp = cmpInfo;
-                	}
-                	else{
-                	    //Making sure that the cmp is rendered by Aura and a normal HTML tag
-                	    //Making sure to grab the correct $A. Depending if you are using the debuggertool or not, $A will be different
-                	    cmp = $A.getCmp(data_aura_rendered_by);
-                	    
-                	    if(accessAideFuncs.containsNecessaryFunctions(cmp)){
-                		//If he component exists grab it descriptor
-                		cmpDesc = cmp.getAttributes().getValueProvider().getDef().getDescriptor();
-                		
-                		//Grab the namespace and name so that it is not viewed as a hyperlink
-                		cmpInfo = cmpDesc.getNamespace()+":"+cmpDesc.getName();
-                		
-                		//Grabbing the erroneous components value provider
-                		cmpDesc = cmp.getAttributes().getValueProvider();
-                		
-                		//Making sure we are not at the app level and that we are not looking at a pass through value
-                		if(accessAideFuncs.containsNecessaryFunctions(cmpDesc)){                    
-                		    cmpDesc = cmpDesc.getAttributes().getValueProvider();
-                		    cmpDesc = cmpDesc.getDef().getDescriptor();
-                		    compThatRenderedCmp = cmpDesc.getNamespace()+":"+cmpDesc.getName();
-                	        }
-                		else{
-                		    //If the component does not have a valueprovider than we are at the app level, or the necessary information can't be found
-                		    compThatRenderedCmp = cmpInfo;
-                		}
-                	}
-                	else{
-                	    cmpInfo = "No Aura information available";
-                	    compThatRenderedCmp = cmpInfo;
-                	}
-                }
-                
-                errStr = errStr+"Component markup: //"+cmpInfo+"\nFound in: //"+compThatRenderedCmp+"\nRendered Tag:   <"+nodeName+""+accessAideFuncs.attribStringVal(errArray[i].attributes)+">...</"+nodeName+">\n";             
-                errStr = errStr+"StackTrace:\n" + accessAideFuncs.getStackTrace(errArray[i], "           ");
-            }
+        	    else{
+        		//Making sure that the cmp is rendered by Aura and a normal HTML tag
+        		//Making sure to grab the correct $A. Depending if you are using the debuggertool or not, $A will be different
+        		cmp = $A.getCmp(data_aura_rendered_by);
+        		
+        		if(!aura.util.isUndefinedOrNull(cmpDesc)){
+        		    //If he component exists grab it descriptor
+        		    cmpDesc = cmp.getAttributes().getValueProvider().getDef().getDescriptor();
+        		    //Grab the namespace and name so that it is not viewed as a hyperlink
+        		    cmpInfo = cmpDesc.getNamespace()+":"+cmpDesc.getName();
+        		    
+        		  //Grabbing the erroneous components value provider
+        		  cmpDesc = cmp.getAttributes().getValueProvider().getAttributes().getValueProvider();
+        		    
+        		  //Making sure we are not at the app level
+        		  if(!aura.util.isUndefinedOrNull(cmpDesc)){
+        		      cmpDesc = cmpDesc.getDef().getDescriptor();
+        		      compThatRenderedCmp = cmpDesc.getNamespace()+":"+cmpDesc.getName();
+        		  }
+        		  else{
+        		       //If the component does not have a valueprovider than we are at the app level
+        		       compThatRenderedCmp = cmpInfo;
+        		  }  
+        		}
+        		else{
+        		    cmpInfo = "There was an error finding this component. Please rerender or fix the issue";
+        		}
+        	    }
+        	    
+        	    errStr = errStr+"Component markup: //"+cmpInfo+"\nFound in: //"+compThatRenderedCmp+"\nRendered Tag:   <"+nodeName+""+accessAideFuncs.attribStringVal(errArray[i].attributes)+">...</"+nodeName+">\n";     	    
+        	}
                 return errStr;
             },
-            /**
-             * Method looks at the given tags title, and makes sure that it is not the empty string
-             * @param   hd - The head tag
-             * @returns Array - Returns an array of all erroneous values
-             */
             checkHeadHasCorrectTitle : function(hdErrMsg, hd){
         	    var title = hd.getElementsByTagName("title")[0];
         	    var errArray = [];
-        	    if($A.util.isUndefinedOrNull(title) || $A.util.getText(title) === ""){
+        	    if($A.util.isUndefinedOrNull(title) || $A.test.getText(title) === ""){
         		errArray.push(hd);  
         	    }
         	    return errArray;
-        	},
-        	/**
-                 * Method looks at the given anchors img (if it exists) and checks to see if it has an img atrib
-                 * @param   anchor  - The anchor in question
-                 * @returns Boolean - Returns whether a valid img alt was found
-                 */
-        	anchrDoesNotHaveImgWithAlt : function(anchor){
-        	    var imgs = anchor.getElementsByTagName("img");
-        	    var alt = "";
-        	    
-        	    for(var i =0; i<imgs.length; i++){
-        		alt = $A.util.getElementAttributeValue(imgs[i], "alt");
-        		if(!$A.util.isUndefinedOrNull(alt) && alt.replace(/[\s\t\r\n]/g,'') !== ""){
-        		   return false;    
-        		}
-        	    }
-        	    return true;
-        	},
-        	
-                /**
-                 * Method looks at the given arrays for anchor statements that are the empty string
-                 * @param   anchors - The anchor tags in the document
-                 * @returns Array - Returns an array of all erroneous values
-                 */
-                checkAnchorHasInnerText : function (anchors){
-    	        	var errArray = [];
-    	        	var anchor = null;
-    	        	var text = "";
-    	        	var anchorId = null;
-    	        	var accessAideFuncs = $A.devToolService.accessbilityAide;
-    	        	for(var index = 0; index<anchors.length; index++){
-    	        	    anchor = anchors[index];
-    	        	    
-    	        	    anchorId = $A.util.getElementAttributeValue(anchor, "id");
-    	        	    
-    	        	    // Temporary fix for ckeditor. current issue is that ckeditor set "=" which causes innerText to not return the correct value
-    	        	    // Work-around will be temporary and should be removed when ckeditor is updated.
-    	        	    // Bug to track removal: W-1979552
-    	        	    if($A.util.isUndefinedOrNull(anchorId) || anchorId.indexOf("cke_") !== 0 ){
-    	        	    	 //Text should not be undefined or null at any point since $A.test.getText will always return something
-        	        	    text = $A.util.getText(anchor).replace(/[\s\t\r\n]/g,'');
-        	        	                        
-        	        	    if(text === "" && accessAideFuncs.anchrDoesNotHaveImgWithAlt(anchor)){
-        	        	          errArray.push(anchor);
-        	        	    }
-    	        	    }
-    	        	}
-    	        	return errArray;
-                },
-                /**
-                 * Method grabs everything from the given array and finds all tags that are erroneous
-                 * @param   inputTags - radio and checkbox inputs
-                 * @returns array     - Array of all errors that have been found 
-                 */
-                radioButtonAide : function(inputTags){
-                   	 var errorArray = [];
-              		 var inputTag = null;
-              		 var inputType = "";
-              		 var rcName = "";
-              		 var dict = {};
-              		 var tmpArray = [];
-              		 var accessAideFuncs = aura.devToolService.accessbilityAide;
-              		 
-               		 for(var i =0; i<inputTags.length; i++){ 
-              		     inputTag = inputTags[i];
-              		     inputType = $A.util.getElementAttributeValue(inputTag, 'type').toLowerCase();
-              		     if(inputType === "radio" || inputType === "checkbox"){
-              			 rcName = $A.util.getElementAttributeValue(inputTag, 'name');
-              			 if($A.util.isUndefinedOrNull(rcName)){
-              			     continue;
-              			 }
-              			 
-              			 if(!(rcName in dict) ){
-              			     dict[""+rcName] = [];
-              			 }
-              			 
-              			 dict[rcName].push(inputTag);
-              		     }
-              		 }
-               		 
-               		 for(rcName in dict){
-               		    tmpArray = dict[rcName];
-               		    if(tmpArray.length >= 2){
-               			for(var index = 0; index<tmpArray.length; index++){ 
-                   		    if(!accessAideFuncs.checkParentMatchesTag(tmpArray[index], "FIELDSET")){
-                   			 errorArray.push(tmpArray[index]);
-                   	            }
-                   		} 
-               		     } 
-               		 }
-               		 
-               		 return errorArray;
-                 },
-                 /**
-                   * Method that takes in a list of buttons and makes sure that they all have some text associated with them in the labels
-                   * @param   buttons     - All buttons that are on the page
-                   * @returns Array    - Array of all the errors
-                   */
-                 buttonLabelAide : function(buttons){
-                     var errorArray = [];
-                     var button = null;
-                     var buttonImage = null;
-                     var testText = null;
-                     for(var i = 0; i<buttons.length; i++){
-                	 button = buttons[i];
-                	 if(!$A.util.isUndefinedOrNull(button)){ 
-                	     
-                	     buttonImage = button.getElementsByTagName("img");
-                	     if(buttonImage.length === 0){                		 
-                		 testText = $A.util.getText(button).replace(/[\s\t\r\n]/g, '');
-                		 if(testText === ''){
-                 			errorArray.push(button);  
-                 		 }
-                	     }
-                	 }     
-             	     }
-                     return errorArray;               
-                 },
-                 /**
-                  * Method that goes through all tables present on the page and makes sure the tags underneath them have either an id or scope associated with them
-                  * @param   tables        - The tags to find 
-                  * @param   tableErrorMsg - The error message to show when errors are found
-                  * @returns Array         - The error array
-                  */
-                 checkTables : function(tables, tableErrorMsg){
-                     var headerDict = {};
-                     var ths = [];
-                     var scopeVal = "";
-                     var idVals = "";
-                     var errorArray = [];
-                     var i = 0, j = 0;
-                     var skipTDCheck = false;
-                     var validScopes = {'row': false, 'col': false, 'rowgroup': false, 'colgroup' : false};
-                     for(var index = 0; index<tables.length; index++){
-                	 ths = tables[index].getElementsByTagName("th");
-                	//Reset Variables
-                         headerDict = {};
-                         allThsHaveScope = [];
-                         skipTDCheck = false;
-                         
-                         //If we have no headers, tds wont be a problem
-                         if(ths.length === 0){
-                             continue;
-                         }
-                         //Phase 1:  If all <th> within a <table> contain scope attribute and scope attribute value is one of col, row, colgroup, rowgroup, then pass test. 
-                         for(i = 0; i<ths.length; i++){                      
-                             //Grab scope
-                             scopeVal = $A.util.getElementAttributeValue(ths[i], "scope");
-                             idVals = $A.util.getElementAttributeValue(ths[i], "id");
-                             //If Scope exists
-                             if(!$A.util.isUndefinedOrNull(scopeVal)){
-                            	 if(!(scopeVal in validScopes) || $A.util.trim(scopeVal) === ""){
-                            	    errorArray.push(ths[i]);
-                            	 }
-                            	 
-                            	 skipTDCheck = true;
-                            	
-                             }
-                             else if(!$A.util.isUndefinedOrNull(idVals)){
-                        	 headerDict[idVals] = true;
-                             }
-                             else{
-                        	 errorArray.push(ths[i]);
-                             }
-                         }
-                         
-                         //If we have already found an error with the THS (either they don't have an ID or they don't have a scope) skip the rest
-                         if(!$A.util.isEmpty(errorArray) || skipTDCheck){
-                             continue;
-                         }
-                       
-                       
-                         //Phase 2: If all <th> within a <table> contain "id" and all <td> contain "headers" attribute, and each id listed in header attribute matches id attribute of a <th>, then pass test.
-                         tds = tables[index].getElementsByTagName("td");
-                         
-                         //Don't need this I believe
-                         if(tds.length === 0){
-                             continue;
-                         }
-                         for(i = 0; i<tds.length; i++){
-                             idVals = $A.util.getElementAttributeValue(tds[i], "headers");
-                             if($A.util.isUndefinedOrNull(idVals)){
-                        	 errorArray.push(tds[i]);
-                        	 continue;
-                             }
-                             
-                             idVals = $A.util.trim(idVals).split(/\s+/);
-                             for(j = 0; j<idVals.length; j++){
-                        	 if(!(idVals[j] in headerDict)){
-                        	     errorArray.push(tds[i]);
-                        	     break;
-                        	 }
-                             }
-                         }
-                     }
-                     return errorArray;
-                 },
-                 /**
-                  * Method that takes in a list of h#, the tag that show follow directly after, and all possible items that can be found.
-                  * It will start start searching through siblings of h# to find invalid-nested tags and return an error array with them if found
-                  * @param   tags     - Array of all h# tags to look at
-                  * @param   nextTag  - String representation of the very next tag that we should see. 
-                  * 			i.e. if tags contains all h1 tags, nextTag should be "h2"
-                  * @param   allHdrs  - Dictionary of all possible h# we can see.
-                  * 		       i.e. if tags is a list of all h1 tags in the document, then allHdrs will be a dictionary
-                  * 		       of h2-h6. 
-                  * @returns Array    - Array of all the errors
-                  */
-                 findNextHeader : function(tags, nextTag, allHdrs){
-                     var errorArray = [];
-                     var children = [];
-                     var child = null;
-                     var currTag;
-                     var startLooking = false;
-
-                     for(var index = 0; index< tags.length; index++){
-                 	children = tags[index].parentNode.children;
-                 	currTag = "";
-                 	startLooking = false;
-
-                 	if($A.util.isUndefinedOrNull(children)){
-                 	    continue;
-                 	}
-                 	            	
-                 	for(var childIndex = 0; childIndex < children.length; childIndex++){
-                 	    child = children[childIndex];
-                 	    
-                 	    if(tags[index] === child){
-                 		startLooking = true;
-                 	    }
-                 	    
-                 	    if(startLooking){
-                 		currTag = child.tagName.toLowerCase();
-                 		if(currTag in allHdrs){
-                 		    if(currTag !== nextTag){
-                 			errorArray.push(child);
-                 		    }
-                 		    break;
-                 		}
-                 	    }
-                 	}
-                     }
-                     
-                     return errorArray;
-                 }
+        	}
+           
         },
         verifyAccessibility : {
-            /**
-             * Function that will find all nested Headers and make sure that they have in 1 lvl difference
-             * @returns String - Returns a string representation of the errors
-             */
-            checkNestedHeaders : function(domElem){
-                   var headerErrMsg = "Headings are properly nested and increased by 1 level at a time. e.g., h1 followed by h2, h2 followed by h2 or h3. Refer to http://www.w3.org/TR/WCAG20-TECHS/G141.html.";
-                   var errArray = [];
-                   var accessAideFuncs = $A.devToolService.accessbilityAide;
-                   var hdrs1 = domElem.getElementsByTagName("h1");
-                   var hdrs2 = domElem.getElementsByTagName("h2");
-                   var hdrs3 = domElem.getElementsByTagName("h3");
-                   var hdrs4 = domElem.getElementsByTagName("h4");
-                   var hdrs5 = domElem.getElementsByTagName("h5");
-
-                   errArray = errArray.concat(accessAideFuncs.findNextHeader(hdrs1, "h2", {"h2":"", "h3":"", "h4":"", "h5":"", "h6":""}));
-                   errArray = errArray.concat(accessAideFuncs.findNextHeader(hdrs2, "h3", {"h3":"", "h4":"", "h5":"", "h6":""}));
-                   errArray = errArray.concat(accessAideFuncs.findNextHeader(hdrs3, "h4", {"h4":"", "h5":"", "h6":""}));
-                   errArray = errArray.concat(accessAideFuncs.findNextHeader(hdrs4, "h5", {"h5":"", "h6":""}));
-                   errArray = errArray.concat(accessAideFuncs.findNextHeader(hdrs5, "h6", {"h6":""}));
-
-                   return accessAideFuncs.formatOutput(headerErrMsg, errArray);
-               
-             },
-               /**
-                * Function that will find all anchors and make sure that they have text in them
-                * @returns String - Returns a string representation of the errors
-                */
-               checkAnchorHasText : function(domElem){
-                      var anchorErrMsg = "Anchor tag should contain proper link text and tell what the link is about. For a graphical link, uses ui:image instead,"+
-                   		      " or uses a span tag with assistiveText class to include the link text; uses ui:button if it's a button.";
-                      var accessAideFuncs = $A.devToolService.accessbilityAide;
-                      var anchors = domElem.getElementsByTagName("a");
-                      return accessAideFuncs.formatOutput(anchorErrMsg, accessAideFuncs.checkAnchorHasInnerText(anchors));
-                  
-                },
                 /**
                  * Function that will find all ths and make sure that they have scope in them, and that they are equal to row, col, rowgroup, colgroup
                  * @returns String - Returns a string representation of the errors
                  */
-                  checkHeadTitle : function(domElem){
+                  checkHeadTitle : function(){
         		var hdErrMsg = "Head element must include non-empty title element. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/navigation-mechanisms.html.";
         		var accessAideFuncs = $A.devToolService.accessbilityAide;
-        		var hd = domElem.getElementsByTagName("head")[0];
-        		
-        		if($A.util.isEmpty(hd)){
-        		    return "";
-        		}
+        		var hd = document.getElementsByTagName("head")[0];
         		return accessAideFuncs.formatOutput(hdErrMsg, accessAideFuncs.checkHeadHasCorrectTitle(hdErrMsg, hd));
         	     },
-        	     /**
-                      * Function that will find all ths and make sure that they have scope in them, and that they are equal to row, col, rowgroup, colgroup
-                      * @returns String - Returns a string representation of the errors
-                      */
-             	     checkTableIsAccessible : function(domElem){
-             		var tableErrorMsg = "Table header must properly associate with table cell by, either using 'scope' attribute with one of the values 'row', 'col', 'rowgroup' and 'colgroup', or using id and headers attributes.";
-         		var accessAideFuncs = aura.devToolService.accessbilityAide;
-         		var tables = domElem.getElementsByTagName("table");
-         		return accessAideFuncs.formatOutput(tableErrorMsg, accessAideFuncs.checkTables(tables, tableErrorMsg));
-             	     },
+                    /**
+                     * Function that will find all ths and make sure that they have scope in them, and that they are equal to row, col, rowgroup, colgroup
+                     * @returns String - Returns a string representation of the errors
+                     */
+            	     checkThHasScope : function(){
+            		var thScopeMsg = "Table header must have scope attribute. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/content-structure-separation.html.";
+        		var accessAideFuncs = aura.devToolService.accessbilityAide;
+        		var ths = document.getElementsByTagName("th");
+        		return accessAideFuncs.formatOutput(thScopeMsg,accessAideFuncs.checkForAttrib(ths,"scope", {'row': false, 'col': false, 'rowgroup': false, 'colgroup' : false}, accessAideFuncs.doesNotContain));
+            	     },
                      /**
                       * Function that will find all IFrames and make sure that they have titles in them
                       * @returns String - Returns a string representation of the errors
                       */
-        	     checkIFrameHasTitle : function(domElem){
+        	     checkIFrameHasTitle : function(){
         		var iFrameTitleMsg = "Each frame and iframe element must have non-empty title attribute. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/ensure-compat.html.";
         		var accessAideFuncs = aura.devToolService.accessbilityAide;
-                        var iframes = domElem.getElementsByTagName("iframe");
-        		
-        		/**THIS CODE BLOCK SHOULD BE REMOVED AFTER PARTIAL CODE RUNNING**/
-        		var id = null;
-        		var src = null;
-        		var frame = null;
-        		var iframeArray = [];
-        		for(var i = 0; i<iframes.length; i++){
-        			frame = iframes[i];
-        			id  = $A.util.getElementAttributeValue(frame, "id");
-        			src = $A.util.getElementAttributeValue(frame, "src"); 
-        			if((!$A.util.isUndefinedOrNull(src) && src.indexOf("/apex/") !== -1) ||
-        					(!$A.util.isUndefinedOrNull(id) && id.toLowerCase().indexOf("vfframeid") !== -1)){
-        				continue;
-        			}
-        			
-        			iframeArray.push(frame);
-        		}
-        		/*************************************************************************/
-        		return accessAideFuncs.formatOutput(iFrameTitleMsg,accessAideFuncs.checkForAttrib(iframeArray, "title", "", accessAideFuncs.doesContain));
+        		var iframe = document.getElementsByTagName("iframe");
+        		return accessAideFuncs.formatOutput(iFrameTitleMsg,accessAideFuncs.checkForAttrib(iframe, "title", "", accessAideFuncs.doesContain));
         	    },
         	    /**
                      * Grabs all images tags and makes sure they have titles
                      * @returns String - Returns a string representation of the errors
                      */
-        	    checkImageTagForAlt : function(domElem){
+        	    checkImageTagForAlt : function(){
         		var imgError = "IMG tag must have alt attribute. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/text-equiv.html.";
         		var infoMsg = "\nNote: If the image type is informational, then the alt must be set";
                 	var decoMsg = "\nNote: If the image type is decorative,  then the alt must be the empty string";
-                	var altError = "\nNote: Alt attribute cannot not be equal to \"undefined\", \"empty\", \"null\"";
+                	var imgTypeNotDefinedMsg  = "\nNote: ImageType Attribute must be set to either decorative or informational";
         		var accessAideFuncs = aura.devToolService.accessbilityAide;
-        		var allImgTags = domElem.getElementsByTagName("img");
-       		        return accessAideFuncs.findAllImgTags(allImgTags, imgError, infoMsg, decoMsg, altError);
+       		        return accessAideFuncs.findAllImgTags(imgError,infoMsg,decoMsg,imgTypeNotDefinedMsg);
         	    },
         	    /**
-                     * Goes through all of the fieldsets tags that do not have the display:none field set and makes sure that each one has a legend
+                     * Goes through all of the fieldsets tags and makes sure that each on has a legend
                      * @returns String - Returns a string representation of the errors
                      */
-        	    checkFieldSetForLegend : function(domElem){
+        	    checkFieldSetForLegend : function(){
         		var fieldsetLegnedMsg = "Fieldset element must include legend element. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/minimize-error.html.";
         		var accessAideFuncs = aura.devToolService.accessbilityAide;
-        		var fieldSets = domElem.getElementsByTagName('fieldset');
+        		var fieldSets = document.getElementsByTagName('fieldset');
         		var legends = "";
         		var errorArray = [];
-        		var fieldSetSytle  = "";
+        		
         		for(var i=0; i<fieldSets.length; i++){
         		        legends = fieldSets[i].getElementsByTagName('legend');
-        		        fieldSetSytle = fieldSets[i].style.display;
-        		      
-        		        if(!$A.util.isUndefinedOrNull(fieldSetSytle) && fieldSetSytle == "none"){
-        		            continue;
-        		        }
-
         	        	if(legends.length === 0){
         	        	    errorArray.push(fieldSets[i]);
         	        	}
         	         }
         		return accessAideFuncs.formatOutput(fieldsetLegnedMsg, errorArray);
         	    }, 
-        	    checkButtonsHaveNonEmptyLabel : function(domElem){
-           		 var buttonLabelErrorMsg = "Button should have non-empty label. When using ui:button, assign a non-empty string to label attribute.";
-           		 var accessAideFuncs = aura.devToolService.accessbilityAide;
-           		 var buttonTags = domElem.getElementsByTagName('button');
-           		 return accessAideFuncs.formatOutput(buttonLabelErrorMsg, accessAideFuncs.buttonLabelAide(buttonTags));
-           	    },
-       	    
         	    /**
                      * Gets all radio buttons, then traverses up the tree to find if they are in a fieldset
                      * @returns String - Returns a string representation of the errors
                      */
-        	    checkRadioButtonsInFieldSet : function(domElem){
+        	    checkRadioButtonsInFieldSet : function(){
         		 var radioButtonFieldSetMsg = "Radio button and checkbox should group by fieldset and legend elements. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/content-structure-separation.html.";
         		 var accessAideFuncs = aura.devToolService.accessbilityAide;
-        		 var inputTags = domElem.getElementsByTagName('input');
-        		 return accessAideFuncs.formatOutput(radioButtonFieldSetMsg, accessAideFuncs.radioButtonAide(inputTags));
+        		 var inputTags = document.getElementsByTagName('input');
+        		 var errorArray = [];
+        		 var inputTag = null;
+        		 
+         		 for(var i =0; i<inputTags.length; i++){ 
+        		     inputTag = inputTags[i];
+        		     if(inputTag.getAttribute('type').toLowerCase() == "radio"){
+        		          if(!accessAideFuncs.checkParentMatchesTag(inputTag, "FIELDSET")){
+        		              errorArray.push(inputTag);
+        		          }
+        		     }
+        		  }
+
+        	         return accessAideFuncs.formatOutput(radioButtonFieldSetMsg, errorArray);
         	    },
         	    /**
                      * Verifys that all inputs have a label
                      * @returns String - Returns a string representation of the errors
                      */
-        	    checkInputHasLabel : function(domElem) {
+        	    checkInputHasLabel : function() {
         		var inputLabelMsg   = "A label element must be directly before/after the input controls, and the for attribute of label must match the id attribute of the input controls, OR the label should be wrapped around an input. Refer to http://www.w3.org/TR/UNDERSTANDING-WCAG20/minimize-error.html.";
         		var accessAideFuncs = aura.devToolService.accessbilityAide;
-        		var inputTextTags   = domElem.getElementsByTagName('input');
-         		var textAreaTags    = domElem.getElementsByTagName('textarea');
-                        var selectTags      = domElem.getElementsByTagName('select');
-                        var lbls = domElem.getElementsByTagName("LABEL");  
+        		var inputTextTags   = document.getElementsByTagName('input');
+         		var textAreaTags    = document.getElementsByTagName('textarea');
+                        var selectTags      = document.getElementsByTagName('select');
+                        var lbls = document.getElementsByTagName("LABEL");  
                         var errorArray = [];
                         
                         errorArray = errorArray.concat(accessAideFuncs.inputLabelAide(lbls, inputTextTags));
@@ -1130,17 +710,13 @@ var AuraDevToolService = function() {
          * Calls all functions in VerifyAccessibility and stores the result in a string
          * @returns String - Returns a a concatenated string representation of all errors or the empty string
          */
-        checkAccessibility : function(domElem){
+        checkAccessibility : function(){
             var functions = aura.devToolService.verifyAccessibility;
             var result = "";
             aura.devToolService.accessbilityAide.errorCount = 0;
             
-            if($A.util.isUndefinedOrNull(domElem)){
-        	domElem = document;
-            }
-            
-            for(var funcNames in functions){           
-        	   result = result + functions[funcNames](domElem);
+            for(var funcNames in functions){
+        	result = result + functions[funcNames]();
             }
             
             if(aura.devToolService.accessbilityAide.errorCount === 0){

@@ -15,12 +15,12 @@
  */
 package org.auraframework.component.aura;
 
-import java.util.Map;
-
 import org.auraframework.test.WebDriverTestCase;
 import org.auraframework.test.annotation.ThreadHostileTest;
+import org.auraframework.test.annotation.UnAdaptableTest;
 import org.auraframework.test.controller.TestLoggingAdapterController;
-import org.openqa.selenium.By;
+
+import java.util.Map;
 
 /**
  * UI Test for LabelValueProvider.js
@@ -29,33 +29,37 @@ public class LabelValueProviderUITest extends WebDriverTestCase {
 
     // URL string to go to
     private final String URL = "/gvpTest/labelProvider.cmp";
-    private By label1 = By.xpath("//div[@id='div1']");
 
     public LabelValueProviderUITest(String name) {
         super(name);
     }
 
     /**
-     * Test we have one java call for each valid label request.
+     * Tests that there are no multiple action requests for the same $Label.
+     *
+     * labelProviderRenderer.js has multiple requests for the same $Label. There are only three unique $Labels so
+     * we should only see three action requests for those unique $Labels
+     *
      * @throws Exception
      */
     @ThreadHostileTest("TestLoggingAdapter not thread-safe")
+    @UnAdaptableTest("Missing TestLoggingAdapter impl")
     public void testEfficientActionRequests() throws Exception {
         TestLoggingAdapterController.beginCapture();
         open(URL);
-        auraUITestingUtil.waitForElementText(label1, "simplevalue1: Today", true);
-        
+        auraUITestingUtil.waitForAuraInit();
         Long callCount = 0L;
         boolean isLabelControllerCalled = false;
         for (Map<String, Object> log : TestLoggingAdapterController.endCapture()) {
-            if(log.containsKey("action_aura://LabelController/ACTION$getLabel")) {
+            if(log.containsKey("action_aura://LabelController/ACTION$getLabelTime")) {
                 callCount = (Long) log.get("JavaCallCount");
                 isLabelControllerCalled = true;
                 break;
             }
         }
-        assertTrue("Fail: LabelController should be called", isLabelControllerCalled);
-        assertTrue("Fail: There should be two calls to LabelController", callCount == 1L);
-    }
 
+        assertTrue("Fail: LabelController should be called", isLabelControllerCalled);
+        assertTrue("Fail: There should be three calls to LabelController", callCount == 3L);
+
+    }
 }

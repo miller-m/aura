@@ -15,68 +15,52 @@
  */
 ({
     displayValue: function(component) {
-	var concCmp = component.getConcreteComponent();
-        var value = concCmp.get("v.value");
+        var value = component.get("v.value");
         var displayValue = value;
         if (value) {
             var d = $A.localizationService.parseDateTimeUTC(value, "yyyy-MM-dd");
             if (d) {
-                var format = concCmp.get("v.format");
-                var langLocale = concCmp.get("v.langLocale");
+                var format = component.get("v.format");
+                var langLocale = component.get("v.langLocale");
                 try {
-                    d = $A.localizationService.translateToOtherCalendar(d);
                     displayValue = $A.localizationService.formatDateUTC(d, format, langLocale);
                 } catch (e) {
                     displayValue = e.message;
                 }
             }
         }
-        
-        /**This instance of the component variable was left in because in cases when we are extending inputDate,
-         * getting the concreteComponent will give us the lowest hanging fruit, which does not include an 
-         * element with an id of inputText. By leaving this variable in, it will work in both cases.
-         */
         var elem = component.find("inputText").getElement();
-        elem.value = displayValue ? $A.localizationService.translateToLocalizedDigits(displayValue) : '';
+        elem.value = displayValue ? displayValue : '';
     },
-
+    
     displayDatePicker: function(component) {
-	var concCmp = component.getConcreteComponent();
-        var datePicker = concCmp.find("datePicker");
-        if (datePicker && datePicker.get("v.visible") === false) {
-            var currentDate = new Date();
-            var value = concCmp.get("v.value");
-            if (value) {
-                currentDate = $A.localizationService.parseDateTime(value, "yyyy-MM-dd");
-            }
-            datePicker.set("v.value", this.getDateString(currentDate));
-            datePicker.set("v.visible", true);
+        var currentDate = new Date();
+        var value = component.get("v.value");
+        if (value) {
+            currentDate = $A.localizationService.parseDateTime(value, "yyyy-MM-dd");
+        }
+        var datePicker = component.find("datePicker");
+        if (datePicker) {
+            datePicker.setValue("v.value", this.getDateString(currentDate));
+            datePicker.setValue("v.visible", true);
         }
     },
-
+    
     /**
      * Override ui:input.
      *
      */
     doUpdate : function(component, value) {
-	var concCmp = component.getConcreteComponent();
-        var v = $A.localizationService.translateFromLocalizedDigits(value);
-        var ret = v;
+        var ret = value;
         if (value) {
-            var format = concCmp.get("v.format");
-            if (!format) { // use default format
-                format = $A.get("$Locale.dateformat");
-            }
-            var langLocale = concCmp.get("v.langLocale");
-            var d = $A.localizationService.parseDateTimeUTC(v, format, langLocale);
-            if (d) {
-                d = $A.localizationService.translateFromOtherCalendar(d);
-                ret = $A.localizationService.formatDateUTC(d, "YYYY-MM-DD");
-            }
+            var format = component.get("v.format");
+            var langLocale = component.get("v.langLocale");
+            var d = $A.localizationService.parseDateTimeUTC(value, format, langLocale);
+            ret = $A.localizationService.formatDateUTC(d, "YYYY-MM-DD");
         }
-        concCmp.set("v.value", ret);
+        component.setValue("v.value", ret);
     },
-
+    
     getDateString: function(date) {
         return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
     }

@@ -15,20 +15,19 @@
  */
 ({
     render : function(cmp){
-        return cmp.get("v.value");
+        return cmp.getAttributes().get("value");
     },
 
     rerender : function(cmp){
-        if (cmp.isDirty("v.value")) {
+        var newValue = cmp.getAttributes().getValue("value");
+        if (newValue && newValue.isDirty()) {
             // TODO: This placeholder logic should move up to the rendering service
             var el = cmp.getElement();
             var placeholder = document.createTextNode("");
             $A.util.insertBefore(placeholder, el);
 
             $A.unrender(cmp);
-            
             var results = $A.render(cmp);
-            
             $A.util.insertBefore(results, placeholder);
             $A.util.removeElement(placeholder);
             $A.afterRender(cmp);

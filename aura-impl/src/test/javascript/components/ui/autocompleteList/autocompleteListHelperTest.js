@@ -49,7 +49,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 						return "label";
 					}
 				},
-				set : function(expression, value) {
+				setValue : function(expression, value) {
 					if (expression === "v.items") {
 						actual = value;	
 					}
@@ -57,9 +57,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 			}
 			
 			var mockHelperMethods = Mocks.GetMocks(targetHelper, {
-				toggleListVisibility : function(cmp, value){},
-				showLoading : function(cmp, value){},
-				fireMatchDoneEvent : function(cmp, value){}
+				toggleListVisibility : function(cmp, value){}
 			});
 			
 			// Act
@@ -94,7 +92,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 						return "label";
 					}
 				},
-				set : function(expression, value) {
+				setValue : function(expression, value) {
 					if (expression === "v.items") {
 						actual = value;	
 					}
@@ -102,9 +100,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 			}
 			
 			var mockHelperMethods = Mocks.GetMocks(targetHelper, {
-				toggleListVisibility : function(cmp, value){},
-				showLoading : function(cmp, value){},
-				fireMatchDoneEvent : function(cmp, value){}
+				toggleListVisibility : function(cmp, value){}
 			});
 			
 			// Act
@@ -139,7 +135,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 						return "label";
 					}
 				},
-				set : function(expression, value) {
+				setValue : function(expression, value) {
 					if (expression === "v.items") {
 						actual = value;	
 					}
@@ -147,9 +143,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 			}
 			
 			var mockHelperMethods = Mocks.GetMocks(targetHelper, {
-				toggleListVisibility : function(cmp, value){},
-				showLoading : function(cmp, value){},
-				fireMatchDoneEvent : function(cmp, value){}
+				toggleListVisibility : function(cmp, value){}
 			});
 			
 			// Act
@@ -180,7 +174,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 						return "label";
 					}
 				},
-				set : function(expression, value) {
+				setValue : function(expression, value) {
 					if (expression === "v.items") {
 						actual = value;	
 					}
@@ -188,9 +182,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 			}
 			
 			var mockHelperMethods = Mocks.GetMocks(targetHelper, {
-				toggleListVisibility : function(cmp, value){},
-				showLoading : function(cmp, value){},
-				fireMatchDoneEvent : function(cmp, value){}
+				toggleListVisibility : function(cmp, value){}
 			});
 			
 			// Act
@@ -225,7 +217,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 						return "custom";
 					}
 				},
-				set : function(expression, value) {
+				setValue : function(expression, value) {
 					if (expression === "v.items") {
 						actual = value;	
 					}
@@ -233,9 +225,7 @@ Test.Components.Ui.AutocompleteList.AutocompleteListHelperTest=function(){
 			}
 			
 			var mockHelperMethods = Mocks.GetMocks(targetHelper, {
-				toggleListVisibility : function(cmp, value){},
-				showLoading : function(cmp, value){},
-				fireMatchDoneEvent : function(cmp, value){}
+				toggleListVisibility : function(cmp, value){}
 			});
 			
 			// Act

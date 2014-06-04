@@ -27,11 +27,12 @@ import org.openqa.selenium.By;
  * 
  * ThreadHostile because simultaneous loads of the testApp will interfere with progress bar loading.
  * 
- * AppCache tests are only for webkit browsers. Excluded from Safari5, iOS for not supporting ProgressEvent.
+ * AppCache tests are only for webkit browsers. Excluded from Safari5, iOS for not supporting ProgressEvent. Note that
+ * Safari6 should support ProgressEvent.
  * 
  * TODO(W-1708575): Android AppCache tests fail when running on SauceLabs
  */
-@TargetBrowsers({ BrowserType.GOOGLECHROME, BrowserType.SAFARI })
+@TargetBrowsers({ BrowserType.GOOGLECHROME })
 public class AppCacheProgressBarUITest extends WebDriverTestCase {
     private final String PROGRESSEVENTSCRIPT = "var evt = new ProgressEvent('%s', {%s});"
             + "window.applicationCache.dispatchEvent(evt);";
@@ -92,9 +93,12 @@ public class AppCacheProgressBarUITest extends WebDriverTestCase {
      */
     @FreshBrowserInstance
     public void testProgressbarNotVisibleInPRODMode() throws Exception {
-        open("/appCache/testApp.app", Mode.PROD);
+        open("/appCache/testApp.app", Mode.PROD, false);
+        assertFalse("Progress bar for appCache should not show up in PROD mode.", findDomElement(appCacheProgressDiv)
+                .isDisplayed());
 
-        // Timing issues make checking the progress bar on load flappy, so just simulate the event
+        // This time simulate the progress event and verify that the progress
+        // bar does not show up.
         auraUITestingUtil.getEval(String.format(APPCACHEPROGRESS, 1, 100));
         assertFalse("Progress bar for appCache should not show up in PROD mode.", findDomElement(appCacheProgressDiv)
                 .isDisplayed());

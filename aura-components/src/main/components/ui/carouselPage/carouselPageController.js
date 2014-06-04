@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-({	
+{	
 	onInit: function(cmp, evt, helper) {
 		//populate pageId with component's globalId
-		cmp.set('v.priv_pageId', cmp.getGlobalId());
+		cmp.getValue('v.priv_pageId').setValue(cmp.getGlobalId());		
 	},
-
-	onPageSelected : function (cmp, evt, helper) {
+	
+	onPageSelected : function (cmp, evt, helper) {		
 		helper.selectPage(cmp, evt);
 	},
-
-	onPageUpdate: function(cmp, evt, helper) {
-		helper.updatePage(cmp, evt.getParam("pageComponent"));
+	
+	onPageUpdate: function(cmp, evt, helper) {		
+		helper.updatePage(cmp, evt);
 	},
-
+	
 	onPageShow: function(cmp, evt, helper) {
 		helper.showPage(cmp, evt.getParam('pageIndex'));
 	},
-
+	
 	onPageHide: function(cmp, evt, helper) {
 		helper.hidePage(cmp, evt.getParam('pageIndex'));
 	},
-
+	
 	onUpdateSize: function(cmp, evt, helper) {
 		var size = evt.getParam('pageSize');
 		if (size) {
 			helper.updateSize(cmp, size.width, size.height);
 		}
 	}
-})
+}

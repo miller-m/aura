@@ -23,13 +23,12 @@
  */
 function ArrayValue(config, def, component) {
     this.owner = component;
-    this.hasRealValue = true;
     this.setValue(config);
     this.commit();
 
     this.fireEvents = true;
     this.initialized = true;
-//#if {"modes" : ["DEVELOPMENT", "STATS"]}
+//#if {"modes" : ["DEVELOPMENT"]}
     if (def) {
         this.name = def.getDescriptor().getQualifiedName();
     }
@@ -42,26 +41,11 @@ function ArrayValue(config, def, component) {
 ArrayValue.prototype.auraType = "Value";
 
 /**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.get(name)[i] instead
- */
-ArrayValue.prototype.getValue = function (index) {
-    //$A.warning("DEPRECATED USE OF arrayValue.get(index). USE component.get(name)[index] INSTEAD.");
-    return this._getValue(index);
-};
-
-/**
  * Returns the value object at the specified index.
- * <code>getValue('length')</code> returns a value object representing the length of this array value.
+ * getValue('length') will return a value object representing the length of this array value.
  * Any other argument for getValue() will flag an error.
- * @param {Number} i The length of the array.
- *
- * @private
  */
-ArrayValue.prototype._getValue = function(i) {
+ArrayValue.prototype.getValue = function(i) {
     if (aura.util.isString(i)) {
         if ("length" === i) {
             // special case for length
@@ -92,23 +76,11 @@ ArrayValue.prototype.getArray = function() {
     return array;
 };
 
-
-/**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.get(name)[i] instead
- */
-ArrayValue.prototype.get = function (index) {
-    //$A.warning("DEPRECATED USE OF arrayValue.get(index). USE component.get(name)[index] INSTEAD.");
-    return this._get(index);
-};
 /**
  * Returns the unwrapped value at the specified index. Shortcut for getValue(index).unwrap().
  * @param i The index for the value to retrieve
  */
-ArrayValue.prototype._get = function(i) {
+ArrayValue.prototype.get = function(i) {
     return $A.expressionService.get(this, String(i));
 };
 
@@ -121,7 +93,7 @@ ArrayValue.prototype.getLength = function() {
     if (arr) {
         return arr.length;
     }
-
+    
     return 0;
 };
 
@@ -130,11 +102,6 @@ ArrayValue.prototype.getLength = function() {
  */
 ArrayValue.prototype.isEmpty = function() {
     return this.getLength() === 0;
-};
-
-/** Returns true if the array was set to null or undefined, not an actual array. */
-ArrayValue.prototype.isUnset = function() {
-    return !this.hasRealValue;
 };
 
 /**
@@ -154,26 +121,12 @@ ArrayValue.prototype.setIsOwner = function(isOwner) {
 
 
 /**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.set(name,value) instead
- */
-ArrayValue.prototype.setValue = function (newArray, skipChange) {
-    //$A.warning("DEPRECATED USE OF arrayValue.setValue(newArray, skipChange). USE component.set(name,newArray) INSTEAD.",newArray);
-    this._setValue(newArray, skipChange);
-};
-
-/**
  * Sets the array to newArray.
  *
- * @param {Object} newArray The new array. This can be an array of literal JavaScript values or an array of value objects.
- * @param {Boolean} skipChange Set to true if you want to skip firing of the change event, which indicates that the content or state has changed. Or set to false if you want to fire the change event.
+ * @param newArray The new array. This can be an array of literal JavaScript values or an array of value objects.
  */
-ArrayValue.prototype._setValue = function(newArray, skipChange) {
+ArrayValue.prototype.setValue = function(newArray, skipChange) {
     this.fireEvents = false;
-    this.hasRealValue = (newArray !== null && newArray !== undefined);
 
     this.newArray = [];
     this.makeDirty();
@@ -201,10 +154,9 @@ ArrayValue.prototype._setValue = function(newArray, skipChange) {
 
 /**
  * Recursively destroys all values in the array
- * @param {Boolean} async Set to true if values are to be destroyed asynchronously.
- * @private
  */
 ArrayValue.prototype.destroyOrphans = function(array, async) {
+    
      while (array.length > 0) {
          var v = array.pop();
          if (v && v.destroy) {
@@ -225,7 +177,7 @@ ArrayValue.prototype.commit = function(clean) {
         if (this.array && this.isOwner) {
             this.destroyOrphans(this.array,true);
         }
-
+            
         this.array = this.newArray;
         this.rollback(clean);
     }
@@ -254,13 +206,6 @@ ArrayValue.prototype.isDirty = function() {
 };
 
 /**
- * Returns true if a new array has been set using the setValue() method but not yet committed.
- */
-ArrayValue.prototype.isDifferentArray = function() {
-    return this.dirty && this.newArray !== this.array;
-};
-
-/**
  * Removes uncommitted changes if there are any. isDirty() returns false after rollback() is called.
  * This method doesn't return a value.
  *
@@ -280,99 +225,52 @@ ArrayValue.prototype.rollback = function(clean){
 /**
  * Adds a new item to the end of the array.
  *
- * @param {Object} config The value for the new item. This can be either a literal JavaScript value or a value object.
+ * @param config The value for the new item. This can be either a literal JavaScript value or a value object.
  */
 ArrayValue.prototype.push = function(config) {
     var ar = this.getArray();
 
     var value = valueFactory.create(config, null, this.owner);
-    if (value.makeDirty) {
-        value.makeDirty();
-    }
     ar.push(value);
-    this.hasRealValue = true;
+
     this.makeDirty();
     this.addValueHandlers(value);
 };
 
 /**
  * Inserts an item at the specified index of the array.
- * @param {Number} index The array index where the value will be inserted.
- * @param {Object} config The value of the new item. This can be either a literal JavaScript value or a value object.
+ * @param index The array index where the value will be inserted
+ * @param config The value of the new item. This can be either a literal JavaScript value or a value object.
  */
 ArrayValue.prototype.insert = function(index, config) {
     if ($A.util.isNumber(index) && index >= 0) {
         var ar = this.getArray();
         var value = valueFactory.create(config, null, this.owner);
         ar.splice(index, 0, value);
-        this.hasRealValue = true;
         this.makeDirty();
-        for (var i = index; i < ar.length; i++) {
-            if (ar[i].makeDirty) {
-                ar[i].makeDirty();
-            }
-        }
+
         this.addValueHandlers(value);
     }
 };
 
 /**
- * Removes from the array the item(s) at the specified index and returns the removed item(s).
- * Largely for back compatibility, remove(i) will return the removed item, but remove(i,m)
- * will return an array of removed items (perhaps only one item, for m=1).
- *
- * @param {Number} index The array index of the item to be removed
- * @param {Number} count The number of items to remove.  If undefined, one item is removed,
- *     and the return is NOT an array.
+ * Removes from the array the item at the specified index and returns the removed item.
  */
-ArrayValue.prototype.remove = function(index, count) {
+ArrayValue.prototype.remove = function(index) {
     if ($A.util.isNumber(index) && index >= 0 && index < this.getLength()) {
         var ar = this.getArray();
-        var removed = ar.splice(index, count === undefined ? 1 : count);
+        var removed = ar.splice(index, 1)[0];
         this.makeDirty();
-        for (var i = index; i < ar.length; i++) {
-            if (ar[i].makeDirty) {
-                ar[i].makeDirty();
-            }
-        }
+
         var handlers = this.handlers;
         if (handlers) {
             for (var globalId in handlers) {
-                for (i = 0; i < removed.length; i++) {
-                    removed[i].destroyHandlers(globalId);
-                }
+                removed.destroyHandlers(globalId);
             }
         }
-        // Ensure that we keep a reference node, or that we create a new locator
-        if (this.referenceNode) {
-            i = 0;
-            while (i < removed.length) {
-                if (removed[i].getElement && removed[i].getElement() === this.referenceNode) {
-                    break;   // We removed our reference
-                }
-                i++;
-            }
-            // First removed item with an element might have been the reference node
-            if (removed[i] && removed[i].getElement && this.referenceNode === removed[i].getElement()) {
-                // Oops, it's not anymore.  So, check if we still have one to use, or make one.
-                i = 0;
-                while (i < ar.length) {
-                    if (ar[i].getElement && ar[i].getElement()) {
-                        break;  // Found a viable reference node instead
-                    }
-                    i++;
-                }
-                if (i < ar.length) {
-                    this.referenceNode = ar[i].getElement();
-                } else {
-                    var newRef = this.createLocator("array locator " + this.owner);
-                    $A.util.insertBefore(newRef, this.referenceNode);
-                    this.referenceNode = newRef;
-                }
-            }
-        }
+
         this.fire("change");
-        return count === undefined ? removed[0] : removed;
+        return removed;
     }
     return null;
 };
@@ -396,11 +294,11 @@ ArrayValue.prototype.addValueHandlers = function(value){
 };
 
 /**
- * @private
+ * @protected
  */
 ArrayValue.prototype.fire = function(name) {
     if (this.initialized && this.fireEvents){
-        BaseValue.fire(name, this.unwrap(), this.getEventDispatcher());
+        BaseValue.fire(name, this, this.getEventDispatcher());
     }
 };
 
@@ -420,35 +318,33 @@ ArrayValue.prototype.isLiteral = function() {
 
 /**
  * Iterates through the array and calls the user-defined function on each value.
- * <p>For example, this function simply alerts the user for each value in the array.</p>
- * <code>
+ * For example, this function simply alerts the user for each value in the array.
+ *
  * arrValue.each(function(val) {
  *      alert(val);
  * });
- *</code>
- * @param {Function} func The function that operates on each value.
- * @param {Boolean} reverse If defined, reverses the direction of the iteration.
+ *
+ * @param func The function that operates on each value.
+ * @param reverse If defined, reverses the direction of the iteration.
  */
 ArrayValue.prototype.each = function(func, reverse) {
     var a = this.getArray();
     var i;
     if (reverse) {
         for(i = a.length - 1; i >= 0; i--){
-            func(a[i],i);
+            func(a[i]);
         }
     } else {
         for(i = 0; i < a.length; i++){
-            func(a[i],i);
+            func(a[i]);
         }
     }
 };
 
 /**
- * Calls getValue() and returns the unwrapped value at the specified index.
- * Different from <code>get()</code>, which is generally preferred, because this bypasses
- * the expression service for lookup.
+ * Returns the unwrapped value at the specified index.
  *
- * @param {Number} i Index of value to return.
+ * @param i index of value to return.
  */
 ArrayValue.prototype.getRawValue = function(i) {
     var ret = this.getValue(i);
@@ -459,22 +355,16 @@ ArrayValue.prototype.getRawValue = function(i) {
 /**
  * Recursively destroys all values in the array and deletes the array.
  * Also, removes any onchange handlers listening to this value object.
- * @param {Boolean} async Set to true if values are to be destroyed asynchronously. The default is false.
  */
 ArrayValue.prototype.destroy = function(async) {
 //#if {"modes" : ["STATS"]}
     valueFactory.deIndex(this);
 //#end
-
-//#if {"modes" : ["TESTING", "TESTINGDEBUG", "AUTOTESTING", "AUTOTESTINGDEBUG"]}
-	async = false; // Force synchronous destroy when in testing modes
-//#end
-
     function destroy(a, async) {
         var array = a.dirty ? a.newArray : a.array;
         for (var i = 0; i < array.length; i++) {
             var v = array[i];
-            if (v !== undefined && v.destroy !== undefined) {
+            if (v !== undefined) {
                 v.destroy(async);
             }
         }
@@ -541,7 +431,7 @@ ArrayValue.prototype.unwrap = function(){
 /**
  * Compare to an ArrayValue or Array.
  * @param {Object} arr The object that is compared. If the object is neither an ArrayValue nor an Array, return false.
- * @returns {Boolean} Returns true if they are identical return true, otherwise return false.
+ * @returns {Boolean} if they are identical return true, otherwise return false.
  */
 ArrayValue.prototype.compare = function(arr) {
     if (arr && arr.auraType === "Value" && arr.toString() === "ArrayValue") {
@@ -562,11 +452,11 @@ ArrayValue.prototype.compare = function(arr) {
             }
         }
         if (arr[i].auraType === "Value") {
-            if (m[i]._getValue() !== arr[i]._getValue()) {
+            if (m[i].getValue() !== arr[i].getValue()) {
                 return false;
             }
         } else {
-            if (m[i]._getValue() !== arr[i]) {
+            if (m[i].getValue() !== arr[i]) {
                 return false;
             }
         }
@@ -588,7 +478,7 @@ ArrayValue.prototype.getEventDispatcher = function() {
 
 /**
  * Adds handlers that will be called by the value when a related event is triggered.
- * @param {Object} config The handlers to be added to the queue.
+ * @param {Object} config The handlers to be added to the queue
  */
 ArrayValue.prototype.addHandler = function(config){
     BaseValue.addHandler(config, this.getEventDispatcher());
@@ -640,6 +530,7 @@ ArrayValue.prototype.render = function(parent, insertElements){
     var referenceNode;
     var ret = [];
 
+    var that = this;
     var array = this.getArray();
     var len = array.length;
     for (var i = 0; i < len; i++) {
@@ -648,9 +539,11 @@ ArrayValue.prototype.render = function(parent, insertElements){
         var els = $A.render(item);
 
         var elLen = els.length;
-        if (elLen > 0) {
-            ret = ret.concat(els);
+        for (var j = 0; j < elLen; j++) {
+            ret.push(els[j]);
+        }
 
+        if (elLen > 0) {
             // Just use the last element as the reference node
             referenceNode = els[elLen - 1];
         } else {
@@ -663,7 +556,7 @@ ArrayValue.prototype.render = function(parent, insertElements){
 
     if (ret.length > 0) {
         // Just use the first element as the reference node
-        referenceNode = ret[0];
+        referenceNode = els[0];
     } else {
         referenceNode = this.createLocator(" array locator " + this.owner);
         ret.unshift(referenceNode);
@@ -671,9 +564,7 @@ ArrayValue.prototype.render = function(parent, insertElements){
 
     this.setReferenceNode(referenceNode);
 
-    if (parent) {
-    	insertElements(ret, parent);
-    }
+    insertElements(ret, parent);
 
     this.hasBeenRendered = true;
 
@@ -689,11 +580,6 @@ ArrayValue.prototype.unrender = function(){
 };
 
 /**
- * Rerender the elements in the array.
- *
- * This function tries to maintain pointers to various positions in the array
- * so that it can be correctly re-rendered as necessary.
- *
  * @private
  */
 ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, insertElements){
@@ -704,24 +590,16 @@ ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, ins
 
     var prevRendered = this.rendered || {};
     var rendered = {};
-    //
-    // These three variables are used to ensure that we do not lose our reference node when the
-    // contents are removed. Basically, if the array is empty, we declare that we need a reference
-    // node, and ensure that one is created if there were previously elements in the array. All
-    // very complicated in the case where you do not have a parent node (which is the case here).
-    //
-    var startReferenceNode = this.referenceNode;
-    var firstReferenceNode = null;
-    var needReference = false;
-    var referenceNode = (appendChild || !this.referenceNode) ? suppliedReferenceNode : this.referenceNode;
     if (!this.isEmpty()) {
+        var referenceNode = appendChild || !this.referenceNode ? suppliedReferenceNode : this.referenceNode;
+
+        var renderer;
         var array = this.getArray();
         var len = array.length;
         for (var j = 0; j < len; j++) {
             var item = array[j];
 
             if (!item["getDef"]) {
-                // FIXME: this kind of flexibility is dangerous.
                 // If someone passed a config in, construct it.
                 item = $A.componentService.newComponentDeprecated(item, null, false, true);
 
@@ -732,26 +610,16 @@ ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, ins
             var globalId = item.getGlobalId();
             var itemReferenceNode;
             if (!item.isRendered()) {
-                //
-                // If the item was not previously rendered, we render after the last element.
-                //
                 var ret = $A.render(item);
                 if (ret.length > 0) {
                     // Just use the last element as the reference node
                     itemReferenceNode = ret[ret.length - 1];
                 } else {
-                    //
-                    // If nothing was rendered put in a placeholder so that we
-                    // can find the element. (FIXME W-1835211: this needs tests -- is it removed?.)
-                    //
                     itemReferenceNode = this.createLocator(" item {rerendered, index:" + j + "} " + item);
                     ret.push(itemReferenceNode);
                 }
 
-                // When adding children and index is zero, referenceNode still points to parent,
-                // and we need to call insertFist(), not appendChild()
-                var asFirst = (j === 0);
-                insertElements(ret, referenceNode, !appendChild, asFirst);
+                insertElements(ret, referenceNode, !appendChild);
 
                 $A.afterRender(item);
             } else {
@@ -762,14 +630,8 @@ ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, ins
                     itemReferenceNode = item.getElement();
                 }
             }
-            if (firstReferenceNode === null) {
-                firstReferenceNode = itemReferenceNode;
-            }
 
-            //
             // Next iteration of the loop will use this component's ref node as its "top"
-            // FIXME W-1835211: this may remove elements...
-            //
             referenceNode = itemReferenceNode;
             this.setReferenceNode(referenceNode);
 
@@ -777,24 +639,10 @@ ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, ins
 
             rendered[globalId] = itemReferenceNode;
         }
-    } else {
-        needReference = true;
     }
 
     // Unrender components no longer in the array
     for (var key in prevRendered) {
-        if (needReference) {
-            //
-            // If we need a reference node (this only occurs when we have
-            // nothing to render), make sure that we create one and put it
-            // in the right spot. If there was nothing previously rendered
-            // this isn't needed because we already have a locator.
-            //
-            referenceNode = this.createLocator(" array locator " + this.owner);
-            insertElements([referenceNode], startReferenceNode, true);
-            firstReferenceNode = referenceNode;
-            needReference = false;
-        }
         if (!rendered[key]) {
             var c = $A.getCmp(key);
             if (c && c.isValid()) {
@@ -802,24 +650,14 @@ ArrayValue.prototype.rerender = function(suppliedReferenceNode, appendChild, ins
             }
         }
     }
-    if (firstReferenceNode === null) {
-        firstReferenceNode = startReferenceNode;
-    }
-    this.setReferenceNode(firstReferenceNode);
 
     this.rendered = rendered;
 };
 
-/**
- * Returns the reference node during a rerender.
- */
 ArrayValue.prototype.getReferenceNode = function() {
     return this.referenceNode;
 };
 
-/**
- * @private
- */
 ArrayValue.prototype.createLocator = function(debugText) {
     var label = "";
 
@@ -834,9 +672,6 @@ ArrayValue.prototype.createLocator = function(debugText) {
 };
 
 ArrayValue.prototype.setReferenceNode = function(ref) {
-    if (ref === this.referenceNode) {
-        return;
-    }
     if (this.referenceNode && this.referenceNode._arrayValueOwner === this) {
         this.referenceNode._arrayValueOwner = null;
         $A.util.removeElement(this.referenceNode);

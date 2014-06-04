@@ -28,8 +28,6 @@ function Event(config) {
     this.fired = false;
 }
 
-Event.prototype.auraType = "Event";
-
 /**
  * Gets the source component associated with this Event.
  * @returns {Object}
@@ -80,7 +78,7 @@ Event.prototype.setParams = function(config) {
 
 /**
  * Gets an Event parameter. Returns the parameters.
- * @param {String} name The name of the Event. For example, <code>event.getParam("button")</code> returns the value of the pressed mouse button (0, 1, or 2).
+ * @param {String} name The name of the Event.
  */
 Event.prototype.getParam = function(name){
     return this.params[name];

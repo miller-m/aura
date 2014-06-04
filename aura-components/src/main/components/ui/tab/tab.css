@@ -16,20 +16,23 @@
 .THIS {
 	float: left;
 	list-style: none;
-	background: #eee;
-	border-bottom: 1px solid #eee;
+	background: -webkit-linear-gradient(#fff,#eee);
+	background: -moz-linear-gradient(#fff,#eee);
+	border: 1px solid #cecece;
+	box-shadow: inset 0 1px 1px #fff;
 	border-radius: 5px 5px 0 0;
-	margin-right: 2px;
+	margin-right:-1px;
 }
 .THIS.active{
-	background: #dc595c;
+	background: -webkit-linear-gradient(#eee,#fff);
+	background: -moz-linear-gradient(#eee,#fff);
 	border-bottom: 1px solid #fff;
 }
 
-.THIS > a.tabHeader {
-	margin: 0px;
+.THIS a.tabHeader {
+	margin: 0 2px 0 0;
 	color: #363c40;
-	padding: 5px 10px;
+	padding: 3px 10px;
 	cursor: pointer;
 	display:block;
 	text-decoration: none;
@@ -44,12 +47,11 @@
 	margin-left:-4px;
 }
 
-.THIS.active > a.tabHeader {
+.THIS.active a.tabHeader {
 	cursor: default;
-	color: #fff;
 }
 
-.THIS > div.tabBody {
+.THIS div.tabBody {
 	position: absolute;
 	left:0;
 	right:0;
@@ -59,15 +61,14 @@
 	overflow:auto;
 }
 
-.THIS > div.tabBody iframe{
+.THIS div.tabBody iframe{
 	min-height:300px;
-	padding-top: 20px;
 }
 
-.THIS > div.tabBody.scrolling {
+.THIS div.tabBody.scrolling {
 	overflow: auto;
 }
 
-.THIS.active > div.tabBody {
+.THIS.active div.tabBody {
 	display: block;
 }

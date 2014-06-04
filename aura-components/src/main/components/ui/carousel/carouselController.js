@@ -22,6 +22,11 @@
     	helper.initPages(cmp); 
     },
     
+    onBeforeScrollStart : function(cmp, evt, helper) {    	
+    	var scroller = helper.getScroller(cmp);
+    	scroller.enable();
+    }, 
+    
     /**
      * Handle scrollStart event coming from scroller
      */
@@ -52,21 +57,6 @@
         helper.refresh(cmp, evt);
     },
     
-
-    onRefreshCurrentPage: function(cmp, evt, helper) {
-    	var curPage = cmp.get('v.priv_currentPage');
-    	var pages = helper.getPageComponents(cmp);
-    	
-    	if (curPage > 0 && curPage <= pages.length) {
-	    	var e = cmp.get('e.loadPage'),
-	    		pageCmp = helper.getPageComponentFromIndex(cmp, curPage),
-	    		pageModel = helper.getPageModelFromIndex(cmp, curPage);
-	    	
-			e.setParams({pageModel: pageModel, pageComponent: pageCmp, pageIndex: curPage});    			
-			e.fire();
-    	}
-    },
-    
     /**
      * Handle clicking event from page indicator
      */
@@ -83,11 +73,27 @@
      */
     pagerKeyed: function (cmp, evt, helper) {	
         helper.handlePagerKeyed(cmp, evt);
-    },    
+    },
+    
+    /**
+     *  Handle pageSelected event     
+     */    
+    pageSelected: function(cmp, evt, helper) {    	
+    	helper.selectPage(cmp, evt.getParam("pageIndex"));
+    },
     
     selectDefaultPage: function (cmp, evt, helper) {   	
     	if (cmp.isRendered()) {
     		helper.selectDefaultPage(cmp, evt);
+    	} else {
+    		if (cmp._selectDefaultPageTimer) {
+    			clearTimeout(cmp._selectDefaultPageTimer);
+    			cmp._selectDefaultPageTimer = null;
+    		}    		
+    		cmp._selectDefaultPageTimer = setTimeout(function(){
+    			cmp._selectDefaultPageTimer = null;
+				helper.selectDefaultPage(cmp, evt);
+			}, 0);
     	}
     }
 })

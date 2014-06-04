@@ -19,33 +19,27 @@
         var acCmp = component.find("autoComplete");
         if (acCmp) {
             // Fetch data if necessary
-            // autocomplete component will automatically match text on the new data
-            var fetchDataEvt = acCmp.get("e.fetchData");
-            var index = 0;
+            var dataProviders = acCmp.getValue("v.dataProvider");
+            var dataProvider = dataProviders.get(0);
             if (keyword.indexOf("MRU") >= 0) {
-                index = 1;
+                dataProvider = dataProviders.get(1);
             }
+            
+            var provideEvent = dataProvider.get("e.provide");
             var options = {};
             options.keyword = keyword;
-            fetchDataEvt.setParams({
-                parameters: options,
-                index: index
+            provideEvent.setParams({
+                parameters: options
             });
-            fetchDataEvt.fire();            
+            provideEvent.fire();
             
-            // If you want to match on the existing data
-            /*
+            // Update matching list
             var matchEvt = acCmp.get("e.matchText");
             matchEvt.setParams({
                 keyword: keyword
             });
             matchEvt.fire();
-            */
         }
-    },
-    
-    handleMatchDone: function(component, event, helper) {
-        console.log("There are " + event.getParam("size") + " matched options.");
     },
     
     handleSelectOption: function(component, event, helper) {

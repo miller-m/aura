@@ -14,62 +14,58 @@
  * limitations under the License.
  */
 ({
-    click: function(component, event, helper) {
-        event.preventDefault();
-        var concreteCmp = component.getConcreteComponent();
-        var _helper = concreteCmp.getDef().getHelper();
-        helper.displayDatePicker(concreteCmp);
+    click: function(cmp, event, helper) {
+        helper.displayDatePicker(cmp);
     },
-
+    
     doInit: function(component, event, helper) {
         // Set placeholder
         var format = component.get("v.format");
         if (!format) {
-            format = $A.get("$Locale.datetimeformat");
+            format = $A.getGlobalValueProviders().get("$Locale.datetimeformat");
         }
-        component.set("v.placeholder", format);
+        component.setValue("v.placeholder", format);
     },
-
+    
     openDatePicker: function(component, event, helper) {
         var concreteCmp = component.getConcreteComponent();
         var _helper = concreteCmp.getDef().getHelper();
         helper.displayDatePicker(concreteCmp);
     },
-
+    
     setValue: function(component, event, helper) {
         var outputCmp = component.find("inputText");
         var elem = outputCmp ? outputCmp.getElement() : null;
         var value = elem ? elem.value : null;
         var format = component.get("v.format");
-        if (!format) { // use default format
-            format = $A.get("$Locale.datetimeformat");
-        }
         var langLocale = component.get("v.langLocale");
+        var hours = 0
+        var mins = 0;
         var secs = 0;
         var ms = 0;
         if (value) {
-            var currDate = $A.localizationService.parseDateTimeUTC(value, format, langLocale);
+            var currDate = $A.localizationService.parseDateTimeUTC(value, format, langLocale); 
+            hours = currDate.getUTCHours();
+            mins = currDate.getUTCMinutes();
             secs = currDate.getUTCSeconds();
             ms = currDate.getUTCMilliseconds();
         }
-
+        
         var dateValue = event.getParam("value");
-        var selectedHours = event.getParam("hours");
-        var selectedMinutes = event.getParam("minutes");
         var newDate = $A.localizationService.parseDateTimeUTC(dateValue, "YYYY-MM-DD", langLocale);
-
-        var targetTime = Date.UTC(newDate.getUTCFullYear(),
-                                  newDate.getUTCMonth(),
+        
+        var targetTime = Date.UTC(newDate.getUTCFullYear(), 
+                                  newDate.getUTCMonth(), 
                                   newDate.getUTCDate(),
-                                  selectedHours,
-                                  selectedMinutes,
+                                  hours,
+                                  mins,
                                   secs,
                                   ms);
         var d = new Date(targetTime);
-
+                
         var timezone = component.get("v.timezone");
         $A.localizationService.WallTimeToUTC(d, timezone, function(utcDate) {
-            component.set("v.value", $A.localizationService.toISOString(utcDate));
+            component.setValue("v.value", utcDate.toISOString());
         });
     }
 })

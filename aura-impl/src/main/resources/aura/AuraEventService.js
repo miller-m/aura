@@ -125,9 +125,8 @@ var AuraEventService = function() {
         },
 
         /**
-         * Returns the event definition.
+         * Returns the event definition (EventDef).
          * @param {Object} config The parameters for the event
-         * @return {EventDef} The event definition.
          * @memberOf AuraEventService
          * @public
          */

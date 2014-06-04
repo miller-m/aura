@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.auraframework</groupId>
         <artifactId>aura-framework</artifactId>
-        <version>0.996-SNAPSHOT</version>
+        <version>0.146-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -53,11 +53,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.uiautomation</groupId>
-            <artifactId>ios-client</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
         </dependency>
@@ -68,10 +63,6 @@
     </properties>
     <build>
         <resources>
-            <resource>
-                <directory>src/resources/META-INF</directory>
-                <targetPath>META-INF</targetPath>
-            </resource>
             <resource>
                 <directory>src/main/http/WEB-INF</directory>
                 <targetPath>aura/http/WEB-INF</targetPath>

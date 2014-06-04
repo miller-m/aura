@@ -44,6 +44,8 @@
 
     assertBasicChecks : function(component, expectedTitle){
         var rootDiv = component.getElement();
+      
+
         // verify aria attributes
         $A.test.assertEquals("alert", rootDiv.getAttribute("role"),
                 "ui:message rendered with wrong aria role attribute");
@@ -58,13 +60,14 @@
                 "ui:message rendered with wrong severity CSS class");
 
         // verify icon alt text
-        var icon = component.find("messageIcon").getElement();
+        //TODO: $A.test.select doesn't work in IE 7        
+        var icon = $A.test.select(this.selectors.icon)[0];
         $A.test.assertEquals(severity, icon["alt"],
                 "ui:message rendered with wrong icon alt text");
 
         // verify closable icon is present or not, based on closable attribute
         var closable = component.get("v.closable");
-        $A.test.assertEquals(closable, !$A.util.isUndefinedOrNull(component.find("closeMessageLink").getElement()),
+        $A.test.assertEquals(closable, $A.test.select(this.selectors.close).length > 0,
                 "ui:message closable attribute is not being respected");
 
         // verify background color is correct, based on severity attribute
@@ -81,13 +84,12 @@
                 "ui:message rendered with wrong background color for severity '" + component.get("v.severity") + "'");
 
         // verify title text
-        var title = component.find("h4Title").getElement();
-        
+        var title = $A.test.select(this.selectors.title)[0];
         if (expectedTitle) {
             $A.test.assertEquals(expectedTitle, $A.test.getText(title),
                 "os:message rendered with wrong title text");
         } else {
-            $A.test.assertTrue($A.util.isUndefinedOrNull(title),
+            $A.test.assertTrue($A.util.isUndefined(title),
                 "os:message expecting no title");
         }
     },

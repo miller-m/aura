@@ -114,12 +114,11 @@
 		mocks : [{
 		    type : "ACTION",
 			stubs : [{
-                                method : { name : "getString" },
-                                answers : [{
-                                        value : "what I expected"
-                                }]
-                            }
-			]
+				method : { name : "getString" },
+				answers : [{
+					value : "what I expected"
+				}]
+			}]
 		}],
 		test : [function(cmp) {
 			cmp.find("trigger").get("e.press").fire();

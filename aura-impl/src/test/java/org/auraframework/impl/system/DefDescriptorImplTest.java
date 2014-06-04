@@ -23,7 +23,6 @@ import org.auraframework.def.DefDescriptor.DefType;
 import org.auraframework.def.LayoutsDef;
 import org.auraframework.def.TypeDef;
 import org.auraframework.impl.AuraImplTestCase;
-import org.auraframework.test.annotation.ThreadHostileTest;
 import org.auraframework.throwable.AuraRuntimeException;
 
 public class DefDescriptorImplTest extends AuraImplTestCase {
@@ -76,7 +75,6 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
         assertEquals(testDescriptor.getDefType(), DefType.COMPONENT);
     }
 
-    @ThreadHostileTest("cache dependent")
     public void testGetInstance() throws Exception {
         // test getInstance(tag, defClass)
         DefDescriptor<?> testDescriptor = DefDescriptorImpl.getInstance("aura:text", ComponentDef.class);
@@ -87,7 +85,7 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
         // even if the component doesn't exist
         assertNotNull(DefDescriptorImpl.getInstance("fake:component", ComponentDef.class));
 
-        // subsequent calls to getInstance should return objects that are the same.
+        // subsequent calls to getInstance should return the same object
         assertSame(testDescriptor, (DefDescriptorImpl.getInstance("aura:text", ComponentDef.class)));
 
         // test getInstance(null, defClass)
@@ -97,7 +95,7 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
             testDescriptorNullTag = DefDescriptorImpl.getInstance(null, ComponentDef.class);
             fail("Should have thrown AuraException for null tag in ComponentDefDescriptor");
         } catch (AuraRuntimeException expected) {
-        	assertEquals("descriptor is null", expected.getMessage());
+            assertEquals("descriptor is null", expected.getMessage());
         }
 
         // test getInstance(name, null)
@@ -112,23 +110,21 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
 
         // test getting type instances.
         // Why did qualified name EVER match?? --fka3
-        
-        // It is unncetain why this fails. Here is a bug for investigation: W-2051904. 
-        // testDescriptor = DefDescriptorImpl.getInstance("Aura.Component", TypeDef.class);
-        // assertEquals(testDescriptor, (DefDescriptorImpl.getInstance("aura://Aura.Component", TypeDef.class)));
+        testDescriptor = DefDescriptorImpl.getInstance("Aura.Component", TypeDef.class);
+        assertSame(testDescriptor, (DefDescriptorImpl.getInstance("aura://Aura.Component", TypeDef.class)));
 
         testDescriptor = DefDescriptorImpl.getInstance("aura://Aura.Component[]", TypeDef.class);
-        assertEquals(testDescriptor, (DefDescriptorImpl.getInstance("Aura.Component[]", TypeDef.class)));
+        assertSame(testDescriptor, (DefDescriptorImpl.getInstance("Aura.Component[]", TypeDef.class)));
 
         testDescriptor = DefDescriptorImpl.getInstance("aura://List<String>", TypeDef.class);
-        assertEquals(testDescriptor, (DefDescriptorImpl.getInstance("List<String>", TypeDef.class)));
+        assertSame(testDescriptor, (DefDescriptorImpl.getInstance("List<String>", TypeDef.class)));
 
         testDescriptor = DefDescriptorImpl.getInstance("aura://List", TypeDef.class);
-        assertEquals(testDescriptor, (DefDescriptorImpl.getInstance("List", TypeDef.class)));
+        assertSame(testDescriptor, (DefDescriptorImpl.getInstance("List", TypeDef.class)));
 
         // no type validation for map sub-types
         testDescriptor = DefDescriptorImpl.getInstance("Map<Aura.Component>", TypeDef.class);
-        assertEquals(testDescriptor, (DefDescriptorImpl.getInstance("Map<String>", TypeDef.class)));
+        assertSame(testDescriptor, (DefDescriptorImpl.getInstance("Map<String>", TypeDef.class)));
     }
 
     public void testGetNamespace() throws Exception {
@@ -210,11 +206,9 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
         if (compareTo == 0) {
             assertTrue(x + " equals " + y, x.equals(y));
             assertEquals(x + " compareTo[" + compareTo + "] " + y, x.compareTo(y), compareTo);
-            assertEquals(x.hashCode(), y.hashCode());
         } else {
             assertFalse(x + " NOT equals " + y, x.equals(y));
             assertTrue(x + " compareTo[" + compareTo + "] " + y, x.compareTo(y) * compareTo > 0);
-            assertFalse(x.hashCode() == y.hashCode());
         }
     }
 
@@ -227,13 +221,7 @@ public class DefDescriptorImplTest extends AuraImplTestCase {
                 vendor.makeComponentDefDescriptor("fake:component"), 0);
         testEquals(DefDescriptorImpl.getInstance("aura:text", ComponentDef.class),
                 vendor.makeComponentDefDescriptor("aura:text"), 0);
-		testEquals(DefDescriptorImpl.getInstance("some:component", ComponentDef.class),
-				DefDescriptorImpl.getInstance("markup://some:component", ComponentDef.class), 0);
-		/* this class of descriptors does not default a prefix, which makes sense in some cases like for renderer, provider, etc.
-		testEquals(DefDescriptorImpl.getInstance("js://some.component", HelperDef.class),
-				DefDescriptorImpl.getInstance("some.component", HelperDef.class), 0);
-		 */
-		
+
         testEquals(DefDescriptorImpl.getInstance("aura:fakeComponent", ComponentDef.class),
                 vendor.makeComponentDefDescriptor("fake:component"), -1);
         testEquals(DefDescriptorImpl.getInstance("aura:fakeComponent", ComponentDef.class),

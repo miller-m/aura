@@ -21,7 +21,6 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.EventDef;
 import org.auraframework.def.RootDefinition;
 import org.auraframework.expression.Expression;
@@ -63,8 +62,7 @@ public class EventHandlerDefHandler extends XMLHandler<EventHandlerDefImpl> {
 
     @Override
     public EventHandlerDefImpl getElement() throws XMLStreamException, QuickFixException {
-        DefDescriptor<? extends RootDefinition> defDescriptor = parentHandler.getDefDescriptor();
-		builder.setParentDescriptor(defDescriptor);
+        builder.setParentDescriptor(parentHandler.getDefDescriptor());
         builder.setLocation(getLocation());
 
         String event = getAttributeValue(ATTRIBUTE_EVENT);

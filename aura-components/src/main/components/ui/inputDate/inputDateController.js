@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 ({
-    click: function(component, event, helper) {
-        event.preventDefault();
-        var concreteCmp = component.getConcreteComponent();
-        var _helper = concreteCmp.getDef().getHelper();
-        _helper.displayDatePicker(component);
-    },
-
     doInit: function(component, event, helper) {
         // Set placeholder
         var concreteCmp = component.getConcreteComponent();
         var format = concreteCmp.get("v.format");
         if (!format) {
-            format = $A.get("$Locale.dateformat");
+            format = $A.getGlobalValueProviders().get("$Locale.dateformat");
         }
-        component.set("v.placeholder", format);
+        concreteCmp.setValue("v.placeholder", format);
     },
-
+    
     openDatePicker: function(component, event, helper) {
         var concreteCmp = component.getConcreteComponent();
         var _helper = concreteCmp.getDef().getHelper();
-        _helper.displayDatePicker(component);
+        _helper.displayDatePicker(concreteCmp);
     },
-
+    
     setValue: function(component, event, helper) {
         var dateValue = event.getParam("value");
         if (dateValue) {
             var concreteCmp = component.getConcreteComponent();
-            component.set("v.value", dateValue);
+            concreteCmp.setValue("v.value", dateValue);
         }
     }
 })

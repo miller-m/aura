@@ -19,7 +19,6 @@
     <aura:attribute name="start" type="Integer"/>
     <aura:attribute name="end" type="Integer"/>
 
-    {!v.start} {!v.end}
     <aura:iteration aura:id="iteration" items="{!m.innerData}" var="var" indexVar="idx" start="{!v.start}" end="{!v.end}">
         <iterationTest:iterationChildWJSProvider aura:id="childWithJSProvider" strAttribute="{!var}"/><br/>
     </aura:iteration>

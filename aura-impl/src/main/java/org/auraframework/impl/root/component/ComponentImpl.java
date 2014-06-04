@@ -21,7 +21,6 @@ import java.util.Map;
 import org.auraframework.Aura;
 import org.auraframework.def.AttributeDefRef;
 import org.auraframework.def.ComponentDef;
-import org.auraframework.def.ControllerDef;
 import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
 import org.auraframework.def.ProviderDef;
@@ -30,7 +29,6 @@ import org.auraframework.instance.BaseComponent;
 import org.auraframework.instance.Component;
 import org.auraframework.instance.ComponentConfig;
 import org.auraframework.instance.ValueProvider;
-import org.auraframework.instance.ValueProviderType;
 import org.auraframework.system.AuraContext;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
@@ -62,14 +60,17 @@ public final class ComponentImpl extends BaseComponentImpl<ComponentDef, Compone
         super(descriptor, attributeDefRefs, attributeValueProvider, valueProviders, delegateValueProvider);
     }
 
+    protected ComponentImpl(DefDescriptor<ComponentDef> descriptor, Component extender,
+            BaseComponent<?, ?> attributeValueProvider, Component concreteComponent) throws QuickFixException {
+        super(descriptor, extender, attributeValueProvider, concreteComponent);
+    }
+
     @Override
     protected void createSuper() throws QuickFixException {
         ComponentDef def = getComponentDef();
         if (!remoteProvider) {
             DefDescriptor<ComponentDef> superDefDescriptor = def.getExtendsDescriptor();
             if (superDefDescriptor != null) {
-            	Aura.getDefinitionService().getDefRegistry().assertAccess(descriptor, superDefDescriptor.getDef());
-            	
                 Component concrete = concreteComponent == null ? this : concreteComponent;
                 superComponent = new ComponentImpl(superDefDescriptor, this, this, concrete);
             }
@@ -81,22 +82,16 @@ public final class ComponentImpl extends BaseComponentImpl<ComponentDef, Compone
     protected void injectComponent() throws QuickFixException {
         if (this.intfDescriptor != null) {
             AuraContext context = Aura.getContextService().getCurrentContext();
-            context.setCurrentCaller(descriptor);
+            context.setCurrentNamespace(descriptor.getNamespace());
             BaseComponent<?, ?> oldComponent = context.setCurrentComponent(new ProtoComponentImpl(descriptor,
                     getGlobalId(), attributeSet));
             try {
                 RootDefinition root = intfDescriptor.getDef();
                 ProviderDef providerDef = root.getLocalProviderDef();
                 if (providerDef == null) {
-                    providerDef = root.getProviderDef();
-                    if (providerDef != null) {
-                        // In this case, we have a 'remote' provider (i.e. client side) and we simply
-                        // continue on as if nothing happened.
-                    } else {
-                    	throw new InvalidDefinitionException(String.format("%s cannot be instantiated directly.",
+                    throw new InvalidDefinitionException(String.format("%s cannot be instantiated directly.",
                             descriptor), root.getLocation());
-                    }
-                } 
+                }
 
                 if (providerDef.isLocal()) {
                     ComponentConfig config = providerDef.provide(intfDescriptor);
@@ -113,7 +108,8 @@ public final class ComponentImpl extends BaseComponentImpl<ComponentDef, Compone
 
                         try {
                             if (descriptor.getDefType() != DefType.COMPONENT) {
-                                throw new AuraRuntimeException(String.format("%s is not a component", descriptor));
+                                throw new AuraRuntimeException(String.format("%s did not provide a valid component",
+                                        providerDef.getDescriptor()));
                             }
 
                             ComponentDef c = descriptor.getDef();
@@ -121,15 +117,9 @@ public final class ComponentImpl extends BaseComponentImpl<ComponentDef, Compone
                                 throw new AuraRuntimeException(String.format("%s cannot be instantiated directly.",
                                         descriptor));
                             }
-                            
-                            // new component may have its own controllerdef so add that one
-                            ControllerDef cd = c.getControllerDef();
-                            if (cd != null) {
-                                this.valueProviders.put(ValueProviderType.CONTROLLER.getPrefix(), cd);
-                            }
                         } catch (DefinitionNotFoundException dnfe) {
                             throw new AuraRuntimeException(String.format("%s did not provide a valid component",
-                                    providerDef.getDescriptor()), dnfe);
+                                    providerDef.getDescriptor()));
                         }
 
                         attributeSet.setRootDefDescriptor(descriptor);
@@ -167,8 +157,4 @@ public final class ComponentImpl extends BaseComponentImpl<ComponentDef, Compone
         super.finishInit();
     }
 
-    private ComponentImpl(DefDescriptor<ComponentDef> descriptor, Component extender,
-            BaseComponent<?, ?> attributeValueProvider, Component concreteComponent) throws QuickFixException {
-        super(descriptor, extender, attributeValueProvider, concreteComponent);
-    }
 }

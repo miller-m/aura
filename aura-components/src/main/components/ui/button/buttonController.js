@@ -13,34 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
-    handleKeydown : function(cmp, event){
-        var keydownEvent = cmp.getEvent("keydown");
-        keydownEvent.setParams({"domEvent": event});
-        keydownEvent.fire();
-        return true;
-    },
-
+{
     press : function(cmp, event){
-        if ($A.util.getBooleanValue(cmp.get("v.stopPropagation"))) {
-            //IE9 & Other Browsers
-            if (event.stopPropagation) {
-              event.stopPropagation();
-            }
-            //IE8 and Lower
-            else {
-              event.cancelBubble = true;
-            }
-        }
-
-        if ($A.util.getBooleanValue(cmp.get("v.disabled"))) {
+        if (cmp.getAttributes().getValue("disabled").getBooleanValue()) {
             event.preventDefault();
             return false;
         }
-
-        var pressEvent = cmp.getEvent("press");
-        pressEvent.setParams({"domEvent": event});
-        pressEvent.fire();
+        var e = cmp.getEvent("press");
+        e.setParams({"domEvent": event});
+        e.fire();
         return true;
     }
-})
+}

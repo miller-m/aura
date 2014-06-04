@@ -15,33 +15,18 @@
  */
 ({
     render : function(component, helper) {
-    	var placeholder = "auraplaceholder";
-        var valueProvider = component.getAttributeValueProvider();
+        var placeholder = "auraplaceholder";
+        var attributes = component.getAttributes();
+        var valueProvider = attributes.getValueProvider();
         var replacements = {};
-        var ret;
 
-        var tag = component.get("v.tag");
+        var tag = attributes.get("tag");
         if ($A.util.isUndefinedOrNull(tag)) {
             $A.error("Undefined tag attribute for "+component.getGlobalId());
             tag = "div";
         }
-        var HTMLAttributes = component.getValue("v.HTMLAttributes");
-
-        //Fix for name being read only attribute on IE7
-        var isIE7 = $A.get("$Browser.isIE7");
-        if(isIE7 ===  true && tag == "input"){
-        	var value = $A.expressionService.getValue(valueProvider, "v.name");
-        	value = value.getValue();
-        	if($A.util.isEmpty(value)){
-        		ret = document.createElement(tag);
-        	}
-        	else{
-        		ret = document.createElement('<input name="' + value + '">');
-        	}
-        }
-        else{
-        	ret = document.createElement(tag);
-        }
+        var HTMLAttributes = attributes.getValue("HTMLAttributes");
+        var ret = document.createElement(tag);
 
         if (HTMLAttributes && HTMLAttributes.each) {
             // go through all the HTML tag attributes (except class, which is handled specially below)
@@ -53,7 +38,7 @@
         }
 
         if (helper.canHaveBody(component)) {
-            var body = component.getValue("v.body");
+            var body = attributes.getValue("body");
             $A.render(body, ret);
         }
 
@@ -61,14 +46,15 @@
     },
 
     rerender : function(component, helper) {
+        var attributes = component.getAttributes();
+        var valueProvider = attributes.getValueProvider();
         var element = component.getElement();
         if (!element) {
             return;
         }
 
-        var valueProvider = component.getAttributeValueProvider();
         var expressionService = $A.expressionService;
-        var HTMLAttributes = component.getValue("v.HTMLAttributes");
+        var HTMLAttributes = attributes.getValue("HTMLAttributes");
         if (HTMLAttributes && HTMLAttributes.each) {
             HTMLAttributes.each(function(name, ve) {
                 // TODO: what if this isn't an expression and changes? doesn't
@@ -85,8 +71,7 @@
                             var oldValue = element[helper.caseAttribute(lowerName)];
 
                             if (aura.util.arrayIndexOf(helper.SPECIAL_BOOLEANS, lowerName) > -1) {
-                                // JBUCH: TEMPORARY FIX FOR HALO
-                                newValue = $A.util.getBooleanValue(value.getValue());
+                                newValue = value.getBooleanValue();
                             } else {
                                 newValue = value.unwrap();
                             }
@@ -123,14 +108,14 @@
         }
 
         if (helper.canHaveBody(component)) {
-            var body = component.getValue("v.body");
+            var body = attributes.getValue("body");
             $A.rerender(body, element, true);
         }
     },
 
     afterRender : function(component, helper) {
         if (helper.canHaveBody(component)) {
-            $A.afterRender(component.get("v.body"));
+            $A.afterRender(component.getAttributes().getValue("body"));
         }
     },
 
@@ -139,7 +124,9 @@
         // TODO: this should use attribute type checking and iterate through all attributes, not just body
 
         if (helper.canHaveBody(component)) {
-            $A.unrender(component.get("v.body"));
+            var attributes = component.getAttributes();
+            var value = attributes.getValue('body');
+            $A.unrender(value);
         }
 
         var elements = component.getElements();

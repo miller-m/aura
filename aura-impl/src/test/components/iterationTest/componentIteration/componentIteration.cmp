@@ -23,5 +23,4 @@
     <aura:iteration aura:id="iteration" items="{!v.cmps}" var="var" indexVar="idx" start="{!v.start}" end="{!v.end}">
         {!var}
     </aura:iteration>
-
 </aura:component>

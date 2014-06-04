@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint bitwise: true*/
+/*jslint bitwise: false*/
 /**
- * A representation of a set of individual bits, addressable as if organized as
- * an array.
- *
  * @namespace
  * @constructor
  */
 function Bitset(str) {
-    if (typeof str != "string") {
+    if (typeof (str) != "string") {
         str = "";
     }
     Bitset.init();
@@ -31,11 +28,6 @@ function Bitset(str) {
 }
 
 // members
-/**
- * Tests whether a specific individual bit is or is not set.
- *
- * @returns {@code true} if and only if the n'th bit of the set is true.
- */
 Bitset.prototype.testBit = function(n) {
     var i = Math.floor(n / 6);
     if (i >= this.data.length) {
@@ -44,20 +36,12 @@ Bitset.prototype.testBit = function(n) {
         return ((Bitset.codes[this.data[i]] & (0x20 >> (n % 6))) !== 0);
     }
 };
-
-/**
- * Causes the n'th bit of the Bitset to be set true.
- */
 Bitset.prototype.setBit = function(n) {
     var i = Math.floor(n / 6);
     this.pad(i);
     this.data[i] = Bitset.alphabet[Bitset.codes[this.data[i]]
             | (0x20 >> (n % 6))];
 };
-
-/**
- * Causes the n'th bit of the Bitset to be set false.
- */
 Bitset.prototype.clearBit = function(n) {
     var i = Math.floor(n / 6);
     if (i < this.data.length) {
@@ -66,17 +50,10 @@ Bitset.prototype.clearBit = function(n) {
         this.trim();
     }
 };
-
-/**
- * Returns a base64 representation of the Bitset.
- */
 Bitset.prototype.toString = function() {
     return this.data.join('');
 };
-
-/**
- * Internal utility to remove trailing 0's from the bitset data.
- */
+// remove trailing 0's
 Bitset.prototype.trim = function() {
     for ( var i = this.data.length - 1; i >= 0; i--) {
         if (this.data[i] != Bitset.alphabet[0]) {
@@ -85,20 +62,13 @@ Bitset.prototype.trim = function() {
     }
     this.data.splice(i + 1, this.data.length);
 };
-
-/**
- * Internal utility to pad leading 0's onto the bitset data.
- */
+// pad with leading 0's if necessary
 Bitset.prototype.pad = function(n) {
     var size = this.data.length;
     for ( var i = 0; i <= n - size; i++) {
         this.data.push(Bitset.alphabet[0]);
     }
 };
-
-/**
- * Returns length of the bitset, in 6-bit words (not individual bits).
- */
 Bitset.prototype.length = function() {
     return this.data.length;
 };

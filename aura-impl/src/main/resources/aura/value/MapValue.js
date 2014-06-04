@@ -15,10 +15,10 @@
  */
 /*jslint sub: true */
 /**
- * @class A value object wrapper for a map with case-insensitive keys. Each value in the map is a value object rather
- * than a JavaScript literal value. A value object is a thin wrapper around the actual data. The wrapper layer around
- * the literal JavaScript objects enables you to modify data in a transactional manner. The framework selectively
- * rerenders and updates the UI in response to data changes.
+ * @class A value object wrapper for a map. Each value in the map is a value object rather than a JavaScript literal
+ * value. A value object is a thin wrapper around the actual data. The wrapper layer around the literal JavaScript
+ * objects enables you to modify data in a transactional manner. The framework selectively rerenders and updates the
+ * UI in response to data changes.
  *
  * @constructor
  * @protected
@@ -27,10 +27,6 @@ function MapValue(config, def, component){
     this.value = {};
     this.keys = {};
     this.owner = component;
-
-    /** One of "true" if set to any {...} object, or "null" or "undefined" if not */
-    this.hasRealValue = true;
-
     var k;
     // attributes can come through here but have no way of knowing the member keys
     // models have getMembers
@@ -41,7 +37,6 @@ function MapValue(config, def, component){
             this.add(k, config);
         }
     } else {
-        this.hasRealValue = (config !== null && config !== undefined);
         if (config) {
             for (k in config) {
                 this.add(k, config);
@@ -50,7 +45,7 @@ function MapValue(config, def, component){
     }
 
     this.dirty = false;
-//#if {"modes" : ["DEVELOPMENT", "STATS"]}
+//#if {"modes" : ["DEVELOPMENT"]}
     if (def) {
         this.name = def.getDescriptor().getQualifiedName();
     }
@@ -63,39 +58,10 @@ function MapValue(config, def, component){
 MapValue.prototype.auraType = "Value";
 
 /**
- * Recursively fire for subelements of the map.  Used in particular
- * when MapValue.put() adds a new submap to a MapValue with handlers
- * already registered.
- * @private
- */
-MapValue.prototype.fire = function(name) {
-    for (var k in this.value) {
-        this.value[k].fire(name);
-    }
-};
-
-
-/**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.get(key) instead
- */
-MapValue.prototype.getValue = function (key) {
-    //$A.warning("DEPRECATED USE OF mapValue.getValue(key). USE component.get(key) INSTEAD.",{key:key});
-    return this._getValue(key);
-};
-
-/**
  * Returns a SimpleValue for the specified key.
  * @param {String} k The key for whose value is to be fetched.
- *
- * TEMPORARILY INTERNALIZED TO GATE ACCESS
- *
- * @private
  */
-MapValue.prototype.getValue = function(k, returnUndefined){
+MapValue.prototype.getValue = function(k){
     if ($A.util.isUndefined(this.value)) {
         return valueFactory.create(undefined, null, this.owner);
     }
@@ -103,24 +69,11 @@ MapValue.prototype.getValue = function(k, returnUndefined){
     aura.assert(k, "Key is required for getValue on MapValue");
 
     var ret = this.value[k.toLowerCase()];
-    if ($A.util.isUndefined(ret) && !returnUndefined){
+    if ($A.util.isUndefined(ret)){
         ret = valueFactory.create(undefined, null, this.owner);
     }
 
     return ret;
-};
-
-
-/**
- * DO NOT USE THIS METHOD.
- *
- * @public
- *
- * @deprecated use Component.set(key,newMap) instead
- */
-MapValue.prototype.setValue = function (newMap) {
-    //$A.warning("DEPRECATED USE OF mapValue.setValue(newMap). USE component.set(key,newMap) INSTEAD.", {key: key,value:newMap});
-    this._setValue(newMap);
 };
 
 /**
@@ -135,20 +88,14 @@ MapValue.prototype.setValue = function (newMap) {
  * construct a MapValue, then call this.
  *
  * @param {Object} newMap The new map.
- *
- * TEMPORARILY INTERNALIZED TO GATE ACCESS
- * @private
  */
-MapValue.prototype._setValue = function(newMap) {
-    var oldMap = this.value;  // Held to test for dirty replaced subobjects
+MapValue.prototype.setValue = function(newMap) {
     this.value = {};
     this.keys = {};
     this.makeDirty();
     if ($A.util.isUndefinedOrNull(newMap) || (newMap.isDefined && !newMap.isDefined())) {
-        this.hasRealValue = false;
         return;
     }
-    this.hasRealValue = true;
     if (!$A.util.isObject(newMap)) {
         $A.assert(false, "newMap must be an object");
     }
@@ -172,15 +119,13 @@ MapValue.prototype._setValue = function(newMap) {
             return;
         }
     }
-    for (var originalKey in copyMap) {
-        var lowerKey;
-        if (copyKeys && copyKeys[originalKey]) {
-            lowerKey = originalKey;
-            originalKey = copyKeys[originalKey];
-        } else {
-            lowerKey = originalKey.toLowerCase();
+    for (var k in copyMap) {
+        var key = k;
+
+        if (copyKeys && copyKeys[k]) {
+            key = copyKeys[k];
         }
-        this.add(originalKey, copyMap, lowerKey in oldMap);
+        this.add(key, copyMap);
     }
 };
 
@@ -207,22 +152,7 @@ MapValue.prototype.get = function(key){
 };
 
 /**
- * Sets the value for the key.
- *
- * @param {String} key The key for the value to return.
- */
-MapValue.prototype.set = function (key,value) {
-    var v = this._getValue(key);
-    if ($A.util.isUndefinedOrNull(v)) {
-        $A.error("Invalid key " + key);
-        return;
-    }
-    v._setValue(value);
-};
-
-/**
- * Merges the specified map into the current map.  After this, the map will have all its original
- * keys <i>plus</i> keys from the supplied maps.
+ * Merges the specified map into the current map.
  *
  * @param {Object} yourMap The map to merge into the current map.
  * @param {Boolean} overwrite If set to true, entries from yourMap overwrite entries in the current map.
@@ -239,7 +169,6 @@ MapValue.prototype.merge = function(yourMap, overwrite) {
             my[key] = yourvalue;
         }
     }
-    this.hasRealValue = true;
 };
 
 /**
@@ -254,11 +183,6 @@ MapValue.prototype.isExpression = function(){
  */
 MapValue.prototype.isLiteral = function(){
     return false;
-};
-
-/** Returns true if this was set to null or undefined */
-MapValue.prototype.isUnset = function() {
-    return !this.hasRealValue;
 };
 
 /**
@@ -323,9 +247,7 @@ MapValue.prototype.each = function(func, config){
 
 /**
  * Convenience method for getting the current value (committed or not)
- * of a named property of this map.  Same as calling getValue(k).unwrap(),
- * and different from get() in that it bypasses the expression service.
- *
+ * of a named property of this map.  Same as calling getValue(k).getValue().
  * @param {String} k The key for the value to return.
  */
 MapValue.prototype.getRawValue = function(k){
@@ -381,12 +303,10 @@ MapValue.prototype.unwrap = function(){
  * wraps the value in a simple or map value and adds to this map.
  *
  * The use of config allows null or undefined to be passed in as the value.
- * The subDirty flag can be used to force the new subkey to be dirty; an
- * added key is normally clean.
  *
  * @private
  */
-MapValue.prototype.add = function(k, config, subDirty) {
+MapValue.prototype.add = function(k, config) {
     var key = k.toLowerCase();
     var v = config[k];
 
@@ -398,9 +318,6 @@ MapValue.prototype.add = function(k, config, subDirty) {
     }
 
     this.makeDirty();
-    if (value.makeDirty && subDirty) {
-        value.makeDirty();
-    }
 
     var handlers = this.handlers;
     if (handlers) {
@@ -438,7 +355,6 @@ MapValue.prototype.put = function(k, v){
 };
 
 /**
- * Adds a new handler to the map value, fired when its children are changed.
  * @public
  */
 MapValue.prototype.addHandler = function(config){
@@ -446,7 +362,7 @@ MapValue.prototype.addHandler = function(config){
     var keys = this.keys;
     for(var k in values){
         var v = values[k];
-        var key = keys[k] !== undefined ? keys[k]:k;
+        var key = this.keys[k] !== undefined ? this.keys[k]:k;
         BaseValue.addValueHandler(key, v, config);
     }
 
@@ -466,8 +382,6 @@ MapValue.prototype.addHandler = function(config){
 };
 
 /**
- * Destroys handlers registered for a given global id.
- *
  * @protected
  */
 MapValue.prototype.destroyHandlers = function(globalId){
@@ -477,17 +391,14 @@ MapValue.prototype.destroyHandlers = function(globalId){
     }
 
     var values = this.value;
+    var keys = this.keys;
     for(var k in values){
         var v = values[k];
-        if (v.destroyHandlers) {
-            v.destroyHandlers(globalId);
-        }
+        v.destroyHandlers(globalId);
     }
 };
 
 /**
- * Returns true if the map contains the given key, in a case-insensitive test.
- *
  * @private
  */
 MapValue.prototype.contains = function(key){

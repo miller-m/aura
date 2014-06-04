@@ -38,16 +38,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
-import com.google.common.collect.Maps;
-
 /**
  * A testing mock of {@link HttpServletRequest}. The implementations here all do
  * nothing (return null, zero, etc.), so override what you need to.
  */
 public class DummyHttpServletRequest implements HttpServletRequest {
-
-    private String pathInfo = null;
-    private Map<String, String> queryParams = Maps.newHashMap();
 
     @Override
     public Object getAttribute(String name) {
@@ -86,7 +81,7 @@ public class DummyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getParameter(String name) {
-        return this.queryParams.get(name);
+        return null;
     }
 
     @Override
@@ -272,7 +267,7 @@ public class DummyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getPathInfo() {
-        return this.pathInfo;
+        return null;
     }
 
     @Override
@@ -378,13 +373,5 @@ public class DummyHttpServletRequest implements HttpServletRequest {
     @Override
     public Part getPart(String name) throws IOException, ServletException {
         return null;
-    }
-
-    public void setPathInfo(String pathInfo) {
-        this.pathInfo = pathInfo;
-    }
-
-    public void setQueryParam(String name, String value) {
-        this.queryParams.put(name, value);
     }
 }

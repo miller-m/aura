@@ -28,15 +28,18 @@
      * @return {void}
      */
     activateDialog : function(dialog, manager) {
-        var isModal         = dialog.get("v.isModal"),
-            clickOutToClose = dialog.get("v.clickOutToClose"),
-            autoFocus       = dialog.get("v.autoFocus"),
+
+        var atts            = dialog.getAttributes(),
+            isModal         = atts.get("isModal"),
+            clickOutToClose = atts.get("clickOutToClose"),
+            autoFocus       = atts.get("autoFocus"),
             handlerConfig   = this.getHandlerConfig(dialog, isModal, clickOutToClose);
 
         this.applyHandlers(handlerConfig);
         this.toggleDisplay(true, dialog, autoFocus, isModal, handlerConfig);
-        manager.set("v._activeDialog", dialog);
-        dialog.set("v._handlerConfig", handlerConfig);
+        manager.getAttributes().setValue("_activeDialog", dialog);
+        atts.setValue("_handlerConfig", handlerConfig);
+
     },
 
 
@@ -52,14 +55,17 @@
      * @return {void}
      */
     deactivateDialog : function(dialog, manager) {
-        var isModal       = dialog.get("v.isModal"),
-            autoFocus     = dialog.get("v.autoFocus"),
-            handlerConfig = dialog.get("v._handlerConfig");
+
+        var atts          = dialog.getAttributes(),
+            isModal       = atts.get("isModal"),
+            autoFocus     = atts.get("autoFocus"),
+            handlerConfig = atts.get("_handlerConfig");
 
         this.removeHandlers(handlerConfig);
         this.toggleDisplay(false, dialog, autoFocus, isModal, handlerConfig);
-        manager.set("v._activeDialog", null);
-        dialog.set("v._handlerConfig", null);
+        manager.getAttributes().setValue("_activeDialog", null);
+        atts.setValue("_handlerConfig", null);
+
     },
 
 
@@ -323,14 +329,9 @@
                 // if not a modal, then just hide the dialog immediately
                 $A.util.addClass(outer, "hidden");
             }
-            
             // apply proper element focus if necessary
             if (config.oldFocus) {
-            	try {
-            		config.oldFocus.focus();
-            	} catch (e) {
-            		// Ignore these - invalid element or in IE7/8 trying to set focus to an invisible element
-            	}
+                config.oldFocus.focus();
             }
         }
 

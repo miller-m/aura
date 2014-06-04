@@ -15,7 +15,7 @@
  */
 ({
     provide : function simpleProvider(component) {
-        var attr = component.get('v.strAttribute');
+        var attr = component.getAttributes().getValue('strAttribute').getValue();
         return {
             attributes: {
                 "newStrAttribute": "TextAppend" + attr

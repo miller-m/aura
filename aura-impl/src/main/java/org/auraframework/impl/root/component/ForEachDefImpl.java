@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.auraframework.Aura;
 import org.auraframework.def.AttributeDefRef;
 import org.auraframework.def.ComponentDef;
 import org.auraframework.def.DefDescriptor;
@@ -30,8 +29,6 @@ import org.auraframework.expression.PropertyReference;
 import org.auraframework.impl.root.AttributeDefRefImpl;
 import org.auraframework.instance.BaseComponent;
 import org.auraframework.instance.Component;
-
-import org.auraframework.system.AuraContext;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.json.Json;
 
@@ -81,12 +78,7 @@ public class ForEachDefImpl extends ComponentDefRefImpl implements ForEachDef {
                 iterable = rev;
             }
 
-            AuraContext context = Aura.getContextService().getCurrentContext();
-            context.getInstanceStack().pushInstance(valueProvider);
-            context.getInstanceStack().setAttributeName("realbody");
-            int idx = 0;
             for (Object o : iterable) {
-                context.getInstanceStack().setAttributeIndex(idx);
                 AttributeDefRefImpl.Builder atBuilder = new AttributeDefRefImpl.Builder();
                 atBuilder.setDescriptor(body.getAttributeDef(var).getDescriptor());
                 atBuilder.setLocation(location);
@@ -96,20 +88,15 @@ public class ForEachDefImpl extends ComponentDefRefImpl implements ForEachDef {
 
                 Map<String, Object> providers = new HashMap<String, Object>();
                 providers.put(var, o);
-
                 ret.add(new ComponentImpl(descriptor, Lists.newArrayList(attribute), valueProvider, providers,
                         valueProvider));
-                context.getInstanceStack().clearAttributeIndex(idx);
-                idx += 1;
             }
-            context.getInstanceStack().clearAttributeName("realbody");
-            context.getInstanceStack().popInstance(valueProvider);
         }
         return ret;
     }
 
     @Override
-    public void appendDependencies(Set<DefDescriptor<?>> dependencies) {
+    public void appendDependencies(Set<DefDescriptor<?>> dependencies) throws QuickFixException {
         getComponentDef().appendDependencies(dependencies);
     }
 

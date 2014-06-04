@@ -36,7 +36,7 @@ import org.auraframework.def.TestCaseDef;
 import org.auraframework.def.TestSuiteDef;
 import org.auraframework.service.ContextService;
 import org.auraframework.service.DefinitionService;
-import org.auraframework.system.AuraContext.Authentication;
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.system.AuraContext.Format;
 import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.test.WebDriverUtil.BrowserType;
@@ -47,7 +47,6 @@ import org.auraframework.util.AuraTextUtil;
 import org.auraframework.util.json.JsonReader;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * TODO(W-1386863): investigate why/fix the thread hostile nature of these tests.
@@ -86,7 +85,7 @@ public class ComponentJSTestSuiteTest extends TestSuite {
             boolean contextStarted = false;
             if (!contextService.isEstablished()) {
                 contextStarted = true;
-                contextService.startContext(Mode.JSTEST, Format.JSON, Authentication.AUTHENTICATED);
+                contextService.startContext(Mode.JSTEST, Format.JSON, Access.AUTHENTICATED);
             }
 
             Map<String, TestSuite> subSuites = new HashMap<String, TestSuite>();
@@ -148,8 +147,7 @@ public class ComponentJSTestSuiteTest extends TestSuite {
             if (defType == DefType.APPLICATION) {
                 ext = ".app";
             }
-            return String.format("/%s/%s%s?aura.mode=%s&aura.testReset=true", descriptor.getNamespace(),
-                    descriptor.getName(), ext, mode);
+            return String.format("/%s/%s%s?aura.mode=%s", descriptor.getNamespace(), descriptor.getName(), ext, mode);
         }
 
         /**
@@ -160,7 +158,7 @@ public class ComponentJSTestSuiteTest extends TestSuite {
             ContextService contextService = Aura.getContextService();
             boolean isEstablished = contextService.isEstablished();
             if (!isEstablished) {
-                contextService.startContext(Mode.AUTOJSTEST, Format.JSON, Authentication.AUTHENTICATED);
+                contextService.startContext(Mode.AUTOJSTEST, Format.JSON, Access.AUTHENTICATED);
             }
             try {
                 return descriptor.getDef().getCode();
@@ -235,17 +233,18 @@ public class ComponentJSTestSuiteTest extends TestSuite {
         public void testRun() throws Throwable {
             Set<Definition> mocks = caseDef.getLocalDefs();
             if (mocks != null && !mocks.isEmpty()) {
-            	Aura.get(TestContextAdapter.class).getTestContext().getLocalDefs().addAll(mocks);
+                Aura.get(TestContextAdapter.class).getTestContext()
+                        .getLocalDefs().addAll(mocks);
                 AuraTestingUtil.clearCachedDefs(mocks);
             }
 
             open(getUrl(), Mode.AUTOJSTEST);
 
             String ret = (String) auraUITestingUtil.getEval(String.format(
-                    "return window.aura.test.run('%s', '%s', 30)",
+                    "return window.aura.test.run('%s', '%s')",
                     AuraTextUtil.escapeForJavascriptString(caseDef.getName()),
                     AuraTextUtil.escapeForJavascriptString(suite.getCode())));
-           
+
             if (ret != null && !"null".equals(ret)) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> e = (Map<String, Object>) new JsonReader()
@@ -271,11 +270,6 @@ public class ComponentJSTestSuiteTest extends TestSuite {
         @Override
         protected Set<String> getExceptionsAllowedDuringInit() {
             return caseDef.getExceptionsAllowedDuringInit();
-        }
-
-        @Override
-        public Set<String> getTestLabels() {
-            return Sets.newHashSet(caseDef.getTestLabels());
         }
 
         private final ComponentTestSuite suite;

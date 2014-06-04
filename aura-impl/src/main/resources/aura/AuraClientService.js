@@ -20,28 +20,14 @@
  * @constructor
  */
 var AuraClientService = function() {
-    // #include aura.controller.Action
     // #include aura.controller.ActionCallbackGroup
     // #include aura.controller.ActionQueue
     // #include aura.controller.ActionCollector
-    // #include aura.model.ValueDef
     // #include aura.AuraClientService_private
-	
-    var NOOP = function() {};
-	
+
     var clientService = {
 
-        /**
-         * Init host is used to set the host name for communications.
-         *
-         * It should only be called once during the application life cycle, since it
-         * will be deleted in production mode.
-         *
-         * Note that in testing, this can be used to make the host appear unreachable.
-         *
-         * @param {string} host the host name of the server.
-         * @public
-         */
+        /** @private */
         initHost : function(host) {
             priv.host = host || "";
             //#if {"modes" : ["PRODUCTION"]}
@@ -49,47 +35,27 @@ var AuraClientService = function() {
             //#end
         },
 
-        /**
-         * Initialize aura.
-         *
-         * This should never be called by client code. It is exposed, but deleted after
-         * first use.
-         *
-         * @param {Object} config the configuration for aura.
-         * @param {string} token the XSS token.
-         * @param {function} callback the callback when init is complete.
-         * @param {object} container the place to install aura (defaults to document.body).
-         * @private
-         */
+        /** @private */
         init : function(config, token, callback, container) {
-            $A.Perf.mark("Initial Component Created");
-            $A.Perf.mark("Initial Component Rendered");
+            $A.mark("Initial Component Created");
+            $A.mark("Initial Component Rendered");
             var body = document.body;
-            
-            //
-            // not on in dev modes to preserve stacktrace in debug tools
-            // Why? - goliver
-            // I think this should be done in all cases, the $A.error can be more
-            // instructive than an uncaught exception.
-            //
             //#if {"modes" : ["PRODUCTION"]}
             try {
                 //#end
-
-            	if (token) {
+                if (token) {
                     priv.token = token;
                 }
 
                 // Why is this happening in the ClientService? --JT
-                // NOTE: no creation path here, we are at the top level
                 var component = componentService.newComponentDeprecated(config, null, false, true);
 
-                $A.Perf.endMark("Initial Component Created");
+                $A.endMark("Initial Component Created");
 
                 renderingService.render(component, container || body);
                 renderingService.afterRender(component);
 
-                $A.Perf.endMark("Initial Component Rendered");
+                $A.endMark("Initial Component Rendered");
                 callback(component);
 
                 // not on in dev modes to preserve stacktrace in debug tools
@@ -102,47 +68,34 @@ var AuraClientService = function() {
             delete this.init;
         },
 
-        /**
-         * This function is used by the test service to determine if there are outstanding actions.
-         *
-         * @private
-         */
         idle : function() {
             return priv.foreground.idle() && priv.background.idle() && priv.actionQueue.actions.length === 0;
         },
 
-        /**
-         * Initialize definitions.
-         *
-         * This should never be called by client code. It is exposed, but deleted after
-         * first use.
-         *
-         * @param {Object} config the set of definitions to initialize
-         * @private
-         */
+        /** @private */
         initDefs : function(config) {
             var evtConfigs = aura.util.json.resolveRefs(config["eventDefs"]);
-            $A.Perf.mark("Registered Events [" + evtConfigs.length + "]");
+            $A.mark("Registered Events [" + evtConfigs.length + "]");
             for ( var j = 0; j < evtConfigs.length; j++) {
                 eventService.getEventDef(evtConfigs[j]);
             }
-            $A.Perf.endMark("Registered Events [" + evtConfigs.length + "]");
+            $A.endMark("Registered Events [" + evtConfigs.length + "]");
 
             var controllerConfigs = aura.util.json.resolveRefs(config["controllerDefs"]);
-            $A.Perf.mark("Registered Controllers [" + controllerConfigs.length + "]");
+            $A.mark("Registered Controllers [" + controllerConfigs.length + "]");
             for (j = 0; j < controllerConfigs.length; j++) {
                 componentService.getControllerDef(controllerConfigs[j]);
             }
-            $A.Perf.endMark("Registered Controllers [" + controllerConfigs.length + "]");
+            $A.endMark("Registered Controllers [" + controllerConfigs.length + "]");
 
             var comConfigs = aura.util.json.resolveRefs(config["componentDefs"]);
-            $A.Perf.mark("Registered Components [" + comConfigs.length + "]");
+            $A.mark("Registered Components [" + comConfigs.length + "]");
             for ( var i = 0; i < comConfigs.length; i++) {
                 componentService.getDef(comConfigs[i]);
             }
-            $A.Perf.endMark("Registered Components [" + comConfigs.length + "]");
+            $A.endMark("Registered Components [" + comConfigs.length + "]");
 
-            $A.Perf.endMark("PageStart");
+            $A.measure("Initial Scripts Finished", "PageStart");
 
             // Let any interested parties know that defs have been initialized
             for ( var n = 0; n < priv.initDefsObservers.length; n++) {
@@ -155,15 +108,7 @@ var AuraClientService = function() {
             delete this.initDefs;
         },
 
-        /**
-         * Run a callback after defs are initialized.
-         *
-         * This is for internal use only. The function is called synchronously if definitions have
-         * already been initialized.
-         *
-         * @param {function} callback the callback that should be invoked after defs are initialized
-         * @private
-         */
+        /** @private */
         runAfterInitDefs : function(callback) {
             if (this.initDefs) {
                 // Add to the list of callbacks waiting until initDefs() is done
@@ -192,12 +137,10 @@ var AuraClientService = function() {
         },
 
         /**
-         * Fire an event exception from the wire.
+         * Throw an exception.
          *
-         * This is published, but only for use in the case of an event exception serialized as JS,
-         * not sure if this is important.
-         *
-         * @param {Object} config The data for the exception event
+         * @param {Object}
+         *            config The data for the exception event
          * @memberOf AuraClientService
          * @private
          */
@@ -232,15 +175,8 @@ var AuraClientService = function() {
                     var action = $A.get("c.aura://ComponentController." + method);
 
                     action.setStorable({
-                        "ignoreExisting" : true
+                            "ignoreExisting" : true
                     });
-                    //
-                    // No, really, do not abort this. The setStorable above defaults this
-                    // to be abortable, but, even though nothing should ever trigger an action
-                    // that could be abortable here (we haven't loaded the app yet, so it shouldn't
-                    // be possible), we want to avoid any confusion.
-                    //
-                    action.setAbortable(false);
 
                     action.setParams({
                         name : tag,
@@ -267,20 +203,10 @@ var AuraClientService = function() {
                                 });
                             }
                         } else {
-                            //
-                            // This can be either error or aborted, and we really should only
-                            // see error.
-                            //
-                            var errors = a.getError();
-
-                            if (errors && errors[0] && errors[0].message) {
-                                $A.error(a.getError()[0].message);
-                            } else {
-                                $A.error("Unable to load component, action state = "+state);
-                            }
+                            $A.error(a.getError()[0].message);
                         }
 
-                        $A.Perf.endMark("Sending XHR " + $A.getContext().getNum());
+                        $A.measure("Completed Component Callback", "Sending XHR " + $A.getContext().getNum());
                     });
 
                     clientService.enqueueAction(action);
@@ -290,8 +216,6 @@ var AuraClientService = function() {
 
         /**
          * Check to see if we are inside the aura processing 'loop'.
-         *
-         * @private
          */
         inAuraLoop : function() {
             return priv.auraStack.length > 0;
@@ -301,10 +225,10 @@ var AuraClientService = function() {
          * Check to see if a public pop should be allowed.
          *
          * We allow a public pop if the name was pushed, or if there is nothing
-         * on the stack. 
+         * on the stack.
          *
-         * @param {string} name the name of the public 'pop' that will happen.
-         * @return {Boolean} true if the pop should be allowed.
+         * @param name the name of the public 'pop' that will happen.
+         * @return true if the pop should be allowed.
          */
         checkPublicPop : function(name) {
             if (priv.auraStack.length > 0) {
@@ -319,8 +243,7 @@ var AuraClientService = function() {
         /**
          * Push a new name on the stack.
          *
-         * @param {string} name the name of the item to push.
-         * @private
+         * @param name the name of the item to push.
          */
         pushStack : function(name) {
             priv.auraStack.push(name);
@@ -334,7 +257,6 @@ var AuraClientService = function() {
          * the server.
          *
          * @param name the name of the last item pushed.
-         * @private
          */
         popStack : function(name) {
             var count = 0;
@@ -349,29 +271,24 @@ var AuraClientService = function() {
             } else {
                 $A.warning("Pop from empty stack");
             }
-            
             if (priv.auraStack.length === 0) {
                 var tmppush = "$A.clientServices.popStack";
                 priv.auraStack.push(tmppush);
                 clientService.processActions();
                 done = !$A["finishedInit"];
                 while (!done && count <= 15) {
-                    $A.renderingService.rerenderDirty(name);
-                    
+                    $A.renderingService.rerenderDirty();
                     done = !clientService.processActions();
-                    
                     count += 1;
                     if (count > 14) {
                         $A.error("finishFiring has not completed after 15 loops");
                     }
                 }
-                
                 // Force our stack to nothing.
                 lastName = priv.auraStack.pop();
                 if (lastName !== tmppush) {
                     $A.error("Broken stack: popped "+tmppush+" expected "+lastName+", stack = "+priv.auraStack);
                 }
-                
                 priv.auraStack = [];
                 priv.actionQueue.incrementNextTransactionId();
             }
@@ -440,42 +357,18 @@ var AuraClientService = function() {
             priv.token = newToken;
         },
 
-
-        /**
-         * Create an action group with a callback.
-         *
-         * The callback will be called when all actions are complete within the group.
-         *
-         * @param actions
-         *      {Array.<Action>} the array of actions.
-         * @param scope
-         *      {Object} the scope for the function.
-         * @param callback
-         *      {function} The callback function
-         */
-        makeActionGroup : function(actions, scope, callback) {
-            var group = undefined;
-            $A.assert($A.util.isArray(actions), "makeActionGroup expects a list of actions, but instead got: " + actions);
-            if (callback !== undefined) {
-                $A.assert($A.util.isFunction(callback),
-                        "makeActionGroup expects the callback to be a function, but instead got: " + callback);
-                group = new ActionCallbackGroup(actions, scope, callback);
-            }
-            return group;
-        },
-
         /**
          * Run the actions.
          *
-         * This function effectively attempts to submit all pending actions immediately (if
+         * This function effectively attempts to submit the list of actions given immediately (if
          * there is room in the outgoing request queue). If there is no way to immediately queue
          * the actions, they are submitted via the normal mechanism. Note that this does not change
          * the 'transaction' associated with the current aura stack, so abortable actions might go
          * out in two separate requests without cancelling each other.
          *
-         * @param {Array.<Action>}
-         *            actions an array of Action objects
          * @param {Object}
+         *            actions
+         * @param {function}
          *            scope The scope in which the function is executed
          * @param {function}
          *            callback The callback function to run
@@ -483,26 +376,37 @@ var AuraClientService = function() {
          * @public
          */
         runActions : function(actions, scope, callback) {
+        	$A.assert($A.util.isArray(actions), "runActions expects a list of actions, but instead got: " + actions);
+        	if (!$A.util.isUndefined(callback)) {
+				$A.assert($A.util.isFunction(callback),
+						"runActions expects the callback to be a function, but instead got: " + callback);
+			}
+            var group = new ActionCallbackGroup(actions, scope, callback);
             var i;
-
-            clientService.makeActionGroup(actions, scope, callback);
-            for (i = 0; i < actions.length; i++) {
-                priv.actionQueue.enqueue(actions[i]);
+            if (priv.foreground.start()) {
+                priv.actionQueue.bypass(actions);
+                priv.request(actions, priv.foreground);
+            } else {
+                for (i = 0; i < actions.length; i++) {
+                    priv.actionQueue.enqueue(actions[i]);
+                }
             }
-            clientService.processActions();
         },
 
         /**
          * Inject a component and set up its event handlers. For Integration
          * Service.
          *
-         * FIXME: this should be private.
-         *
-         * @param {Object} rawConfig the config for the component to be injected
-         * @param {String} locatorDomId the DOM id where we should place our element.
-         * @param {String} localId the local id for the component to be created.
+         * @param {Component}
+         *            parent
+         * @param {Object}
+         *            rawConfig
+         * @param {String}
+         *            placeholderId
+         * @param {String}
+         *            localId
          * @memberOf AuraClientService
-         * @public
+         * @private
          */
         injectComponent : function(rawConfig, locatorDomId, localId) {
             var config = $A.util.json.resolveRefs(rawConfig);
@@ -534,13 +438,8 @@ var AuraClientService = function() {
                 if (!errors) {
                     componentConfig = a.getReturnValue();
                 } else {
-                    //
-                    // Make sure we clear any configs associated with the action.
-                    //
-                    $A.getContext().clearComponentConfigs(a.getId());
-                    // 
-                    // Display the errors in a ui:message instead
-                    //
+                    // Display the errors in a ui:message
+                    // instead
                     componentConfig = {
                         "componentDef" : {
                             "descriptor" : "markup://ui:message"
@@ -582,9 +481,6 @@ var AuraClientService = function() {
                                 return {
                                     run : function(event) {
                                         window[functionName](event);
-                                    },
-                                    runDeprecated : function(event) {
-                                        window[functionName](event);
                                     }
                                 };
                             }
@@ -596,11 +492,7 @@ var AuraClientService = function() {
                     }
                 }
 
-                var body = root.getValue("v.body");
-                body.push(c);
-                
-                // Do not let Aura consider this initial setting into the surrogate app as a candiadate for rerendering
-                body.commit();          
+                root.getValue("v.body").push(c);
 
                 $A.render(c, element);
 
@@ -612,39 +504,31 @@ var AuraClientService = function() {
         },
 
         /**
-         * Return whether Aura believes it is online. 
-         * Immediate and future communication with the server may fail.
-         * @memberOf AuraClientService
-         * @return {Boolean} Returns true if Aura believes it is online; false otherwise.
-         * @public
+         * Return whether Aura believes it is online. This is only an educated
+         * guess. Immediate and future communication with the server may fail.
+         *
+         * @return true if Aura believes it is online; false otherwise.
          */
         isConnected : function() {
             return !priv.isDisconnected;
         },
-        
+
         /**
-         * Inform Aura that the environment is either online or offline. 
-         * 
-         * @param {Boolean} isConnected Set to true to run Aura in online mode,  
-         * or false to run Aura in offline mode.
-         * @memberOf AuraClientService
-         * @public
+         * Inform Aura that the the environment is offline. One source of data
+         * is native code. Immediate and future communication with the server may fail.
          */
-        setConnected: function(isConnected) {
-        	priv.setConnected(isConnected);
+        setConnectedFalse : function() {
+            priv.setConnectedFalse();
         },
 
         /**
          * Queue an action for execution after the current event loop has ended.
          *
-         * This function must be called from within an event loop.
+         * This must be called from within an event loop!
          *
          * @param {Action} action the action to enqueue
-         * @param {Boolean} background Set to true to run the action in the background, otherwise the value of action.isBackground() is used.
-         * @memberOf AuraClientService
-         * @public
+         * @param {Boolean} background if true the action will be backgrounded, otherwise the value of action.isBackground() is used.
          */
-        // TODO: remove boolean trap http://ariya.ofilabs.com/2011/08/hall-of-api-shame-boolean-trap.html 
         enqueueAction : function(action, background) {
             $A.assert(!$A.util.isUndefinedOrNull(action), "EnqueueAction() cannot be called on an undefined or null action.");
             $A.assert(!$A.util.isUndefined(action.auraType)&& action.auraType==="Action", "Cannot call EnqueueAction() with a non Action parameter.");
@@ -657,110 +541,38 @@ var AuraClientService = function() {
         },
 
         /**
-         * Defer the action by returning a Promise object. 
-         * Configure your action excluding the callback prior to deferring. 
-         * The Promise is a thenable, meaning it exposes a 'then' function for consumers to chain updates.
-         * Do NOT use the promise constructor to initiate the action - it will subvert the actionQueue.
+         * Register a new transaction.This clears out the previously set times (of previous transaction),
+         * clears the transactionName
+         * and triggers a new transaction.
          *
-         * @public
-         * @param {Action} the target action
-         * @return {Promise} a promise which is resolved or rejected depending on the state of the action
+         * @private
          */
-        deferAction : function (action) {
-            var promise = new $A.util.createPromise();
-        
-            action.wrapCallback(this, function (a) {
-                if (a.getState() === 'SUCCESS') {
-                    promise.resolve(a.getReturnValue());
-                }
-                else {
-                    // Reject the promise as it was not successful.
-                    // Give the user a somewhat useful object to use on reject. 
-                    promise.reject({ state: a.getState(), action: a });
-                }
-            });
+        registerTransaction: function() {
+            //#if {"modes" : ["PTEST"]}
+            // to only profile the transactions and not the initial page load
+            // clear out existing timers
+            $A.removeStats();
+            $A.getContext().clearTransactionName();
+            // start a Jiffy transaction
+            $A.startTransaction($A.getContext().incrementTransaction());
+            //#end
+        },
 
-            this.enqueueAction(action);
-            
-            return promise; 
-        },
-    
         /**
-         * Gets whether or not the Aura "actions" cache exists.
-         * @returns {Boolean} true if the Aura "actions" cache exists.
+         * Unregister an existing transaction. This ends the current transaction and
+         * updates the transaction name to include all actions.
+         * It also sets the beaconData to piggyback on the next XHR call.
+         *
+         * @private
          */
-        hasActionStorage: function() {
-            return !!Action.getStorage();
-        },
-        
-        /**
-         * Checks to see if an action is currently being stored (by action descriptor and parameters).
-         * 
-         * @param descriptor {String} action descriptor.
-         * @param params {Object} map of keys to parameter values.
-         * @param callback {Function} called asynchronously after the action was looked up in the cache. Fired with a 
-         * single parameter, isInStorge {Boolean} - representing whether the action was found in the cache.
-         */
-        isActionInStorage : function(descriptor, params, callback) {
-            var storage = Action.getStorage();
-            callback = callback || NOOP;
-            
-            if (!$A.util.isString(descriptor) || !$A.util.isObject(params) || !storage) {
-                callback(false);
-                return;
-            }
-            
-            storage.get(Action.getStorageKey(descriptor, params), function(value, isExpired) {
-                callback(!!value && !isExpired);
-            });
-        },
-        
-        /**
-         * Resets the cache cleanup timer for an action. 
-         * 
-         * @param descriptor {String} action descriptor.
-         * @param params {Object} map of keys to parameter values.
-         * @param callback {Function} called asynchronously after the action was revalidated. Called with a single
-         * parameter, wasRevalidated {Boolean} - representing whether the action was found in the cache and 
-         * successfully revalidated.  
-         */
-        revalidateAction : function(descriptor, params, callback) {
-            var storage = Action.getStorage();
-            callback = callback || NOOP;
-            
-            if (!$A.util.isString(descriptor) || !$A.util.isObject(params) || !storage) {
-                callback(false);
-                return;
-            }
-            
-            var actionKey = Action.getStorageKey(descriptor, params);
-            storage.get(actionKey, function(value) {
-                if (!!value) {
-                    storage.put(actionKey, value);
-                }
-                callback(!!value);
-            });
-        },
-        
-        /**
-         * Clears an action out of the action cache. 
-         * 
-         * @param descriptor {String} action descriptor.
-         * @param params {Object} map of keys to parameter values.
-         * @param callback {Function} called after the action was invalidated. Called with true if the action was 
-         * successfully invalidated and false if the action was invalid or was not found in the cache.
-         */
-        invalidateAction : function(descriptor, params, callback) {
-            var storage = Action.getStorage();
-            callback = callback || NOOP;
-            
-            if (!$A.util.isString(descriptor) || !$A.util.isObject(params) || !storage) {
-                callback(false);
-                return;
-            }
-            
-            storage.remove(Action.getStorageKey(descriptor, params));
-            callback(true);
+        unregisterTransaction: function() {
+            // end the previously started transaction
+            $A.endTransaction($A.getContext().getTransaction());
+            // set the transaction using #hashtag from the URL and the
+            // concatenated action names as the unique ID
+            $A.updateTransaction("txn_" + $A.getContext().getTransaction(), "txn_" + $A.historyService.get()["token"] + $A.getContext().getTransactionName());
+            // update the vars and set the beaconData to piggyback on the next XHR call
+            $A.setBeaconData($A.toJson());
         },
         
         /**
@@ -772,6 +584,8 @@ var AuraClientService = function() {
          */
         processActions : function() {
             var actions;
+            var backgroundIdx;
+            var backgroundAction;
             var processedActions = false;
             var action;
 
@@ -781,12 +595,7 @@ var AuraClientService = function() {
                 processedActions = true;
             }
             
-            //
-            // Only send forground actions if we have something that
-            // needs to be sent (force boxcar will delay this)
-            // FIXME: we need measures of how long this delays things.
-            //
-            if (priv.actionQueue.needXHR() && priv.foreground.start()) {
+            if (priv.foreground.start()) {
                 actions = priv.actionQueue.getServerActions();
                 if (actions.length > 0) {
                     priv.request(actions, priv.foreground);

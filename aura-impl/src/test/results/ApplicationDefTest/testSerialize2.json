@@ -4,14 +4,18 @@
     "descriptor":"markup://fake:component",
     "superDef":{
       "serId":2,
-      "value":"markup://aura:application"
+      "value":{
+        "descriptor":"markup://aura:application"
+      }
     },
     "attributeDefs":[
       {
         "serId":3,
         "value":{
-          "name":"body",
-          "type":"aura://Aura.Component[]"
+          "descriptor":"body",
+          "typeDefDescriptor":"aura://Aura.Component[]",
+          "required":false,
+          "visibility":"PUBLIC"
         }
       }
     ],
@@ -34,15 +38,10 @@
           "token":{
             "serId":6,
             "value":{
-              "name":"token",
-              "type":"aura://String"
-            }
-          },
-          "querystring":{
-            "serId":7,
-            "value":{
-              "name":"querystring",
-              "type":"aura://String"
+              "descriptor":"token",
+              "typeDefDescriptor":"aura://String",
+              "required":false,
+              "visibility":"PUBLIC"
             }
           }
         }

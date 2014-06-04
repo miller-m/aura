@@ -24,7 +24,7 @@
             $A.test.assertEquals("divWithoutBody_Title",ele.title);
 
             //Verify Rerendering
-            cmp.set('v.styleClass', 'styleNEWClass');
+            cmp.getAttributes().setValue('styleClass', 'styleNEWClass');
             $A.rerender(cmp);
             $A.test.assertEquals("styleNEWClass div withoutBody",cmp.find('divWithoutBody').getElement().className)
         }

@@ -32,6 +32,7 @@ import org.auraframework.impl.root.component.LazyComponentDefRef;
 import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.system.Location;
 import org.auraframework.system.Source;
+import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
 import org.auraframework.throwable.quickfix.InvalidDefinitionException;
 import org.auraframework.throwable.quickfix.InvalidReferenceException;
@@ -267,7 +268,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         assertTrue(dependencies.contains(vendor.getBaseComponentPrototype(getDefClass())));
     }
 
-    public void testAppendDependenciesWithAllReferences() throws QuickFixException {
+    public void testAppendDependenciesWithAllReferences() throws Exception {
         DefDescriptor<T> parentDesc = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, "extensible='true'", ""));
         DefDescriptor<ComponentDef> childDesc = addSourceAutoCleanup(ComponentDef.class, "<aura:component/>");
@@ -328,14 +329,14 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * InvalidDefinitionException if model is empty.
+     * AuraRuntimeException if model is empty.
      */
     public void testModelEmpty() throws Exception {
         try {
             define(baseTag, "model=''", "");
             fail("Should not be able to load component with empty model");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
@@ -346,7 +347,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "model='oops'", "");
             fail("Should not be able to load component with invalid model");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class, "No MODEL named java://oops found :");
         }
     }
@@ -361,8 +362,8 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             compDesc.getDef();
             fail("Should not be able to load component with multiple models");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class,
+        } catch (AuraRuntimeException e) {
+            checkExceptionFull(e, AuraRuntimeException.class,
                     "Invalid Descriptor Format: java://org.auraframework.impl.java.model.TestModel,js://test.jsModel");
         }
     }
@@ -385,14 +386,14 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * InvalidDefinitionException if controller is empty.
+     * AuraRuntimeException if controller is empty.
      */
     public void testControllerEmpty() throws Exception {
         try {
             define(baseTag, "controller=''", "");
             fail("Should not be able to load component with empty controller");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
@@ -403,20 +404,20 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "controller='oops'", "");
             fail("Should not be able to load component with invalid controller");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class, "No CONTROLLER named java://oops found :");
         }
     }
 
     /**
-     * InvalidDefinitionException if renderer is empty.
+     * AuraRuntimeException if renderer is empty.
      */
     public void testRendererEmpty() throws Exception {
         try {
             define(baseTag, "renderer=''", "");
             fail("Should not be able to load component with empty renderer");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
@@ -427,20 +428,20 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "renderer='oops'", "");
             fail("Should not be able to load component with invalid renderer");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class, "No RENDERER named js://oops found :");
         }
     }
 
     /**
-     * InvalidDefinitionException if provider is empty.
+     * AuraRuntimeException if provider is empty.
      */
     public void testProviderEmpty() throws Exception {
         try {
             define(baseTag, "provider=''", "");
             fail("Should not be able to load component with empty provider");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
@@ -451,7 +452,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "provider='oops'", "");
             fail("Should not be able to load component with invalid provider");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class, "No PROVIDER named java://oops found :");
         }
     }
@@ -460,7 +461,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * getLocalModelDefDescriptor returns null if there are no models. Test method for
      * {@link BaseComponentDef#getLocalModelDefDescriptor()}.
      */
-    public void testGetLocalModelDefDescriptorWithoutModels() throws QuickFixException {
+    public void testGetLocalModelDefDescriptorWithoutModels() throws Exception {
         DefDescriptor<ModelDef> dd = define(baseTag, "", "").getLocalModelDefDescriptor();
         assertNull(dd);
     }
@@ -469,7 +470,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * getLocalModelDefDescriptor returns model if json model is implicitly defined. Test method for
      * {@link BaseComponentDef#getLocalModelDefDescriptor()}.
      */
-    public void testGetLocalModelDefDescriptorWithImplicitJsonModel() throws QuickFixException {
+    public void testGetLocalModelDefDescriptorWithImplicitJsonModel() throws Exception {
         DefDescriptor<T> compDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag, "", ""));
         DefDescriptor<ModelDef> modelDesc = DefDescriptorImpl.getAssociateDescriptor(compDesc, ModelDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -483,7 +484,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * getLocalModelDefDescriptor returns model if json model is explicitly specified. Test method for
      * {@link BaseComponentDef#getLocalModelDefDescriptor()}.
      */
-    public void testGetLocalModelDefDescriptorWithExplicitJsonModel() throws QuickFixException {
+    public void testGetLocalModelDefDescriptorWithExplicitJsonModel() throws Exception {
         @SuppressWarnings("unchecked")
         DefDescriptor<T> ddParent = (DefDescriptor<T>) define(baseTag,
                 "extensible='true' model='java://org.auraframework.impl.java.model.TestModel'", "").getDescriptor();
@@ -499,7 +500,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * getLocalModelDefDescriptor returns model if java model is explicitly specified. Test method for
      * {@link BaseComponentDef#getLocalModelDefDescriptor()}.
      */
-    public void testGetLocalModelDefDescriptorWithJavaModel() throws QuickFixException {
+    public void testGetLocalModelDefDescriptorWithJavaModel() throws Exception {
         @SuppressWarnings("unchecked")
         DefDescriptor<T> ddParent = (DefDescriptor<T>) define(baseTag,
                 "extensible='true' model='java://org.auraframework.impl.java.model.TestModel2'", "").getDescriptor();
@@ -515,7 +516,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * getModelDefDescriptors returns empty list if there are no models. Test method for
      * {@link BaseComponentDef#getModelDefDescriptors()}.
      */
-    public void testGetModelDefDescriptorsWithoutModels() throws QuickFixException {
+    public void testGetModelDefDescriptorsWithoutModels() throws Exception {
         List<DefDescriptor<ModelDef>> dds = define(baseTag, "", "").getModelDefDescriptors();
         assertNotNull(dds);
         assertTrue(dds.isEmpty());
@@ -524,7 +525,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getModelDefDescriptors()}.
      */
-    public void testGetModelDefDescriptors() throws QuickFixException {
+    public void testGetModelDefDescriptors() throws Exception {
         DefDescriptor<T> grandParentDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag,
                 "extensible='true'", ""));
         DefDescriptor<ModelDef> grandParentModelDesc = DefDescriptorImpl.getAssociateDescriptor(grandParentDesc,
@@ -567,7 +568,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * getModelDef returns null if there are no models Test method for {@link BaseComponentDef#getModelDef()}.
      */
-    public void testGetModelDefWithoutModels() throws QuickFixException {
+    public void testGetModelDefWithoutModels() throws Exception {
         ModelDef d = define(baseTag, "", "").getModelDef();
         assertNull(d);
     }
@@ -575,7 +576,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getModelDef()}.
      */
-    public void testGetModelDefWithJavaModel() throws QuickFixException {
+    public void testGetModelDefWithJavaModel() throws Exception {
         @SuppressWarnings("unchecked")
         DefDescriptor<T> ddParent = (DefDescriptor<T>) define(baseTag,
                 "extensible='true' model='java://org.auraframework.impl.java.model.TestModel2'", "").getDescriptor();
@@ -590,7 +591,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getModelDef()}.
      */
-    public void testGetModelDefWithJsonModel() throws QuickFixException {
+    public void testGetModelDefWithJsonModel() throws Exception {
         @SuppressWarnings("unchecked")
         DefDescriptor<T> ddParent = (DefDescriptor<T>) define(baseTag,
                 "extensible='true' model='java://org.auraframework.impl.java.model.TestModel2'", "").getDescriptor();
@@ -605,7 +606,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getModelDef()}.
      */
-    public void testGetModelDefWithImplicitJsonModel() throws QuickFixException {
+    public void testGetModelDefWithImplicitJsonModel() throws Exception {
         DefDescriptor<T> compDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag, "", ""));
         DefDescriptor<ModelDef> modelDesc = DefDescriptorImpl.getAssociateDescriptor(compDesc, ModelDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -619,7 +620,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Implicit model is ignored if explicit model is specified. Test method for {@link BaseComponentDef#getModelDef()}.
      */
-    public void testGetModelDefWithImplicitAndExplicit() throws QuickFixException {
+    public void testGetModelDefWithImplicitAndExplicit() throws Exception {
         DefDescriptor<T> compDesc = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, "model='java://org.auraframework.impl.java.model.TestModel'", ""));
         DefDescriptor<ModelDef> modelDesc = DefDescriptorImpl.getAssociateDescriptor(compDesc, ModelDef.class,
@@ -634,7 +635,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getControllerDefDescriptors()}.
      */
-    public void testGetControllerDefDescriptorsWithoutControllers() throws QuickFixException {
+    public void testGetControllerDefDescriptorsWithoutControllers() throws Exception {
         List<DefDescriptor<ControllerDef>> dds = define(baseTag, "", "").getControllerDefDescriptors();
         assertNotNull(dds);
         assertTrue(dds.isEmpty());
@@ -643,7 +644,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getControllerDefDescriptors()}.
      */
-    public void testGetControllerDefDescriptors() throws QuickFixException {
+    public void testGetControllerDefDescriptors() throws Exception {
         @SuppressWarnings("unchecked")
         DefDescriptor<T> ddParent = (DefDescriptor<T>) define(baseTag,
                 "extensible='true' controller='java://org.auraframework.impl.java.controller.TestController2'", "")
@@ -667,7 +668,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getControllerDef()}.
      */
-    public void testGetControllerDefWithoutControllers() throws QuickFixException {
+    public void testGetControllerDefWithoutControllers() throws Exception {
         ControllerDef d = define(baseTag, "", "").getControllerDef();
         assertNull(d);
     }
@@ -675,7 +676,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getControllerDef()}.
      */
-    public void testGetControllerDef() throws QuickFixException {
+    public void testGetControllerDef() throws Exception {
         DefDescriptor<? extends BaseComponentDef> ddParent = define(baseTag,
                 "extensible='true' controller='java://org.auraframework.impl.java.controller.TestController2'", "")
                 .getDescriptor();
@@ -691,7 +692,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getRendererDescriptor()}.
      */
-    public void testGetRendererDescriptorWithoutRenderer() throws QuickFixException {
+    public void testGetRendererDescriptorWithoutRenderer() throws Exception {
         DefDescriptor<RendererDef> dd = define(baseTag, "", "").getRendererDescriptor();
         assertNull(dd);
     }
@@ -699,7 +700,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getRendererDescriptor()}.
      */
-    public void testGetRendererDescriptorExplicit() throws QuickFixException {
+    public void testGetRendererDescriptorExplicit() throws Exception {
         DefDescriptor<? extends BaseComponentDef> ddParent = define(
                 baseTag,
                 "extensible='true' renderer='java://org.auraframework.impl.renderer.sampleJavaRenderers.TestOverridingRenderer'",
@@ -717,7 +718,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getRendererDescriptor()}.
      */
-    public void testGetRendererDescriptorImplicit() throws QuickFixException {
+    public void testGetRendererDescriptorImplicit() throws Exception {
         DefDescriptor<T> cmpDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag, "", ""));
         DefDescriptor<RendererDef> renderDesc = DefDescriptorImpl.getAssociateDescriptor(cmpDesc, RendererDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -779,7 +780,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getRendererDescriptor()}.
      */
-    public void testGetLocalRendererDefExplicitRemote() throws QuickFixException {
+    public void testGetLocalRendererDefExplicitRemote() throws Exception {
         DefDescriptor<ComponentDef> otherDesc = addSourceAutoCleanup(ComponentDef.class, "<aura:component/>");
         DefDescriptor<RendererDef> renderDesc = DefDescriptorImpl.getAssociateDescriptor(otherDesc, RendererDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -792,7 +793,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getLocalRendererDef()}.
      */
-    public void testGetLocalRendererDefImplicit() throws QuickFixException {
+    public void testGetLocalRendererDefImplicit() throws Exception {
         DefDescriptor<T> cmpDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag, "", ""));
         DefDescriptor<RendererDef> renderDesc = DefDescriptorImpl.getAssociateDescriptor(cmpDesc, RendererDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -804,7 +805,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getLocalRendererDef()}.
      */
-    public void testGetLocalRendererDefExplicitRemoteAndLocal() throws QuickFixException {
+    public void testGetLocalRendererDefExplicitRemoteAndLocal() throws Exception {
         DefDescriptor<ComponentDef> otherDesc = addSourceAutoCleanup(ComponentDef.class, "<aura:component/>");
         DefDescriptor<RendererDef> renderDesc = DefDescriptorImpl.getAssociateDescriptor(otherDesc, RendererDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -825,7 +826,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHandlerDefs()}.
      */
-    public void testGetHandlerDefsWithNoHandlers() throws QuickFixException {
+    public void testGetHandlerDefsWithNoHandlers() throws Exception {
         // Verify no handlers for empty component
         T def = define(baseTag, "", "");
         Collection<EventHandlerDef> handlerDefs = def.getHandlerDefs();
@@ -835,7 +836,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHandlerDefs()}.
      */
-    public void testGetHandlerDefs() throws QuickFixException {
+    public void testGetHandlerDefs() throws Exception {
         // Verify multiple handlers can be added
         T def = define(baseTag, "", "<aura:handler event=\"aura:doneWaiting\" action=\"{!c.empty}\"/>"
                 + "<aura:handler event=\"aura:doneRendering\" action=\"{!c.empty}\"/>");
@@ -850,7 +851,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getStyleDescriptor()}.
      */
-    public void testGetStyleDescriptorWithoutStyle() throws QuickFixException {
+    public void testGetStyleDescriptorWithoutStyle() throws Exception {
         T def = define(baseTag, "", "");
         DefDescriptor<StyleDef> styleDef = def.getStyleDescriptor();
         assertNull("StyleDescriptor for component without style should be null", styleDef);
@@ -859,7 +860,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getStyleDescriptor()}.
      */
-    public void testGetStyleDescriptor() throws QuickFixException {
+    public void testGetStyleDescriptor() throws Exception {
         T def = define(baseTag, "style=\"templateCss://test.styleTestTemplate\"", "");
         DefDescriptor<StyleDef> styleDef = def.getStyleDescriptor();
         assertNotNull("StyleDescriptor not found on component", styleDef);
@@ -868,28 +869,28 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * InvalidDefinitionException if render is empty.
+     * IllegalArgumentException if render is empty.
      */
-    public void testRenderEmpty() throws QuickFixException {
+    public void testRenderEmpty() throws Exception {
         try {
             define(baseTag, "render=''", "");
             fail("Should not be able to load component with empty render value");
         } catch (Exception e) {
-            checkExceptionRegex(e, InvalidDefinitionException.class,
-                    "No enum const(ant)? (class )?org\\.auraframework\\.def\\.BaseComponentDef.RenderType\\.");
+            checkExceptionFull(e, IllegalArgumentException.class,
+                    "No enum const class org.auraframework.def.BaseComponentDef$RenderType.");
         }
     }
 
     /**
-     * InvalidDefinitionException if render is invalid.
+     * IllegalArgumentException if render is invalid.
      */
-    public void testRenderInvalid() throws QuickFixException {
+    public void testRenderInvalid() throws Exception {
         try {
             define(baseTag, "render='typo'", "");
             fail("Should not be able to load component with invalid render value");
         } catch (Exception e) {
-            checkExceptionRegex(e, InvalidDefinitionException.class,
-                    "No enum const(ant)? (class )?org\\.auraframework\\.def\\.BaseComponentDef.RenderType\\.TYPO");
+            checkExceptionFull(e, IllegalArgumentException.class,
+                    "No enum const class org.auraframework.def.BaseComponentDef$RenderType.TYPO");
         }
     }
 
@@ -897,7 +898,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * Verify the render attribute specified on a component tag. By default the rendering logic is turned on. Test
      * method for {@link BaseComponentDef#getRender()}.
      */
-    public void testGetRenderDefault() throws QuickFixException {
+    public void testGetRenderDefault() throws Exception {
         RenderType defaultRender = define(baseTag, "", "").getRender();
         assertEquals("By default, rendering detection logic should be on.", RenderType.AUTO, defaultRender);
     }
@@ -905,7 +906,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Verify the render attribute specified as server. Test method for {@link BaseComponentDef#getRender()}.
      */
-    public void testGetRenderServer() throws QuickFixException {
+    public void testGetRenderServer() throws Exception {
         T serverRenderedComponentDef = define(baseTag, " render='server'", "");
         assertEquals("Rendering detection logic was expected to be forced to be serverside.", RenderType.SERVER,
                 serverRenderedComponentDef.getRender());
@@ -916,7 +917,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Verify the render attribute specified as client. Test method for {@link BaseComponentDef#getRender()}.
      */
-    public void testGetRenderClient() throws QuickFixException {
+    public void testGetRenderClient() throws Exception {
         T clientRenderedComponentDef = define(baseTag, " render='client'", "");
         assertEquals("Rendering detection logic was expected to be forced to be clientside.", RenderType.CLIENT,
                 clientRenderedComponentDef.getRender());
@@ -926,24 +927,23 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * InvalidDefinitionException thrown for invalid whitespace attribute.
+     * IllegalArgumentException thrown for invalid whitespace attribute.
      */
-    public void testWhitespaceInvalid() throws QuickFixException {
+    public void testWhitespaceInvalid() throws Exception {
         try {
             define(baseTag, " whitespace='bogus'", "");
             fail("IllegalArgumentException should have been thrown for bad whitespace value.");
         } catch (Exception e) {
-            checkExceptionRegex(e, InvalidDefinitionException.class,
-                    "No enum const(ant)? (class )?org\\.auraframework\\.def\\.BaseComponentDef.WhitespaceBehavior\\.BOGUS");
+            checkExceptionFull(e, IllegalArgumentException.class,
+                    "No enum const class org.auraframework.def.BaseComponentDef$WhitespaceBehavior.BOGUS");
         }
     }
 
     /**
      * Verify the whitespace attribute specified on a component tag. By default the whitespace logic is optimize, which
-     * removes all non-necessary whitespace. Test method for
-     * {@link org.auraframework.def.BaseComponentDef#getWhitespaceBehavior()}.
+     * removes all non-necessary whitespace. Test method for {@link aura.def.BaseComponentDef#getWhitespace()}.
      */
-    public void testGetWhitespaceDefault() throws QuickFixException {
+    public void testGetWhitespaceDefault() throws Exception {
         WhitespaceBehavior defaultWhitespaceBehavior = define(baseTag, "", "").getWhitespaceBehavior();
         assertEquals("By default, whitespace optimize should be true.", BaseComponentDef.DefaultWhitespaceBehavior,
                 defaultWhitespaceBehavior);
@@ -951,9 +951,9 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
 
     /**
      * Verify the whitespace attribute specified as preserve. Test method for
-     * {@link org.auraframework.def.BaseComponentDef#getWhitespaceBehavior()}.
+     * {@link aura.def.BaseComponentDef#getWhitespace()}.
      */
-    public void testGetWhitespacePreserve() throws QuickFixException {
+    public void testGetWhitespacePreserve() throws Exception {
         T preserveWhitespaceComponentDef = define(baseTag, " whitespace='preserve'", "");
         assertEquals("Whitespace behavior was expected to be forced to be preserve.", WhitespaceBehavior.PRESERVE,
                 preserveWhitespaceComponentDef.getWhitespaceBehavior());
@@ -961,37 +961,36 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
 
     /**
      * Verify the whitespace attribute specified as optimize. Test method for
-     * {@link org.auraframework.def.BaseComponentDef#getWhitespaceBehavior()}.
+     * {@link aura.def.BaseComponentDef#getWhitespace()}.
      */
-    public void testGetWhitespaceOptimize() throws QuickFixException {
+    public void testGetWhitespaceOptimize() throws Exception {
         T optimizeWhitespaceComponentDef = define(baseTag, " whitespace='optimize'", "");
         assertEquals("Whitespace behavior was expected to be forced to be optimize.", WhitespaceBehavior.OPTIMIZE,
                 optimizeWhitespaceComponentDef.getWhitespaceBehavior());
     }
 
     /**
-     * No dependencies by default. Test method for {@link org.auraframework.def.BaseComponentDef#getDependencies()}.
+     * No dependencies by default. Test method for {@link aura.def.BaseComponentDef#getDependencies()}.
      */
-    public void testGetDependenciesWithoutDependencies() throws QuickFixException {
+    public void testGetDependenciesWithoutDependencies() throws Exception {
         T baseComponentDef = define(baseTag, "", "");
         assertTrue("Dependencies should not be present if not specified on component", baseComponentDef
                 .getDependencies().isEmpty());
     }
 
     /**
-     * Dependency returned for default namespace. Test method for
-     * {@link org.auraframework.def.BaseComponentDef#getDependencies()}.
+     * Dependency returned for default namespace. Test method for {@link aura.def.BaseComponentDef#getDependencies()}.
      */
-    public void testGetDependenciesDefaultNamespace() throws QuickFixException {
+    public void testGetDependenciesDefaultNamespace() throws Exception {
         T baseComponentDef = define(baseTag, "", "<aura:dependency resource=\"*://aura:*\" type=\"EVENT\"/>");
         assertEquals("Dependency not found", "[*://aura:*[EVENT]]", baseComponentDef.getDependencies().toString());
     }
 
     /**
      * Dependency returned for non-default namespace. Test method for
-     * {@link org.auraframework.def.BaseComponentDef#getDependencies()}.
+     * {@link aura.def.BaseComponentDef#getDependencies()}.
      */
-    public void testGetDependenciesNonDefaultNamespace() throws QuickFixException {
+    public void testGetDependenciesNonDefaultNamespace() throws Exception {
         T baseComponentDef = define(baseTag, "", "<aura:dependency resource=\"*://auratest:*\" type=\"EVENT\"/>");
         assertEquals("Dependency not found", "[*://auratest:*[EVENT]]", baseComponentDef.getDependencies().toString());
     }
@@ -999,11 +998,11 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * InvalidDefinitionException for nonexistent dependency.
      */
-    public void testDependencyNonExistent() {
+    public void testDependencyNonExistent() throws Exception {
         try {
-        	define(baseTag, "", "<aura:dependency resource=\"*://idontexist:*\"/>");
+            define(baseTag, "", "<aura:dependency resource=\"*://idontexist:*\"/>");
             fail("Should not be able to load non-existant resource as dependency");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class, "Invalid dependency *://idontexist:*[COMPONENT]");
         }
     }
@@ -1011,12 +1010,12 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * InvalidDefinitionException for invalid dependency.
      */
-    public void testDependencyInvalid()  {
+    public void testDependencyInvalid() throws Exception {
         // Invalid descriptor pattern
         try {
-        	define(baseTag, "", "<aura:dependency resource=\"*://auratest.*\"/>");
+            define(baseTag, "", "<aura:dependency resource=\"*://auratest.*\"/>");
             fail("Should not be able to load resource, bad DefDescriptor format");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class, "Illegal namespace in *://auratest.*");
         }
 
@@ -1024,7 +1023,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "", "<aura:dependency resource=\"*:auratest:*\"/>");
             fail("Should not be able to load resource, bad DefDescriptor format");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class, "Illegal name in *:auratest:*");
         }
     }
@@ -1033,7 +1032,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when component has a Javascript Renderer. Test method for
      * {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithClientsideRenderer() throws QuickFixException {
+    public void testIsLocallyRenderableWithClientsideRenderer() throws Exception {
         T baseComponentDef = define(baseTag, "renderer='js://test.testJSRenderer'", "");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
         assertFalse("When a component has client renderers, the component should not be serverside renderable.",
@@ -1044,7 +1043,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is true when component includes an interface as facet, the interface has a Javascript
      * provider. Test method for {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithOnlyServersideRenderers() throws QuickFixException {
+    public void testIsLocallyRenderableWithOnlyServersideRenderers() throws Exception {
         T baseComponentDef = define(baseTag, "", "Body: Has just text. Text component has a java renderer.");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
         assertTrue("When a component has only server renderers, the component should be serverside renderable.",
@@ -1055,7 +1054,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when component includes an interface as facet and the interface has a Javascript
      * provider. Test method for {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithClientsideFacet() throws QuickFixException {
+    public void testIsLocallyRenderableWithClientsideFacet() throws Exception {
         T baseComponentDef = define(baseTag, "", "Body: Includes an interface which has a JS provider. "
                 + " <test:test_JSProvider_Interface/>");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
@@ -1068,7 +1067,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when component has a Javascript Provider. Test method for
      * {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithClientsideProvider() throws QuickFixException {
+    public void testIsLocallyRenderableWithClientsideProvider() throws Exception {
         T baseComponentDef = define(baseTag, "provider='js://test.test_JSProvider_Interface'", "");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
         assertFalse("When a component has client renderers, the component should not be serverside renderable.",
@@ -1079,7 +1078,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when component includes a Javascript controller. Test method for
      * {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithClientsideController() throws QuickFixException {
+    public void testIsLocallyRenderableWithClientsideController() throws Exception {
         T baseComponentDef = define(baseTag, "", "Body: Includes a component with a client controller. "
                 + " <test:testJSController/>");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
@@ -1091,7 +1090,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when a component includes a Style. Test method for
      * {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithStyle() throws QuickFixException {
+    public void testIsLocallyRenderableWithStyle() throws Exception {
         T baseComponentDef = define(baseTag, "style='css://test.testValidCSS'", "");
         assertEquals("Rendering detection logic is not on.", RenderType.AUTO, baseComponentDef.getRender());
         assertFalse("When a component has a style, the rendering should be done clientside.",
@@ -1102,7 +1101,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when a facet of a component has a component marked for LAZY loading, the component
      * should always be rendered client side. Test method for {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithLazyLoadedFacet() throws QuickFixException {
+    public void testIsLocallyRenderableWithLazyLoadedFacet() throws Exception {
         DefDescriptor<ComponentDef> facetDesc = addSourceAutoCleanup(ComponentDef.class,
                 "<aura:component> <aura:text aura:load='LAZY'/></aura:component>");
         T baseComponentDef = define(baseTag, "", String.format("<%s/>", facetDesc.getDescriptorName()));
@@ -1116,7 +1115,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * isLocallyRenderable is false when lazy loading specification in parent is reflected in child and components which
      * use the child. Test method for {@link BaseComponentDef#isLocallyRenderable()}.
      */
-    public void testIsLocallyRenderableWithInheritedLazyLoadedFacet() throws QuickFixException {
+    public void testIsLocallyRenderableWithInheritedLazyLoadedFacet() throws Exception {
         DefDescriptor<ComponentDef> parentDesc = addSourceAutoCleanup(ComponentDef.class,
                 "<aura:component extensible='true'> <aura:text aura:load='LAZY'/></aura:component>");
         DefDescriptor<ComponentDef> childDesc = addSourceAutoCleanup(ComponentDef.class,
@@ -1144,7 +1143,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * hasLocalDependencies is true if component has serverside renderer. Test method for
      * {@link BaseComponentDef#hasLocalDependencies()}.
      */
-    public void testHasLocalDependenciesWithServersideRenderer() throws QuickFixException {
+    public void testHasLocalDependenciesWithServersideRenderer() throws Exception {
         T baseComponentDef = define(baseTag,
                 "renderer='java://org.auraframework.impl.renderer.sampleJavaRenderers.TestSimpleRenderer'", "");
         assertTrue("When a component has a server renderer only, the component has server dependencies.",
@@ -1169,7 +1168,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * hasLocalDependencies is false if component has clientside provider. Test method for
      * {@link BaseComponentDef#hasLocalDependencies()}.
      */
-    public void testHasLocalDependenciesWithClientsideProvider() throws QuickFixException {
+    public void testHasLocalDependenciesWithClientsideProvider() throws Exception {
         T baseComponentDef = define(baseTag, "abstract='true'", "");
         DefDescriptor<ProviderDef> providerDesc = Aura.getDefinitionService().getDefDescriptor(
                 baseComponentDef.getDescriptor(), DefDescriptor.JAVASCRIPT_PREFIX, ProviderDef.class);
@@ -1180,10 +1179,10 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * hasLocalDependencies is true if component only has serverside provider. Test method for
+     * hasLocalDependencies is true if component has clientside provider. Test method for
      * {@link BaseComponentDef#hasLocalDependencies()}.
      */
-    public void testHasLocalDependenciesWithServersideProvider() throws QuickFixException {
+    public void testHasLocalDependenciesWithServersideProvider() throws Exception {
         T baseComponentDef = define(baseTag,
                 "abstract='true' provider='java://org.auraframework.impl.java.provider.TestProviderAbstractBasic'", "");
         assertTrue("Abstract Component with serverside providers have server dependecies.", definitionService
@@ -1194,7 +1193,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * hasLocalDependencies is true if super has local dependencies. Test method for
      * {@link BaseComponentDef#hasLocalDependencies()}.
      */
-    public void testHasLocalDependenciesInherited() throws QuickFixException {
+    public void testHasLocalDependenciesInherited() throws Exception {
         String parentContent = String.format(baseTag,
                 "extensible='true' model='java://org.auraframework.impl.java.model.TestJavaModel' ", "");
         DefDescriptor<T> parent = addSourceAutoCleanup(getDefClass(), parentContent);
@@ -1210,7 +1209,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
      * hasLocalDependencies is false even if facet has local dependencies. Test method for
      * {@link BaseComponentDef#hasLocalDependencies()}.
      */
-    public void testHasLocalDependenciesWithFacetWithLocalDependencies() throws QuickFixException {
+    public void testHasLocalDependenciesWithFacetWithLocalDependencies() throws Exception {
         T baseComponentDef = define(
                 baseTag,
                 "",
@@ -1230,7 +1229,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             extendsSelf.getDef();
             fail(defType + " should not be able to extend itself.");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class, extendsSelf.getQualifiedName()
                     + " cannot extend itself", extendsSelf.getQualifiedName());
         }
@@ -1246,7 +1245,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             extendsCmp.getDef();
             fail(defType + " should not be able to extend a non-extensible component");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class, extendsCmp.getQualifiedName()
                     + " cannot extend non-extensible component " + nonExtensible.getQualifiedName(),
                     extendsCmp.getQualifiedName());
@@ -1264,10 +1263,9 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             cmp.getDef();
             fail(defType + " should throw Exception when extending non-existent component");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, DefinitionNotFoundException.class,
-                    "No " + defType + " named markup://aura:iDontExist found : [" + cmp.getQualifiedName()+"]",
-                    cmp.getQualifiedName());
+        } catch (Exception e) {
+            checkExceptionFull(e, DefinitionNotFoundException.class, "No " + defType
+                    + " named markup://aura:iDontExist found : " + cmp.getQualifiedName(), cmp.getQualifiedName());
         }
     }
 
@@ -1282,15 +1280,15 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             cmp.getDef();
             fail(defType + " should throw Exception when extends is empty");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
     /**
-     * Test method for {@link BaseComponentDef#isInstanceOf(DefDescriptor)}.
+     * Test method for {@link BaseComponentDef#isInstanceOf()}.
      */
-    public void testIsInstanceOfAbstract() throws QuickFixException {
+    public void testIsInstanceOfAbstract() throws Exception {
         // Test cases for Abstract Component extensions
         DefDescriptor<T> grandParent = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, "extensible='true' abstract='true'", ""));
@@ -1305,9 +1303,9 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     /**
-     * Test method for {@link BaseComponentDef#isInstanceOf(DefDescriptor)}.
+     * Test method for {@link BaseComponentDef#isInstanceOf()}.
      */
-    public void testIsInstanceOfInterface() throws QuickFixException {
+    public void testIsInstanceOfInterface() throws Exception {
         // Test cases for Interface inheritance and implementations
         String interfaceTag = "<aura:interface %s> </aura:interface>";
         DefDescriptor<InterfaceDef> grandParentInterface = addSourceAutoCleanup(InterfaceDef.class,
@@ -1329,7 +1327,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * When a facet is marked for Lazy/Exclusive loading, parentDef has a LazyComponentDefRef
      */
-    public void testFacetLazyLoaded() throws QuickFixException {
+    public void testFacetLazyLoaded() throws Exception {
         DefDescriptor<T> desc = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, "", "<aura:text aura:load='LAZY'/>"));
         T def = desc.getDef();
@@ -1345,7 +1343,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * When a facet is marked for Lazy/Exclusive loading, parentDef has a LazyComponentDefRef.
      */
-    public void testFacetExclusivelyLoaded() throws QuickFixException {
+    public void testFacetExclusivelyLoaded() throws Exception {
         DefDescriptor<T> desc = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, "", "<aura:text aura:load='Exclusive'/>"));
         T def = desc.getDef();
@@ -1399,7 +1397,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             desc.getDef();
             fail("should not be able to use a non-basic attribute type in lazy loaded component");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(
                     e,
                     InvalidReferenceException.class,
@@ -1408,7 +1406,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         }
     }
 
-    public void testGetLocation() throws QuickFixException {
+    public void testGetLocation() throws Exception {
         BaseComponentDef bcd = vendor.makeBaseComponentDefWithNulls(getDefClass(),
                 getAuraTestingUtil().getNonce("test:cmp"), null, null, null,
                 vendor.makeLocation("filename1", 5, 5, 0), null, null,
@@ -1433,7 +1431,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             parentDesc.getDef();
             fail("A child cannot widen the support level of its parent.");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class,
                     String.format("%s cannot widen the support level to GA from %s's level of BETA",
                             parentDesc.getQualifiedName(), grandParentDesc.getQualifiedName()),
@@ -1455,7 +1453,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             testDesc.getDef();
             fail("Test component's facet has a component which tries to widen the support level of its parent.");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class,
                     String.format("%s cannot widen the support level to GA from %s's level of BETA",
                             childCmp.getQualifiedName(), parentCmp.getQualifiedName()), childCmp.getQualifiedName());
@@ -1474,7 +1472,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             dd.getDef();
             fail(defType + " should not be able to have attribute and event with same name");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class,
                     "Cannot define an attribute and register an event with the same name: dupeAttrEvent",
                     dd.getQualifiedName());
@@ -1490,7 +1488,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             dd.getDef();
             fail(DefType.getDefType(getDefClass()) + " must be extensible if abstract");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class,
                     "Abstract component " + dd.getQualifiedName() + " must be extensible.",
                     dd.getQualifiedName());
@@ -1507,7 +1505,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
             dd.getDef();
             fail(DefType.getDefType(getDefClass())
                     + " should not be able to implement rootComponent if not in aura namespace");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionFull(e, InvalidDefinitionException.class,
                     "Component " + dd.getQualifiedName()
                             + " cannot implement the rootComponent interface because it is not in the aura namespace",
@@ -1523,7 +1521,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
             define(baseTag, "", "<aura:iDontExist/>");
             fail(DefType.getDefType(getDefClass())
                     + " should not be able to reference inner component that does not exist");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class,
                     "No COMPONENT named markup://aura:iDontExist found :");
         }
@@ -1536,8 +1534,8 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "implements=''", "");
             fail(DefType.getDefType(getDefClass()) + " should throw Exception when implements is empty");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "QualifiedName is required for descriptors");
+        } catch (Exception e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "QualifiedName is required for descriptors");
         }
     }
 
@@ -1548,7 +1546,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         try {
             define(baseTag, "implements='aura:iDontExist'", "");
             fail(DefType.getDefType(getDefClass()) + " should throw Exception when implementing non-existent interface");
-        } catch (QuickFixException e) {
+        } catch (Exception e) {
             checkExceptionStart(e, DefinitionNotFoundException.class,
                     "No INTERFACE named markup://aura:iDontExist found :");
         }
@@ -1557,7 +1555,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#isAbstract()}.
      */
-    public void testIsAbstractDefault() throws QuickFixException {
+    public void testIsAbstractDefault() throws Exception {
         assertFalse(define(baseTag, "", "").isAbstract());
     }
 
@@ -1569,13 +1567,12 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     }
 
     public void testBuildWithNullDescriptor() throws Exception {
-        BaseComponentDef bcd = vendor.makeBaseComponentDefWithNulls(getDefClass(), null, null, null, null,
-                null, null, null, null, null, null, null, null, false, false);
         try {
-            bcd.validateDefinition();
-            fail("Should have thrown AuraRuntimeException for null descriptor");
-        } catch (Exception e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "No descriptor");
+            vendor.makeBaseComponentDefWithNulls(getDefClass(), null, null, null, null,
+                    null, null, null, null, null, null, null, null, false, false);
+            fail("Should have thrown AuraException for null AuraDescriptor");
+        } catch (AuraRuntimeException e) {
+            checkExceptionFull(e, AuraRuntimeException.class, "descriptor is null");
         }
     }
 
@@ -1660,7 +1657,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHelperDef()}.
      */
-    public void testGetHelperDefDefault() throws QuickFixException {
+    public void testGetHelperDefDefault() throws Exception {
         HelperDef d = define(baseTag, "", "").getHelperDef();
         assertNull(d);
     }
@@ -1668,7 +1665,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHelperDef()}.
      */
-    public void testGetHelperDefImplicit() throws QuickFixException {
+    public void testGetHelperDefImplicit() throws Exception {
         DefDescriptor<T> compDesc = addSourceAutoCleanup(getDefClass(), String.format(baseTag, "", ""));
         DefDescriptor<HelperDef> helperDesc = DefDescriptorImpl.getAssociateDescriptor(compDesc, HelperDef.class,
                 DefDescriptor.JAVASCRIPT_PREFIX);
@@ -1682,7 +1679,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHelperDef()}.
      */
-    public void testGetHelperDefExplicit() throws QuickFixException {
+    public void testGetHelperDefExplicit() throws Exception {
         DefDescriptor<HelperDef> helperDesc = vendor.getHelperDescriptor();
         HelperDef d = define(baseTag, String.format("helper='%s'", helperDesc), "").getHelperDef();
         assertNotNull(d);
@@ -1692,7 +1689,7 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
     /**
      * Test method for {@link BaseComponentDef#getHelperDef()}.
      */
-    public void testGetHelperDefImplicitAndExplicit() throws QuickFixException {
+    public void testGetHelperDefImplicitAndExplicit() throws Exception {
         DefDescriptor<HelperDef> helperDesc = vendor.getHelperDescriptor();
         DefDescriptor<T> compDesc = addSourceAutoCleanup(getDefClass(),
                 String.format(baseTag, String.format("helper='%s'", helperDesc), ""));
@@ -1722,38 +1719,5 @@ public abstract class BaseComponentDefTest<T extends BaseComponentDef> extends R
         assertTrue(temp instanceof Map);
         Map<Object, Object> cmpConfig = (HashMap<Object, Object>) temp;
         return cmpConfig.containsKey(property) ? cmpConfig.get(property) : null;
-    }
-
-    public void testClientLibraryDefValidation() throws Exception {
-        DefDescriptor<T> missingRequiredAttr = addSourceAutoCleanup(getDefClass(),
-                String.format(baseTag, "", "<aura:clientLibrary type='JS' />"));
-        try {
-            missingRequiredAttr.getDef();
-            fail("Failed to validate client library type which didn't specify a name attribute.");
-        } catch (InvalidDefinitionException e) {
-            assertEquals("Must have either a name or url", e.getMessage());
-        }
-
-        DefDescriptor<T> invalidResource = addSourceAutoCleanup(getDefClass(),
-                String.format(baseTag, "", "<aura:clientLibrary name='doesntExist' type='js' url='js://foo.bar'/>"));
-        try {
-            invalidResource.getDef();
-            fail("Failed to validate client library type which specified non existing component resource.");
-        } catch (QuickFixException e) {
-            checkExceptionFull(e, InvalidDefinitionException.class, "No resource named js://foo.bar found");
-        }
-    }
-
-    /** tests the local theme is added to the dependencies */
-    public void testAppendsLocalThemeToDependencies() throws Exception {
-        DefDescriptor<ThemeDef> themeDesc = addSourceAutoCleanup(ThemeDef.class, "<aura:theme/>");
-        String fmt = String.format("%s:%s", themeDesc.getNamespace(), themeDesc.getName());
-        DefDescriptor<ComponentDef> cmpDesc = DefDescriptorImpl.getInstance(fmt, ComponentDef.class);
-        addSourceAutoCleanup(cmpDesc, "<aura:component/>");
-        assertEquals(themeDesc, cmpDesc.getDef().getLocalThemeDescriptor());
-
-        Set<DefDescriptor<?>> deps = Sets.newHashSet();
-        cmpDesc.getDef().appendDependencies(deps);
-        assertTrue(deps.contains(themeDesc));
     }
 }

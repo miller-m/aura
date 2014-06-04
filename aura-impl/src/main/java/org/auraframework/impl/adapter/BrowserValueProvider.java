@@ -33,6 +33,8 @@ import com.google.common.collect.Maps;
 
 /**
  * $Browser global value provider, backed by data from BrowserInfo
+ * 
+ * @author eanderson
  */
 public class BrowserValueProvider implements GlobalValueProvider {
     public static final String IS_TABLET = "isTablet";
@@ -43,14 +45,6 @@ public class BrowserValueProvider implements GlobalValueProvider {
     public static final String IS_IPAD = "isIPad";
     public static final String IS_IOS = "isIOS";
     public static final String IS_WINDOWS_PHONE = "isWindowsPhone";
-
-    public static final String IS_WEBKIT = "isWEBKIT";
-    public static final String IS_FIREFOX = "isFIREFOX";
-    public static final String IS_IE6 = "isIE6";
-    public static final String IS_IE7 = "isIE7";
-    public static final String IS_IE8 = "isIE8";
-    public static final String IS_IE9 = "isIE9";
-    public static final String IS_IE10 = "isIE10";
 
     private Map<String, Object> browserDetails;
 
@@ -66,13 +60,6 @@ public class BrowserValueProvider implements GlobalValueProvider {
         m.put(IS_IPHONE, b.isIPhone());
         m.put(IS_IPAD, b.isIPad());
         m.put(IS_IOS, b.isIOS());
-        m.put(IS_IE6, b.isIE6());
-        m.put(IS_IE7, b.isIE7());
-        m.put(IS_IE8, b.isIE8());
-        m.put(IS_IE9, b.isIE9());
-        m.put(IS_IE10, b.isIE10());
-        m.put(IS_WEBKIT, b.isWebkit());
-        m.put(IS_FIREFOX, b.isFirefox());
         m.put(IS_WINDOWS_PHONE, b.isWindowsPhone());
 
         return m;
@@ -103,8 +90,6 @@ public class BrowserValueProvider implements GlobalValueProvider {
             throw new InvalidExpressionException("No property on $Browser for key: " + expr, expr.getLocation());
         }
     }
-
-
 
     @Override
     public boolean isEmpty() {

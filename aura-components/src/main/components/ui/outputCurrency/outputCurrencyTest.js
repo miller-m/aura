@@ -64,9 +64,18 @@
     },
 
     /**
+     * Negative test case: Verify that empty string cannot be used for currency code.
+     */
+    testEmptyStringCurrencyCode: {
+        attributes : {value : 123, currencyCode: ''},
+        test: function(component){
+            aura.test.assertEquals('The currencyCode attribute must be a valid ISO 4217 currency code', $A.test.getText(component.find('span').getElement()), "Should have used USD as default currency code.");
+        }
+    },
+    /**
      * Negative test case: Verify that non char value cannot be used for currency code.
      */
-    _testNonCharCurrencyCode: {
+    testNonCharCurrencyCode: {
         attributes : {value : 123, currencyCode: 123.4},
         test: function(component){
             aura.test.assertEquals('The currencyCode attribute must be a valid ISO 4217 currency code', $A.test.getText(component.find('span').getElement()), "Should have used USD as default currency code.");
@@ -75,7 +84,7 @@
     /**
      * Negative test case: Assign 'ABC' for attribute 'currencyCode'
      */
-    _testInvalidCurrencyCode: {
+    testInvalidCurrencyCode: {
         attributes : {value : 123, currencyCode : 'ABC'},
         test: function(component){
             aura.test.assertEquals('The currencyCode attribute must be a valid ISO 4217 currency code', $A.test.getText(component.find('span').getElement()), "Should have displayed an error message");
@@ -91,23 +100,40 @@
         }
     },
     /**
+     * Positive test case: Assign 'USD' for attribute 'currencyCode'
+     */
+    testCurrencyCodeUSD: {
+        attributes : {value : 123, currencyCode : 'USD'},
+        test: function(component){
+            aura.test.assertEquals('$123.00', $A.test.getText(component.find('span').getElement()), "Text not correct when currencyCode is specified");
+        }
+    },
+    /**
+     * Positive test case: Assign '  USD  ' for attribute 'currencyCode'
+     */
+    //TODO: W-1075402 (probably) - whitespace not trimmed
+    _testCurrencyCodeWithSpaces: {
+        attributes : {value : 123, currencyCode : '   USD   '},
+        test: function(component){
+            aura.test.assertEquals('$123.00', $A.test.getText(component.find('span').getElement()), "outputCurrency does not process currencyDode after trimming");
+        }
+    },
+    /**
+     * Positive test case: Assign '$' for attribute 'currencyCode'
+     */
+    testSymbolAsCurrencyCode: {
+        attributes : {value : 123, currencyCode : '$'},
+        test: function(component){
+            aura.test.assertEquals('The currencyCode attribute must be a valid ISO 4217 currency code', $A.test.getText(component.find('span').getElement()), "Should have displayed an error message");
+        }
+    },
+    /**
      * Positive test case: Assign 'GBP' for attribute 'currencyCode'
      */
     testCurrencyCodeGBP: {
         attributes : {value : 123, currencyCode : 'GBP'},
         test: function(component){
             aura.test.assertEquals('GBP123.00', $A.test.getText(component.find('span').getElement()), "Text not correct when currencyCode is specified");
-        }
-    },
-    /**
-     * Positive test case: Assign 'GBP' for attribute 'currencyCode'
-     */
-    testCurrencySymbolGBP: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 123, currencySymbol : '£'},
-        test: function(component){
-            aura.test.assertEquals('£123.00', $A.test.getText(component.find('span').getElement()), "Text not correct when currencySymbol is specified");
         }
     },
     /**
@@ -133,12 +159,82 @@
         }
     },
     /**
+     * Positive test case: Verify the default values of 'FractionDigits' attributes
+     */
+    testDefaultIntegerFractionDigits:{
+        attributes : {value : '12345678909876543.444'},
+        test: function(component){
+            aura.test.assertEquals(2, component.getValue('v.fractionDigits').getValue(), "Expected fractionDigits attribute to be 2");
+            aura.test.assertEquals('$12,345,678,909,876,543.44', $A.test.getText(component.find('span').getElement()), "Failed to use default value of fractionDigits attribute.");
+        }
+
+    },
+    /**
+     * Negative test case: Verify that fractionDigits attribute cannot take negative value.
+     * @expectedResult Error message
+     */
+    testFractionDigitsNegativeValue:{
+        attributes : {value : 123.789, fractionDigits : '-1'},
+        test: function(component){
+            aura.test.assertEquals('The fractionDigits attribute must be assigned a non-negative integer value',$A.test.getText(component.find('span').getElement()), "Negative values should not be accepted for fractionDigits attribute");
+        }
+    },
+    /**
+     * Negative test case: Verify that fractional values are not accepted for fractionDigits attribute.
+     */
+    //TODO: W-967009
+    _testFractionDigitsNonIntegerValue:{
+        attributes: {value: 123.789, fractionDigits : '2.5'},
+        test:function(component){
+            aura.test.assertEquals('The fractionDigits attribute must be assigned a non-negative integer value', $A.test.getText(component.find('span').getElement()), "Should have displayed an error message for using fractional values for fractionDigits attribute.");
+        }
+    },
+    /**
+     * Negative test case: Verify that string values cannot be used for intergerDigits attribute.
+     */
+    //TODO: W-967009
+    _testFractionDigitsStringValue:{
+        attributes: {value: 123.789, fractionDigits : 'ABC'},
+        test:function(component){
+            aura.test.assertEquals('The fractionDigits attribute must be assigned a non-negative integer value', $A.test.getText(component.find('span').getElement()), "Should have displayed an error message for using literal values for fractionDigits attribute.");
+        }
+    },
+    /**
+     * Negative test case: Assign empty string to fractionDigits attribute
+     * @ExpectedResult Error message
+     */
+    //TODO: W-967009
+    _testFractionDigitsEmptyString: {
+        attributes : {value : 123.45, fractionDigits : ''},
+        test: function(component){
+            aura.test.assertEquals('The fractionDigits attribute must be assigned a non-negative integer value', $A.test.getText(component.find('span').getElement()), "Should have displayed an error message if fractionDigits attribute is assigned a non integer value.");
+        }
+    },
+    /**
+     * Positive test case: Assign fractionDigits value of 2
+     */
+   testFractionDigits: {
+        attributes : {value : 1234567890.45, fractionDigits : '2'},
+        test: function(component){
+            aura.test.assertEquals('$1,234,567,890.45', $A.test.getText(component.find('span').getElement()), "Value not displayed correctly when fractionDigits is specified.");
+        }
+    },
+    /**
+     * Positive test case: Verify that fractionDigits handles value of > 340.
+     * DecimalFormat is being used by OutputCurrencyModel. DecimalFormat lets you to use upto 340, and not anymore, for fraction digits.
+     * Beyond 340, it overrides the value by using 340.
+     */
+    testFractionDigitsMaxValue:{
+        attributes: {value: 123, fractionDigits : '341'},
+        test:function(component){
+            aura.test.assertTrue($A.test.getText(component.find('span').getElement()).indexOf('$123.00')===0, "Failed to process big values for fractionDigits.");
+        }
+    },
+    /**
      * Positive test case: Assign fractionDigits value of 4 and provide a integer value. Verifying padding to match precision.
      */
     testFractionDigitsPad: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890, format : '¤#,##0.0000'},
+        attributes : {value : 1234567890, fractionDigits : '4'},
         test: function(component){
             aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not displayed correctly when fractionDigits is specified and pads with zeros.");
         }
@@ -147,9 +243,7 @@
      * Positive test case: Assign fractionDigits value of 4 and verify rounding down function
      */
     testFractionDigitsTruncate_RoundDown: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890.7654321, format : '¤#,##0.0000'},
+        attributes : {value : 1234567890.7654321, fractionDigits : '4'},
         test: function(component){
             aura.test.assertEquals('$1,234,567,890.7654', $A.test.getText(component.find('span').getElement()), "Value not displayed correctly when fractionDigits is specified and truncates.");
         }
@@ -158,9 +252,7 @@
      * Positive test case: Assign fractionDigits value of 4 and verify rounding up function
      */
     testFractionDigitsTruncate_RoundUp: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890.7654521, format : '¤#,##0.0000'},
+        attributes : {value : 1234567890.7654521, fractionDigits : '4'},
         test: function(component){
             aura.test.assertEquals('$1,234,567,890.7655', $A.test.getText(component.find('span').getElement()), "Value not displayed correctly when fractionDigits is specified and truncates.");
         }
@@ -170,9 +262,7 @@
      * @ExpectedResult Displays integer part of value
      */
     testFractionDigitsZeroValue: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 123.45, format : '¤#'},
+        attributes : {value : 123.45, fractionDigits : '0'},
         test: function(component){
             aura.test.assertEquals('$123', $A.test.getText(component.find('span').getElement()), "fractionDigits should be allowed to take value of 0.");
         }
@@ -185,92 +275,6 @@
         attributes : {value : '1234567890123456789012345678901234567890.12'},
         test: function(component){
             aura.test.assertEquals('$1,234,567,890,123,456,789,012,345,678,901,234,567,890.12', $A.test.getText(component.find('span').getElement()), "Unexpected value.");
-        }
-    },
-
-    /**
-     * Verify that when the value changes it is rerendered with the new value
-     */
-    testUpdateValue: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890, format : '¤#,##0.0000'},
-        test: function(component){
-            aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.value", 1234567890.1234);
-            $A.rerender(component);
-            aura.test.assertEquals('$1,234,567,890.1234', $A.test.getText(component.find('span').getElement()), "Value not updated after changed");
-        }
-    },
-
-    /**
-     * Verify that when the value doesn't change it is rerendered with the same value
-     */
-    testUpdateValueWithSame: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890, format : '¤#,##0.0000'},
-        test: function(component){
-        	aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.value", 1234567890);
-            $A.rerender(component);
-            aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not updated after changed");
-        }
-    },
-
-    /**
-     * Verify that when the format changes it is rerendered using the new format
-     */
-    testUpdateFormat: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890, format : '¤#,##0.0000'},
-        test: function(component){
-            aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.format", "¤#,##0.00");
-            $A.rerender(component);
-            aura.test.assertEquals('$1,234,567,890.00', $A.test.getText(component.find('span').getElement()), "Value not updated after format changed");
-        }
-    },
-
-    /**
-     * Verify that when the format doesn't change it is rerendered using the same format
-     */
-    testUpdateFormatWithSame: {
-        // TODO(W-1787430): Special char added to formatted currency values in IE
-        browsers: ["-IE7","-IE8","-IE9","-IE10"],
-        attributes : {value : 1234567890, format : '¤#,##0.0000'},
-        test: function(component){
-        	aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.format", "¤#,##0.0000");
-            $A.rerender(component);
-            aura.test.assertEquals('$1,234,567,890.0000', $A.test.getText(component.find('span').getElement()), "Value not updated after format changed");
-        }
-    },
-
-    /**
-     * Verify that when the currencySymbol changes it is rerendered with the new currencySymbol
-     */
-    testUpdateCurrencySymbol: {
-        attributes : {value : 1234567890, currencySymbol : '$'},
-        test: function(component){
-            aura.test.assertEquals('$1,234,567,890.00', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.currencySymbol", '£');
-            $A.rerender(component);
-            aura.test.assertEquals('£1,234,567,890.00', $A.test.getText(component.find('span').getElement()), "Value not updated after changed");
-        }
-    },
-
-    /**
-     * Verify that when the currencyCode changes it is rerendered with the new currencyCode
-     */
-    testUpdateCurrencyCode: {
-        attributes : {value : 1234567890, currencyCode : 'USD'},
-        test: function(component){
-            aura.test.assertEquals('USD1,234,567,890.00', $A.test.getText(component.find('span').getElement()), "Value not formatted correctly");
-            component.set("v.currencyCode", 'GBP');
-            $A.rerender(component);
-            aura.test.assertEquals('GBP1,234,567,890.00', $A.test.getText(component.find('span').getElement()), "Value not updated after changed");
         }
     }
 })

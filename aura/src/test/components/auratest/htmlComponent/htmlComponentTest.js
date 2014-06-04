@@ -135,7 +135,7 @@
 			$A.test.assertNotNull(tag, "Dynamic change test component not found");
 			$A.test.assertEquals("a", tag.tagName.toLowerCase(), "Tag name of dynamic change test is incorrect");
 			
-			tagCmp.set("v.tag", "p");
+			tagCmp.getAttributes().setValue("tag", "p");
 			$A.rerender(component);
 			
 			var pTag = component.find('atag').getElement();

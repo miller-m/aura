@@ -21,7 +21,7 @@
             cause: cmp.get("v.throwableCause")
         });
         a.setCallback(cmp, function(action){
-            cmp.set("v.response", action);
+            cmp.getAttributes().setValue("response", action);
         });
         $A.enqueueAction(a);
     }

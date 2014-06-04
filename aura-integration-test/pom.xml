@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.auraframework</groupId>
         <artifactId>aura-framework</artifactId>
-        <version>0.996-SNAPSHOT</version>
+        <version>0.146-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <dependencies>
@@ -79,15 +79,10 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.uiautomation</groupId>
-            <artifactId>ios-client</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <properties>
-        <chromedriver.url>http://chromedriver.storage.googleapis.com/{version}/{artifactId}_{classifier}.zip</chromedriver.url>
-        <chromedriver.version>2.9</chromedriver.version>
+        <chromedriver.url>http://chromedriver.googlecode.com/files/{artifactId}_{classifier}_{version}.zip</chromedriver.url>
+        <chromedriver.version>26.0.1383.0</chromedriver.version>
         <jetty.spawn>true</jetty.spawn>
         <jetty.resources>${basedir}/src/test/resources/htdocs</jetty.resources>
         <aura.build.id />
@@ -107,6 +102,8 @@
         <webdriver.browser.type>GOOGLECHROME</webdriver.browser.type> <!-- refer to org.auraframework.test.WebDriverUtil.BrowserType enums for valid values -->
         <sauce.record.video>false</sauce.record.video>
         <sauce.record.screenshots>false</sauce.record.screenshots>
+        <sauce.username>lumen</sauce.username>
+        <sauce.access.key>4df61bdf-1696-4f73-b869-ead4c7603dca</sauce.access.key>
         <xdisplay.exec>Xvfb</xdisplay.exec>
         <xdisplay.options>-ac</xdisplay.options>
         <xdisplay.size>960x640</xdisplay.size>
@@ -357,31 +354,6 @@
             </build>
         </profile>
         <profile>
-            <id>runOnlyIntTests</id>
-            <activation>
-                <property>
-                    <name>runOnlyIntTests</name>
-                </property>
-            </activation>
-            <properties>
-                <testPhase>integration-test</testPhase>
-                <testSetupPhase>pre-integration-test</testSetupPhase>
-                <testTeardownPhase>post-integration-test</testTeardownPhase>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
             <id>dev</id>
             <activation>
                 <property>
@@ -479,20 +451,6 @@
             </activation>
             <properties>
                 <platform.chromedriver>linux${sun.arch.data.model}</platform.chromedriver>
-                <chromedriver.url>http://chromedriver.googlecode.com/files/{artifactId}_{classifier}_{version}.zip</chromedriver.url>
-                <chromedriver.version>26.0.1383.0</chromedriver.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>ubuntu12</id>
-            <activation>
-               <property>
-                 <name>env.UBUNTU12</name>
-               </property>
-            </activation>
-            <properties>
-                <chromedriver.url>http://chromedriver.storage.googleapis.com/{version}/{artifactId}_{classifier}.zip</chromedriver.url>
-                <chromedriver.version>2.9</chromedriver.version>
             </properties>
         </profile>
         <profile>
@@ -503,9 +461,7 @@
                 </os>
             </activation>
             <properties>
-                <chromedriver.url>http://chromedriver.storage.googleapis.com/{version}/{artifactId}_{classifier}.zip</chromedriver.url>
-                <chromedriver.version>2.9</chromedriver.version>
-                <platform.chromedriver>mac32</platform.chromedriver>
+                <platform.chromedriver>mac</platform.chromedriver>
             </properties>
         </profile>
         <profile>
@@ -516,8 +472,7 @@
                 </os>
             </activation>
             <properties>
-                <xdisplay.skip>true</xdisplay.skip>
-                <platform.chromedriver>win32</platform.chromedriver>
+                <platform.chromedriver>win</platform.chromedriver>
                 <webdriver.chrome.driver>${basedir}/target/bin/chromedriver.exe</webdriver.chrome.driver>
             </properties>
         </profile>

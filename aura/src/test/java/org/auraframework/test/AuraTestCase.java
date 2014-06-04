@@ -17,7 +17,6 @@ package org.auraframework.test;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import org.auraframework.Aura;
 import org.auraframework.adapter.ConfigAdapter;
@@ -131,6 +130,10 @@ public abstract class AuraTestCase extends UnitTestCase {
         AuraContext newContext = service.startContext(context.getMode(), context.getFormat(), context.getAccess(),
                 context.getApplicationDescriptor());
         newContext.setLastMod(context.getLastMod());
+        newContext.clearPreloads();
+        for (String preload : context.getPreloads()) {
+            newContext.addPreload(preload);
+        }
     }
 
     /**
@@ -143,19 +146,6 @@ public abstract class AuraTestCase extends UnitTestCase {
      */
     protected void checkExceptionFull(Throwable e, Class<?> clazz, String message, String filename) {
         checkExceptionFull(e, clazz, message);
-        assertLocation(e, filename);
-    }
-    
-    /**
-     * Check to ensure that an exception matches both message regex and location.
-     * 
-     * @param e the exception to check.
-     * @param clazz a class to match if it is not null.
-     * @param message The message to match (must be exact match).
-     * @param filename a 'file name' to match the location.
-     */
-    protected void checkExceptionRegex(Throwable e, Class<?> clazz, String regex, String filename) {
-        checkExceptionRegex(e, clazz, regex);
         assertLocation(e, filename);
     }
 
@@ -179,21 +169,7 @@ public abstract class AuraTestCase extends UnitTestCase {
         if (clazz != null) {
             assertEquals("Exception must be " + clazz.getSimpleName(), clazz, e.getClass());
         }
-        
         assertEquals("Unexpected message", message, e.getMessage());
-    }
-
-    /**
-     * Check that an exception matches the regex, ignore location.
-     */
-    protected void checkExceptionRegex(Throwable e, Class<?> clazz, String regex) {
-        if (clazz != null) {
-            assertEquals("Exception must be " + clazz.getSimpleName(), clazz, e.getClass());
-        }
-        
-        String message = e.getMessage();
-        Pattern pattern = Pattern.compile(regex);
-        assertTrue("Unexpected message: " + message, pattern.matcher(message).find());
     }
 
     /**
@@ -230,43 +206,6 @@ public abstract class AuraTestCase extends UnitTestCase {
             assertEquals("Exception must be " + clazz.getSimpleName(), clazz, e.getClass());
         }
         assertTrue("Unexpected message: " + e.getMessage() + "!=" + message, e.getMessage().startsWith(message));
-    }
-
-    /**
-     * Check to ensure that an exception message contains a string and has the correct location.
-     * 
-     * @param e the exception to check.
-     * @param clazz a class to match if it is not null.
-     * @param message The String which is contained in the Exception message.
-     * @param filename a 'file name' to match the location.
-     */
-    protected void checkExceptionContains(Throwable e, Class<?> clazz, String message, String filename) {
-        checkExceptionContains(e, clazz, message);
-        assertLocation(e, filename);
-    }
-
-    /**
-     * Check the exception exactly message contains a string and check the location of an Exception using the Source of
-     * the file in error. Use this method when the location is a full filesystem path to the file (instead of just a
-     * qualified name).
-     * 
-     * Depending on whether we are reading form jars or source, the location in the exception is different. When reading
-     * from source we need to strip the "file:" prefix. When reading from jars we leave the "jar:file:" prefix.
-     */
-    protected void checkExceptionContains(Throwable e, Class<?> clazz, String message, Source<?> src) {
-        checkExceptionContains(e, clazz, message);
-        assertLocation(e, src);
-    }
-
-    /**
-     * Check that an exception message contains a string, ignore location.
-     */
-    protected void checkExceptionContains(Throwable e, Class<?> clazz, String message) {
-        if (clazz != null) {
-            assertEquals("Exception must be " + clazz.getSimpleName(), clazz, e.getClass());
-        }
-        assertTrue("Expected exception message to contain <" + message + ">, but was <" + e.getMessage() + " >", e
-                .getMessage().contains(message));
     }
 
     protected AuraTestingUtil getAuraTestingUtil() {

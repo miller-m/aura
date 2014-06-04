@@ -15,19 +15,19 @@
  */
 ({
     runTest: function(component, action, callback, expected) {
-        component.set("v.cbState", "NONE");
-        component.set("v.cbExpected", expected);
-        component.set("v.cbComplete", "No");
-        component.set("v.cbResult", "NONE");
+        component.getValue("v.cbState").setValue("NONE");
+        component.getValue("v.cbExpected").setValue(expected);
+        component.getValue("v.cbComplete").setValue("No");
+        component.getValue("v.cbResult").setValue("NONE");
         var action = component.get(action);
         action.setCallback(this, function(a) {
-            component.set("v.cbComplete", "Broken");
-            component.set("v.cbState", a.getState());
+            component.getValue("v.cbComplete").setValue("Broken");
+            component.getValue("v.cbState").setValue(a.getState());
         }, "ALL");
         action.setCallback(this, function(a) {
-            component.set("v.cbComplete", "Yes");
-            component.set("v.cbState", a.getState());
-            component.set("v.cbResult", a.getState());
+            component.getValue("v.cbComplete").setValue("Yes");
+            component.getValue("v.cbState").setValue(a.getState());
+            component.getValue("v.cbResult").setValue(a.getState());
         }, callback);
         $A.enqueueAction(action);
     }

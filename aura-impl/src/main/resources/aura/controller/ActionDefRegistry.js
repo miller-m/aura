@@ -25,9 +25,9 @@ function ActionDefRegistry(){
 ActionDefRegistry.prototype.auraType = "ActionDefRegistry";
 
 /**
- * Returns an ActionDef instance from the registry. 
+ * Returns a ActionDef instance from registry
  * Throws an error if config is not provided.
- * @param {Object} config The descriptor of an ActionDef.
+ * @param {Object} config Passes in the descriptor of an ActionDef.
  */
 ActionDefRegistry.prototype.getDef = function(config){
     aura.assert(config, "ActionDef Config required for registration");

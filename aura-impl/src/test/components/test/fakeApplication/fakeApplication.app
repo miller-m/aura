@@ -15,6 +15,6 @@
     limitations under the License.
 
 -->
-<aura:application access="unauthenticated">
+<aura:application access="public">
     <aura:attribute name="value" type="String"/>
 </aura:application>

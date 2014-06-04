@@ -22,7 +22,6 @@ import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.auraframework.Aura;
 import org.auraframework.def.AttributeDef;
 import org.auraframework.def.BaseComponentDef;
 import org.auraframework.def.ComponentDef;
@@ -44,14 +43,15 @@ import org.auraframework.impl.system.DefDescriptorImpl;
 import org.auraframework.impl.util.TextTokenizer;
 import org.auraframework.system.Source;
 import org.auraframework.system.SubDefDescriptor;
-import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
 import org.auraframework.throwable.quickfix.QuickFixException;
 import org.auraframework.util.AuraTextUtil;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHandler<ForEachDef, P> implements ExpressionContainerHandler {
+public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHandler<ForEachDef, P> implements
+ExpressionContainerHandler {
+
     public static final String TAG = "aura:foreach";
 
     private static final String ATTRIBUTE_REVERSE = "reverse";
@@ -69,12 +69,8 @@ public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHand
         super();
     }
 
-    protected ForEachDefHandler(RootTagHandler<P> parentHandler, XMLStreamReader xmlReader, Source<?> source) throws DefinitionNotFoundException {
+    protected ForEachDefHandler(RootTagHandler<P> parentHandler, XMLStreamReader xmlReader, Source<?> source) {
         super(parentHandler, xmlReader, source);
-        
-        if (!isInPrivilegedNamespace()) {
-        	throw new DefinitionNotFoundException(Aura.getDefinitionService().getDefDescriptor(TAG, ComponentDef.class));
-        }
     }
 
     @Override
@@ -84,6 +80,7 @@ public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHand
 
     @Override
     protected ForEachDef createDefinition() {
+
         ComponentDefImpl.Builder componentBuilder = new ComponentDefImpl.Builder();
         builder.setLocation(getLocation());
 
@@ -130,6 +127,7 @@ public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHand
 
     @Override
     protected void handleChildTag() throws XMLStreamException, QuickFixException {
+
         children.add(getDefRefHandler(getParentHandler()).getElement());
     }
 
@@ -165,9 +163,14 @@ public class ForEachDefHandler<P extends RootDefinition> extends ParentedTagHand
 
     @Override
     public void addExpressionReferences(Set<PropertyReference> propRefs) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public void writeElement(ForEachDef def, Appendable out) {
+        // TODO Auto-generated method stub
+
     }
+
 }

@@ -18,7 +18,6 @@ package org.auraframework.throwable.quickfix;
 import java.lang.reflect.Constructor;
 import java.util.Map;
 
-import org.auraframework.Aura;
 import org.auraframework.system.Annotations.AuraEnabled;
 import org.auraframework.system.Annotations.Controller;
 import org.auraframework.system.Annotations.Key;
@@ -36,11 +35,6 @@ public class AuraQuickFixController {
         Class<AuraQuickFix> clz = (Class<AuraQuickFix>) Class.forName(String.format(className, name));
         Constructor<AuraQuickFix> constructor = clz.getConstructor(Map.class);
         AuraQuickFix quickFix = constructor.newInstance(attributes);
-        Aura.getContextService().pushSystemContext();
-        try {
-            quickFix.fix();
-        } finally {
-            Aura.getContextService().popSystemContext();
-        }
+        quickFix.fix();
     }
 }

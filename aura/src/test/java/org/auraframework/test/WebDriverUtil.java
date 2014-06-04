@@ -25,7 +25,6 @@ import org.openqa.selenium.Platform;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.internal.BuildInfo;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.uiautomation.ios.IOSCapabilities;
 
 /**
  * Utility methods related to WebDriver
@@ -43,9 +42,7 @@ public final class WebDriverUtil {
         TABLET("deviceType", "tablet"),
         LANDSCAPE("deviceOrientation", "landscape"),
         PORTRAIT("deviceOrientation", "portrait"),
-        DISABLE_NATIVE_EVENTS("webdriverEnableNativeEvents", "false"),
-        SIMULATOR_SCALE_IPAD("simulatorScale", ".35"),
-        SIMULATOR_SCALE_IPHONE("simulatorScale", ".5");
+        DISABLE_NATIVE_EVENTS("webdriverEnableNativeEvents", "false");
 
         private final String value;
         private final String name;
@@ -66,53 +63,39 @@ public final class WebDriverUtil {
 
     public enum BrowserType {
         FIREFOX(DesiredCapabilities.firefox(), null, Platform.ANY, ExtraCapability.DISABLE_NATIVE_EVENTS),
-        IE11(DesiredCapabilities.internetExplorer(), "11", "Windows 8.1"),
-        IE10(DesiredCapabilities.internetExplorer(), "10", Platform.WIN8),
+        IE10(DesiredCapabilities.internetExplorer(), "10", "Windows 2012"),
         IE9(DesiredCapabilities.internetExplorer(), "9", Platform.VISTA),
         IE8(DesiredCapabilities.internetExplorer(), "8", Platform.WINDOWS),
         IE7(DesiredCapabilities.internetExplorer(), "7", Platform.WINDOWS),
         GOOGLECHROME(DesiredCapabilities.chrome(), null, Platform.ANY),
-        SAFARI(DesiredCapabilities.safari(), "6", "OS X 10.8"),
-        SAFARI5(DesiredCapabilities.safari(), "5", "Mac"), // Not run in autobuilds
+        SAFARI(DesiredCapabilities.safari(), "5", "Mac 10.6"),
         ANDROID_PHONE(DesiredCapabilities.android(), "4", "Linux", ExtraCapability.PHONE, ExtraCapability.PORTRAIT),
         ANDROID_TABLET(DesiredCapabilities.android(), "4", "Linux", ExtraCapability.TABLET, ExtraCapability.LANDSCAPE),
-        IPHONE(DesiredCapabilities.iphone(), "6", "Mac 10.8"),
-        IPAD(DesiredCapabilities.ipad(), "6", "Mac 10.8"),
-        IPAD7(DesiredCapabilities.ipad(), "7.1", "OS X 10.9", ExtraCapability.PORTRAIT), // Not run in autobuilds
-        IPHONE7(DesiredCapabilities.iphone(), "7.1", "OS X 10.9", ExtraCapability.PORTRAIT), // Not run in autobuilds
-        IPAD_IOS_DRIVER(IOSCapabilities.ipad("Safari"), "7.1", "Mac 10.9", ExtraCapability.SIMULATOR_SCALE_IPAD),
-        IPHONE_IOS_DRIVER(IOSCapabilities.iphone("Safari"), "7.1", "Mac 10.9", ExtraCapability.SIMULATOR_SCALE_IPHONE); // Not run in autobuilds (yet)
+        IPHONE(DesiredCapabilities.iphone(), "5", Platform.MAC),
+        IPAD(DesiredCapabilities.ipad(), "5", "Mac 10.6"),
+        IPADCONTAINER(DesiredCapabilities.ipad(), "5", "Mac 10.6");
 
         private final DesiredCapabilities capability;
         private final String version;
-        private final String IOSDRIVER_VERSION = "sauce-storage:iosserver066.jar";
 
-        private BrowserType(DesiredCapabilities capabilities, String version, ExtraCapability... extraCapabilities) {
+        private BrowserType(DesiredCapabilities capabilities, String version, String platform,
+                ExtraCapability... extraCapabilities) {
             this.capability = capabilities;
             this.version = version;
-            // capabilities for ios-driver common to ipad/iphone
-            if (capabilities instanceof IOSCapabilities) {
-                this.capability.setCapability("simulator", "true");
-                this.capability.setCapability("iosdriver-version", IOSDRIVER_VERSION);
-                this.capability.setCapability("variation", (String) null);
+            if (capabilities != null) {
+                this.capability.setCapability("platform", platform);
             }
             initExtraCapabilities(extraCapabilities);
         }
 
-        private BrowserType(DesiredCapabilities capabilities, String version, String platform,
-                ExtraCapability... extraCapabilities) {
-            this(capabilities, version, extraCapabilities);
-            if (capabilities != null) {
-                this.capability.setCapability("platform", platform);
-            }
-        }
-
         private BrowserType(DesiredCapabilities capabilities, String version, Platform platform,
                 ExtraCapability... extraCapabilities) {
-            this(capabilities, version, extraCapabilities);
+            this.capability = capabilities;
+            this.version = version;
             if (capabilities != null) {
                 this.capability.setPlatform(platform);
             }
+            initExtraCapabilities(extraCapabilities);
         }
 
         private void initExtraCapabilities(ExtraCapability... extraCapabilities) {

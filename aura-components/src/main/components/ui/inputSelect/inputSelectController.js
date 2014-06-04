@@ -30,13 +30,7 @@
         helper.updateOptionsFromValue(cmp);
     },
 
-    // Update options from the current value if flag is set
     optionsChange: function(cmp, evt, helper) {
-    	if (cmp._initOptionsFromValue) {
-    		cmp._initOptionsFromValue = false;
-    		helper.updateOptionsFromValue(cmp);
-    	} else {
-    		helper.updateValueFromOptions(cmp);
-    	}
+        helper.updateValueFromOptions(cmp);
     }
 })

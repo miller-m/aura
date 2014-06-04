@@ -18,7 +18,6 @@
         var tabs = cmp.find({
             instancesOf : "ui:tab"
         });
-        
         if (tabs && tabs.length) {
             var newActiveTab;
             for ( var i = 0; i < tabs.length; i++) {
@@ -36,11 +35,11 @@
                 } else {
                     active = false;
                 }
-                tab.set("v.active", active);
+                tab.getAttributes().setValue("active", active);
             }
 
             if (!newActiveTab) {
-                tabs[0].set("v.active", true);
+                tabs[0].getAttributes().setValue("active", true);
             }
 
             setTimeout(function() {

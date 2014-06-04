@@ -39,18 +39,12 @@ PropertyReferenceValue.prototype.getRoot = function() {
 /**
  * Returns a new PropertyReferenceValue representing everything after the root, or null if there is no more.
  */
-
 PropertyReferenceValue.prototype.getStem = function() {
     var l = this.path.length;
     if (l == 1) {
         return null;
     }
-    
-    if (!this.stem) {
-    	this.stem = new PropertyReferenceValue(this.path.slice(1, l));
-    }
-   
-    return this.stem;
+    return new PropertyReferenceValue(this.path.slice(1, l));
 };
 
 // this is here because of the inline markup action call thing {!c.wiggle}

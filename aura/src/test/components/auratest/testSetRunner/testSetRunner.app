@@ -15,6 +15,7 @@
     limitations under the License.
 
 -->
-<aura:application>
-    <auratest:testSetRunnerC aura:load="lazy" />
+<aura:application securityProvider="java://org.auraframework.components.security.SecurityProviderAlwaysAllows">
+<auratest:testSetRunnerC aura:load="lazy">
+</auratest:testSetRunnerC>
 </aura:application>

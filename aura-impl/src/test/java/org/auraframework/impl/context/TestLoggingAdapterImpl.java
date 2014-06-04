@@ -21,7 +21,6 @@ import java.util.Map;
 import org.auraframework.impl.LoggingAdapterImpl;
 import org.auraframework.system.LoggingContext;
 import org.auraframework.test.adapter.TestLoggingAdapter;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -82,22 +81,13 @@ public class TestLoggingAdapterImpl extends LoggingAdapterImpl implements TestLo
     }
 
     public class TestLoggingContext extends LoggingContextImpl {
-        private void captureLog(Map<String, Object> valueMap) {
+        
+        @Override
+        protected void log(Map<String, Object> valueMap) {
             if (isCapturing) {
                 logs.add(Maps.newHashMap(valueMap));
             }
-        }
-
-        @Override
-        public void logCSPReport(Map<String, Object> report) {
-            captureLog(report);
-            super.logCSPReport(report);
-        }
-
-        @Override
-        protected void logRequestValuesMap(Map<String, Object> valueMap) {
-            captureLog(valueMap);
-            super.logRequestValuesMap(valueMap);//keep logging-adapter informed
+            super.log(valueMap);//keep logging-adapter informed
         }
 
     }

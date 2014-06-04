@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-({
+{
     pushText : function(cmp) {
         var v = cmp.getValue(cmp.get("v.whichArray"));
         if (!v) { return; }
@@ -43,7 +43,7 @@
         var v = cmp.getValue(cmp.get("v.whichArray"));
         if (!v) { return; }
         var array = v.unwrap();
-        $A.componentService.newComponentAsync(
+        $A.componentService.newComponentAsyn(
             this,
             function (newcmp) {
                 array.push(newcmp);
@@ -84,4 +84,4 @@
         if (!v) { return; }
         v.clear();
     }
-})
+}

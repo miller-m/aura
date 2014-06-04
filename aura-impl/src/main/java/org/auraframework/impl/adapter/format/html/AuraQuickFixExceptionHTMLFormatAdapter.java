@@ -16,9 +16,6 @@
 package org.auraframework.impl.adapter.format.html;
 
 import java.io.IOException;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -53,14 +50,8 @@ public class AuraQuickFixExceptionHTMLFormatAdapter extends HTMLFormatAdapter<Qu
 
         try {
             Map<String, Object> attribs = Maps.newHashMap();
-            Throwable t = (Throwable)value;
             attribs.put("exception", value);
-            if (t.getCause() != null) {
-                StringWriter sw = new StringWriter();
-                t.getCause().printStackTrace(new PrintWriter(sw));
-                attribs.put("cause", sw.toString());
-            }
-
+            Aura.getContextService().getCurrentContext().setPreloading(false);
             Component cmp = Aura.getInstanceService()
                                 .getInstance("auradev:quickFixException", ComponentDef.class, attribs);
             Aura.getSerializationService().write(cmp, attribs, Component.class, out);

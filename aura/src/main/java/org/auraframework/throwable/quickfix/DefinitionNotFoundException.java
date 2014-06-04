@@ -47,8 +47,6 @@ public class DefinitionNotFoundException extends AuraValidationException {
             return new AuraQuickFix[] { new CreateComponentDefQuickFix(descriptor) };
         case APPLICATION:
             return new AuraQuickFix[] { new CreateApplicationDefQuickFix(descriptor) };
-        case THEME:
-            return new AuraQuickFix[] { new CreateThemeDefQuickFix(descriptor) };
         default:
             return null;
         }
@@ -62,7 +60,7 @@ public class DefinitionNotFoundException extends AuraValidationException {
         return descriptor;
     }
 
-    public static String getMessage(DefType defType, String defName) {
+    private static String getMessage(DefType defType, String defName) {
         return String.format(messageFormat, defType, defName);
     }
 }

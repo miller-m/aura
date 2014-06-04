@@ -24,8 +24,6 @@
 
 .THIS ul {
     display: none;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .THIS ul.visible {

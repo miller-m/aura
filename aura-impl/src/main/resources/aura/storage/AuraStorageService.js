@@ -41,7 +41,7 @@ var AuraStorageService = function(){
          * @param {Boolean} persistent Set to true if the requested storage is persistent.
          * @param {Boolean} secure Set to true if the requested storage is secure.
          * @param {number} maxSize Specifies the maximum storage size in KB.
-         * @param {number} defaultExpiration Specifies the default time in seconds after which the cache expires. When an item is requested that has gone past the default cache expiration time, it will not be used.
+         * @param {number} defaultExpiration Specifies the default time in seconds after which the cache expires.
          * @param {number} defaultAutoRefreshInterval Specifies the default interval in seconds after which cached data is to be refreshed.
          * @param {Boolean} debugLoggingEnabled Set to true to enable debug logging in the JavaScript console for the Aura Storage Service.
          * @param {Boolean} clearStorageOnInit Set to true to clear storage when storage is initialized.
@@ -73,6 +73,7 @@ var AuraStorageService = function(){
         
         registerAdapter : function(config) {
         	var name = config["name"];
+        	var adapterClass = config["adapterClass"];
         	
         	if (adapters[name]) {
         		$A.error("StorageService.registerAdapter() adapter '" + name + "' already registered!");
@@ -146,10 +147,10 @@ var AuraStorageService = function(){
         	// Now take the set of candidates and weed out any non-persistent if persistence is requested (not required)
         	var match;
         	for (var n = 0; !match && n < candidates.length; n++) {
-        		var candidate = candidates[n];
-        		var candidateIsPersistent = candidate["persistent"];
-        		if ((persistent && candidateIsPersistent === true) || (!persistent && !candidateIsPersistent)) {
-        			match = candidate;
+        		adapter = candidates[n];
+        		var adapterIsPersistent = adapter["persistent"];
+        		if ((persistent && adapterIsPersistent === true) || (!persistent && !adapterIsPersistent)) {
+        			match = adapter;
         		}
         	}
         	

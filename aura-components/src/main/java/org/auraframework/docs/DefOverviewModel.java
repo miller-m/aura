@@ -26,7 +26,6 @@ import org.auraframework.def.DefDescriptor;
 import org.auraframework.def.DefDescriptor.DefType;
 import org.auraframework.def.Definition;
 import org.auraframework.instance.BaseComponent;
-import org.auraframework.service.DefinitionService;
 import org.auraframework.system.Annotations.AuraEnabled;
 import org.auraframework.system.Annotations.Model;
 import org.auraframework.system.AuraContext;
@@ -52,12 +51,10 @@ public class DefOverviewModel {
         String desc = (String) component.getAttributes().getValue("descriptor");
 
         DefType defType = DefType.valueOf(((String) component.getAttributes().getValue("defType")).toUpperCase());
-        DefinitionService definitionService = Aura.getDefinitionService();
-		DefDescriptor<?> descriptor = definitionService.getDefDescriptor(desc, defType.getPrimaryInterface());
+        DefDescriptor<?> descriptor = Aura.getDefinitionService().getDefDescriptor(desc, defType.getPrimaryInterface());
 
         Definition def = descriptor.getDef();
-		ReferenceTreeModel.assertAccess(def);
-		
+
         Map<DefType, List<DefModel>> depsMap = Maps.newEnumMap(DefType.class);
 
         Set<DefDescriptor<?>> deps = Sets.newHashSet();

@@ -57,11 +57,11 @@ public interface Integration {
     @Deprecated
     /**
      * @deprecated This method will soon be replaced by a new dependencies framework.
-     *
-     * Preloads the metadata definitions of all dependent components that should
-     * be sent to the client for the specified namespace.
-     *
-     * @param namespace The namespace for which to preload metadata definitions on the client.
+     * 
+     * Preloads the metadata definitions of all dependent components that should 
+     * be sent to the client for the specified namespace.    
+     * 
+     * @param namespace The namespace for which to preload metadata definitions on the client. 
      */
     void addPreload(String namespace);
 }

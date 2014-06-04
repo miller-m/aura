@@ -15,47 +15,22 @@
  */
 package org.auraframework.builder;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.auraframework.def.ComponentDefRef;
 import org.auraframework.def.StyleDef;
+import org.auraframework.system.Client;
 
 /**
  */
 public interface StyleDefBuilder extends DefBuilder<StyleDef, StyleDef> {
-    /**
-     * Sets the parsed/preprocessed CSS content.
-     */
-    StyleDefBuilder setContent(String content);
 
-    /**
-     * Sets the class name that was used for .THIS replacements.
-     */
     StyleDefBuilder setClassName(String className);
 
-    /**
-     * Specifies all expressions found in the source.
-     * <p>
-     * An expression is the argument passed to the theme function. For example, in:
-     * 
-     * <pre>
-     * <code>
-     * .THIS {
-     *   color: theme(color);
-     *   margin: theme(small + large + 'px');
-     * }
-     * </code>
-     * </pre>
-     * 
-     * both "color" and "small + large + 'px'" would be theme expressions.
-     */
-    StyleDefBuilder setThemeExpressions(Set<String> expressions);
+    StyleDefBuilder setCode(String code);
 
-    /**
-     * TODONM remove
-     * 
-     * specifies the components to render the parsed css source.
-     */
-    StyleDefBuilder setComponents(List<ComponentDefRef> components);
+    StyleDefBuilder setImageURLs(Set<String> imageURLs);
+
+    StyleDefBuilder setCode(Map<Client.Type, String> browserCode);
+
 }

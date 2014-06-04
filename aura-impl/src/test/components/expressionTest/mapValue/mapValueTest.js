@@ -18,17 +18,7 @@
         $A.test.assertTrue(undefined !== component._log, "change handler not invoked");
         $A.test.assertEquals(1, component._log.length, "unexpected number of change events recorded");
         $A.test.assertEquals(index, component._log[0].index, "unexpected index of change");
-        if (value instanceof Array) {
-        	var actual = component._log[0].value;
-        	$A.test.assertEquals(value.length, actual.length, "Unexpected value of change length mismatch");
-        	for (var i = 0; i < value.length; i++) {
-        		// Deal with nested-array support if and when we need it.
-        		$A.test.assertEquals(value[i], actual[i], "Unexpected value of change at index " + i);
-        	}
-        } else {
-        	// We punt on map support until we need it.
-            $A.test.assertEquals(value, component._log[0].value, "unexpected value of change");
-        }
+        $A.test.assertEquals(value, component._log[0].value.unwrap(), "unexpected value of change");
         component._log = undefined; // reset log
     },
 
@@ -67,7 +57,7 @@
             //No Key
             try{
         	mval.getValue();
-        	$A.test.fail("getValue cannot be called without a key");
+        	$A.test.fail("getValue cannot be called without a key")
             }catch(e){/*Expected*/}
             //Non string key TODO: W-1611590
             /*mval = $A.expressionService.create(null, {23:"bar"});
@@ -84,7 +74,7 @@
     // FIXME: W-1563175
     _testGetWithPropertyReference:{
         test:function(component){
-            var newMap = component.find('htmlDiv').getValue('v.htmlattributes');
+            var newMap = component.find('htmlDiv').getAttributes().getValue('htmlattributes');
             $A.test.assertEquals("MapValue", newMap.toString());
             try{
                 $A.test.assertEquals("false", newMap.get("disabled"), "failed to resolve propertyReferenceValue");
@@ -118,7 +108,7 @@
      */
     testSetValueMapValueWithPropertyReferences:{
         test:function(component){
-            var newMap = component.find('htmlDiv').getValue('v.htmlattributes');
+            var newMap = component.find('htmlDiv').getAttributes().getValue('htmlattributes');
             $A.test.assertEquals("MapValue", newMap.toString());
             var setval = $A.expressionService.create(component.find('htmlDiv'), {});
             try{
@@ -172,6 +162,7 @@
             $A.test.assertEquals(true, setval.isDirty());
         }
     },
+
     /**
      * Setting a MapValue to a simple value that is undefined should clear the map.
      */
@@ -205,6 +196,25 @@
                 $A.test.fail("Expected exception from setValue(ArrayValue)");
             } catch (e) {
             }
+        }
+    },
+
+
+
+    /**
+     * Setting map value to a primitive null should reset the map.
+     */
+    testSetValuePrimitiveNull: {
+        test: function(component){
+            var setval = $A.expressionService.create(null, {"a":"b"});
+            $A.test.assertEquals("MapValue", setval.toString());
+            $A.test.assertEquals(1, this.calculateSize(setval));
+            $A.test.assertEquals(false, setval.isDirty());
+            setval.setValue(null);
+
+            $A.test.assertEquals(undefined, setval.get("a"));
+            $A.test.assertEquals(0, this.calculateSize(setval));
+            $A.test.assertEquals(true, setval.isDirty());
         }
     },
 
@@ -333,17 +343,11 @@
 
             $A.log("for updating existing key with a new value object");
             map.put("bagel", val);
-            this.assertChangeEvent(component, "bagel", val.getValue());
+            this.assertChangeEvent(component, "bagel", val);
             
             $A.log("for updating existing simple value of a key");
             val.setValue("Sarah Lee");
-            this.assertChangeEvent(component, "bagel", "Sarah Lee");
-
-            // Map.put of map and array tests, don't fire.
-            map.put("submap", { one: 1 });
-            this.assertChangeEvent(component, "one", 1);
-            map.put("subarray", [ 1 ]);
-            this.assertChangeEvent(component, "subarray", [ 1 ]);
+            this.assertNoChangeEvent(component);
 
             // MapValue
             //var newMap = $A.expressionService.create(null, {"Banana":"Del Monte"});
@@ -357,132 +361,6 @@
             //TODO W-1562377: Doesn't really update the original map, since merge() does a copy
             //this.assertChangeEvent(component, "Orange", "Florida");
         }]
-    },
-
-    /**
-     * Tests that values cross-propagate "as expected."  Note that I'm not
-     * convinced this is good, but it tests our actual behavior as of 25jul2013.
-     */
-    testCrossPropagation: {
-        test: function(component){
-            var mockGlobalId = 0;
-            var leafCounts = { 'simple': 0, 'map': 0, 'array': 0 };
-            var simval = $A.expressionService.create(null, 180);
-            simval.addHandler({'eventName': 'change',
-                    'method': function(e) { leafCounts['simple']++; },
-                    'globalId': mockGlobalId++
-                });
-
-            var submap = $A.expressionService.create(null, {"magnitude": 10, "units": "mph"});
-            // TODO(fabbott): I'd like to add handlers on all the collections (leaf, mapval, copymap),
-            // but they want not a "method" function but an "actionExpression," which is proving hard
-            // to formulate.  Probably just because I need sleep, but for now I'm punting.
-
-            var subarray = $A.expressionService.create(component, ['amy', 'bob']);
-
-            var mapval = $A.expressionService.create(component,{"heading": simval, "speed": submap,
-                "passengers": subarray});
-
-            // Subvalues should be shared (which implies their handlers, etc. are shared!).
-            $A.test.assertEquals(simval, mapval.getValue('heading'));
-            $A.test.assertEquals(submap, mapval.getValue('speed'));
-            $A.test.assertEquals(subarray, mapval.getValue('passengers'));
-
-            var copymap = $A.expressionService.create(component, {'heading': 'north',
-                'speed': { 'magnitude': 5, 'precision': 2}, passengers: []});
-            // Ditto the mapval handler comment here: can't get actionExpression to cooperate.
-            copymap.setValue(mapval);
-
-            // These subvalues are also shared.
-            $A.test.assertEquals(simval, copymap.getValue('heading'));
-            $A.test.assertEquals(submap, copymap.getValue('speed'));
-            $A.test.assertEquals(subarray, copymap.getValue('passengers'));
-
-            // Changehandlers should chain, as should value changes (since the object is identical).
-            mapval.getValue('heading').setValue('south');
-            $A.test.assertEquals('south', simval.getValue());
-            $A.test.assertEquals('south', mapval.get('heading'));
-            $A.test.assertEquals('south', copymap.get('heading'));
-            $A.test.assertEquals(1, leafCounts['simple']);
-
-            mapval.getValue('speed').put('units', 'kph');
-            $A.test.assertEquals('kph', submap.get('units'));
-            // and new members of a shared thing are shared:
-            submap.put('precision', 20);
-            $A.test.assertEquals(20, mapval.getValue('speed').get('precision'));
-            $A.test.assertEquals(20, copymap.getValue('speed').get('precision'));
-
-            mapval.getValue('passengers').getValue(1).setValue('bill');
-            $A.test.assertEquals('bill', subarray.get(1));
-            $A.test.assertEquals('bill', mapval.get('passengers')[1]);
-            $A.test.assertEquals('bill', copymap.get('passengers')[1]);
-            // And, again, for new items:
-            subarray.push('cathy');
-            $A.test.assertEquals('cathy', subarray.get(2));
-            $A.test.assertEquals('cathy', mapval.get('passengers')[2]);
-            $A.test.assertEquals('cathy', copymap.get('passengers')[2]);
-
-            // But new keys in the two top maps are NOT shared:
-            mapval.put("extra", 4);
-            $A.test.assertEquals(undefined, copymap.get('extra'));
-        }
-    },
-
-    testMapSetValueRenders: {
-        test: [ function(component) {
-            var map = component.getValue("m.map");
-            map.put("subkey", "put");
-            // Insert a pause for re-rendering.  Put of a "new" key is CLEAN,
-            // perhaps oddly, so it doesn't re-render:
-            $A.test.addWaitFor("", function() {
-                var output = component.find("outputText");
-                return $A.test.getText(output.getElement());
-            });
-        }, function(component) {
-           var map = component.getValue("m.map");
-            map.put("subkey", "put2");
-            // Insert a pause for re-rendering.  Put of a "old" key is DIRTY,
-            // in the usual "I've been changed" way, so it does re-render:
-            $A.test.addWaitFor("put2", function() {
-                var output = component.find("outputText");
-                return $A.test.getText(output.getElement());
-            });
-        }, function(component) {
-            var map = component.getValue("m.map");
-            map.setValue({"subKey": "set"});
-            // Insert a pause for re-rendering.  SetValue leaves DIRTY child
-            // objecst (W-1678810), so it does re-render.  Note that this also
-            // tests our case-insensitivity.
-            $A.test.addWaitFor("set", function() {
-                var output = component.find("outputText");
-                return $A.test.getText(output.getElement());
-            });
-        }, function(component) {
-            // Checks case insensitivity
-            var otherMap = $A.expressionService.create(null, { 'subkey' : "second" });
-            var map = component.getValue("m.map");
-            map.setValue(otherMap);
-            $A.test.addWaitFor("second", function() {
-                var output = component.find("outputText");
-                return $A.test.getText(output.getElement());
-            });
-        }
-        ]
-    },
-    /**
-     * Setting map value to a primitive null should reset the map.
-     */
-    testSetValuePrimitiveNull: {
-        test: function(component){
-            var setval = $A.expressionService.create(null, {"a":"b"});
-            $A.test.assertEquals("MapValue", setval.toString());
-            $A.test.assertEquals(1, this.calculateSize(setval));
-            $A.test.assertEquals(false, setval.isDirty());
-            setval.setValue(null);
-
-            $A.test.assertEquals(undefined, setval.get("a"));
-            $A.test.assertEquals(0, this.calculateSize(setval));
-            $A.test.assertEquals(true, setval.isDirty());
-        }
     }
+
 })

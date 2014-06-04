@@ -16,27 +16,25 @@
 ({
     createRealBody: function(cmp, isTrue, doForce) {
         var realbody = [];
+        var atts = cmp.getAttributes();
         var facet;
         if (isTrue) {
-            facet = cmp.getValue("v.body");
+            facet = atts.getValue("body");
             //console.log("truth " + cmp.getGlobalId());
         } else {
-            facet = cmp.getValue("v.else");
+            facet = atts.getValue("else");
             //console.log("fiction " + cmp.getGlobalId());
         }
-
-        $A.pushCreationPath("realbody");
+        var realbody = [];
         for (var i = 0, length = facet.getLength(); i < length; i++) {
-        	$A.setCreationPathIndex(i);
             var cdr = facet.get(i);
-            var cmps = $A.componentService.newComponentDeprecated(cdr, cdr.valueProvider || cmp.getAttributeValueProvider(), false, doForce);
+            var cmps = $A.componentService.newComponentDeprecated(cdr, cdr.valueProvider || atts.getValueProvider(), false, doForce);
             if ($A.util.isArray(cmps)) {
                 throw new Error("foreach inside of an if doesn't work yet");
             } else {
                 realbody.push(cmps);
             }
         }
-        $A.popCreationPath("realbody");
         
         return realbody;
     }

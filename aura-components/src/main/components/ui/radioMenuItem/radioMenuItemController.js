@@ -15,11 +15,11 @@
  */
 ({
     handleClick : function(component, event, helper) {
-    	var concrete = component.getConcreteComponent();
-        var concreteHelper = concrete.getDef().getHelper();
-        
-        concreteHelper.handleClick(concrete);
-
+        var concrete = component.getConcreteComponent();
+        var current = concrete.get("v.selected");
+        if (current === false) {
+            concrete.setValue("v.selected", !current);
+        }
         // Un-select the previously selected item
         helper.uncheckSiblings(concrete);
         helper.fireSelectEvent(component, event);

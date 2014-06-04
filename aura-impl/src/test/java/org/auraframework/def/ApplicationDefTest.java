@@ -15,26 +15,98 @@
  */
 package org.auraframework.def;
 
-import java.util.Set;
-
 import org.auraframework.Aura;
 import org.auraframework.http.AuraBaseServlet;
 import org.auraframework.impl.source.StringSource;
-import org.auraframework.impl.system.DefDescriptorImpl;
-import org.auraframework.system.AuraContext.Authentication;
+import org.auraframework.system.AuraContext.Access;
 import org.auraframework.system.AuraContext.Mode;
 import org.auraframework.test.annotation.ThreadHostileTest;
 import org.auraframework.test.annotation.UnAdaptableTest;
-import org.auraframework.throwable.quickfix.DefinitionNotFoundException;
+import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.throwable.quickfix.InvalidDefinitionException;
 import org.auraframework.throwable.quickfix.QuickFixException;
-
-import com.google.common.collect.Sets;
 
 public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
 
     public ApplicationDefTest(String name) {
         super(name, ApplicationDef.class, "aura:application");
+    }
+
+    public void testGetSecurityProviderDefDescriptorDefault() throws Exception {
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, String.format(baseTag, "", ""));
+        ApplicationDef appdef = Aura.getDefinitionService().getDefinition(desc);
+        assertEquals("java://org.auraframework.components.DefaultSecurityProvider", appdef
+                .getSecurityProviderDefDescriptor().getQualifiedName());
+    }
+
+    public void testGetSecurityProviderDefDescriptorProvided() throws Exception {
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, String.format(baseTag,
+                "securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysAllows'", ""));
+        ApplicationDef appdef = Aura.getDefinitionService().getDefinition(desc);
+        assertEquals("java://org.auraframework.components.security.SecurityProviderAlwaysAllows", appdef
+                .getSecurityProviderDefDescriptor().getQualifiedName());
+    }
+
+    public void testGetSecurityProviderDefDescriptorEmpty() throws Exception {
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class,
+                String.format(baseTag, "securityProvider=''", ""));
+        try {
+            Aura.getDefinitionService().getDefinition(desc);
+            fail("No AuraRuntimeException when securityProvider is empty string");
+        } catch (AuraRuntimeException e) {
+            assertEquals("QualifiedName is required for descriptors", e.getMessage());
+        }
+    }
+
+    public void testGetSecurityProviderDefDescriptorInherited() throws Exception {
+        DefDescriptor<ApplicationDef> parentDesc = addSourceAutoCleanup(
+                ApplicationDef.class,
+                String.format(
+                        baseTag,
+                        "securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysAllows' extensible='true'",
+                        ""));
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class,
+                String.format(baseTag, String.format("extends='%s'", parentDesc.getQualifiedName()), ""));
+        ApplicationDef appdef = Aura.getDefinitionService().getDefinition(desc);
+        assertEquals("java://org.auraframework.components.security.SecurityProviderAlwaysAllows", appdef
+                .getSecurityProviderDefDescriptor().getQualifiedName());
+    }
+
+    public void testGetSecurityProviderDefDescriptorGrandInherited() throws Exception {
+        DefDescriptor<ApplicationDef> grandparentDesc = addSourceAutoCleanup(
+                ApplicationDef.class,
+                String.format(
+                        baseTag,
+                        "securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysAllows' extensible='true'",
+                        ""));
+        DefDescriptor<ApplicationDef> parentDesc = addSourceAutoCleanup(
+                ApplicationDef.class,
+                String.format(baseTag,
+                        String.format("extends='%s' extensible='true'", grandparentDesc.getQualifiedName()), ""));
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class,
+                String.format(baseTag, String.format("extends='%s'", parentDesc.getQualifiedName()), ""));
+        ApplicationDef appdef = Aura.getDefinitionService().getDefinition(desc);
+        assertEquals("java://org.auraframework.components.security.SecurityProviderAlwaysAllows", appdef
+                .getSecurityProviderDefDescriptor().getQualifiedName());
+    }
+
+    public void testGetSecurityProviderDefDescriptorOverride() throws Exception {
+        DefDescriptor<ApplicationDef> parentDesc = addSourceAutoCleanup(
+                ApplicationDef.class,
+                String.format(
+                        baseTag,
+                        "securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysAllows' extensible='true'",
+                        ""));
+        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(
+                ApplicationDef.class,
+                String.format(
+                        baseTag,
+                        String.format(
+                                "extends='%s' securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysDenies'",
+                                parentDesc.getQualifiedName()), ""));
+        ApplicationDef appdef = Aura.getDefinitionService().getDefinition(desc);
+        assertEquals("java://org.auraframework.components.security.SecurityProviderAlwaysDenies", appdef
+                .getSecurityProviderDefDescriptor().getQualifiedName());
     }
 
     /**
@@ -97,12 +169,13 @@ public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
     @UnAdaptableTest
     @ThreadHostileTest("preloads namespace")
     public void testMultipleAppCache() throws Exception {
-        String appFormat = "<aura:application useAppCache='true'>\n    <%s:%s />\n</aura:application>";
+        String appFormat = "<aura:application securityProvider='java://org.auraframework.components.security.SecurityProviderAlwaysAllows' useAppCache='true' preload='%s'>\n    <%s:%s />\n</aura:application>";
         String componentText = "<aura:component>the body</aura:component>";
         DefDescriptor<ComponentDef> oldCompDesc = addSourceAutoCleanup(ComponentDef.class, componentText, "oldComp");
         StringSource<ComponentDef> oldComp = (StringSource<ComponentDef>) getSource(oldCompDesc);
 
-        String appText = String.format(appFormat, oldCompDesc.getNamespace(), oldCompDesc.getName());
+        String appText = String.format(appFormat, oldCompDesc.getNamespace(), oldCompDesc.getNamespace(),
+                oldCompDesc.getName());
         DefDescriptor<ApplicationDef> oldAppDesc = addSourceAutoCleanup(ApplicationDef.class, appText, "old");
         StringSource<ApplicationDef> oldApp = (StringSource<ApplicationDef>) getSource(oldAppDesc);
         enablePreloads(oldAppDesc);
@@ -114,7 +187,7 @@ public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
         oldApp.setLastModified(soon);
 
         Aura.getContextService().endContext();
-        Aura.getContextService().startContext(Mode.PROD, null, Authentication.AUTHENTICATED, oldAppDesc);
+        Aura.getContextService().startContext(Mode.PROD, null, Access.AUTHENTICATED, oldAppDesc);
         enablePreloads(oldAppDesc);
         //
         // The app should give us 'soon'
@@ -125,37 +198,40 @@ public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
 
         DefDescriptor<ComponentDef> newCompDesc = addSourceAutoCleanup(ComponentDef.class, componentText);
         ((StringSource<?>) getSource(newCompDesc)).setLastModified(later);
-        appText = String.format(appFormat, newCompDesc.getNamespace(), newCompDesc.getName());
+        appText = String.format(appFormat, newCompDesc.getNamespace(), newCompDesc.getNamespace(),
+                newCompDesc.getName());
         DefDescriptor<ApplicationDef> newerAppDesc = addSourceAutoCleanup(ApplicationDef.class, appText);
         ((StringSource<?>) getSource(newerAppDesc)).setLastModified(later);
 
         // Start a newerApp context in DEV mode so that we can update the
         // lastMod cache.
-        Aura.getContextService().startContext(Mode.DEV, null, Authentication.AUTHENTICATED, newerAppDesc);
+        Aura.getContextService().startContext(Mode.DEV, null, Access.AUTHENTICATED, newerAppDesc);
 
         // Sanity check that we get the expected answer in DEV mode.
-        assertEquals("Sanity check DEV mode lastMod update", later, AuraBaseServlet.getLastMod());
+        // assertEquals("Sanity check DEV mode lastMod update", later.getTime(),
+        // AuraServlet.getLastMod());
 
         Aura.getContextService().endContext();
-        Aura.getContextService().startContext(Mode.PROD, null, Authentication.AUTHENTICATED, newerAppDesc);
+        Aura.getContextService().startContext(Mode.PROD, null, Access.AUTHENTICATED, newerAppDesc);
         enablePreloads(newerAppDesc);
 
         //
         // The newer app should give its newer lastmod 'later'.
         //
-        assertEquals("Expected second app to show up as later", later, AuraBaseServlet.getLastMod());
+        assertEquals("Expected second app to show up as soon", later, AuraBaseServlet.getLastMod());
         Aura.getContextService().endContext();
 
         //
-        // we preload dependencies now not namespaces so changing the namespace won't have any effect.
-        // should still be soon
+        // Switching back to dev mode should reset, and give us 'later' for the
+        // first app as the
+        // namespace was updated by newer
         //
-        Aura.getContextService().startContext(Mode.DEV, null, Authentication.AUTHENTICATED, oldAppDesc);
-        enablePreloads(oldAppDesc);
-        assertEquals("Expected first app to show up as soon second time", soon, AuraBaseServlet.getLastMod());
+        Aura.getContextService().startContext(Mode.DEV, null, Access.AUTHENTICATED, oldAppDesc);
+        enablePreloads(newerAppDesc);
+        assertEquals("Expected first app to show up as later second time", later, AuraBaseServlet.getLastMod());
         Aura.getContextService().endContext();
 
-        Aura.getContextService().startContext(Mode.PROD, null, Authentication.AUTHENTICATED, newerAppDesc);
+        Aura.getContextService().startContext(Mode.PROD, null, Access.AUTHENTICATED, newerAppDesc);
         enablePreloads(newerAppDesc);
         assertEquals("Expected second app to show up as later second time", later, AuraBaseServlet.getLastMod());
         Aura.getContextService().endContext();
@@ -203,6 +279,7 @@ public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
         } catch (InvalidDefinitionException e) {
             assertEquals("Invalid dependency *://somecrap:*[COMPONENT]", e.getMessage());
         }
+
     }
 
     /**
@@ -225,116 +302,6 @@ public class ApplicationDefTest extends BaseComponentDefTest<ApplicationDef> {
         desc = addSourceAutoCleanup(ApplicationDef.class, String.format(baseTag, "", ""));
         ApplicationDef simpleApp = Aura.getDefinitionService().getDefinition(desc);
         assertEquals(Boolean.FALSE, simpleApp.isOnePageApp());
-    }
 
-    /** verify that we set the correct theme descriptor when there is an explicit theme on the app tag */
-    public void testExplicitTheme() throws QuickFixException {
-        DefDescriptor<ThemeDef> theme = addSourceAutoCleanup(ThemeDef.class, "<aura:theme></aura:theme>");
-
-        String src = String.format("<aura:application overrideTheme=\"%s\"/>", theme.getDescriptorName());
-        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, src);
-        assertEquals(theme, desc.getDef().getOverrideThemeDescriptor());
-    }
-
-    /** verify that we set the correct theme descriptor when there is only a bundle theme */
-    public void testBundleTheme() throws QuickFixException {
-        DefDescriptor<ThemeDef> theme = addSourceAutoCleanup(ThemeDef.class, "<aura:theme></aura:theme>");
-
-        String src = "<aura:application/>";
-        DefDescriptor<ApplicationDef> desc = DefDescriptorImpl.getInstance(theme.getDescriptorName(),
-                ApplicationDef.class);
-        addSourceAutoCleanup(desc, src);
-        assertEquals(theme, desc.getDef().getOverrideThemeDescriptor());
-    }
-
-    /** verify that we set the correct theme descriptor when there is only the namespace default theme */
-    public void testImplicitTheme() throws QuickFixException {
-        DefDescriptor<ThemeDef> dummy = addSourceAutoCleanup(ThemeDef.class, "<aura:theme></aura:theme>");
-
-        DefDescriptor<ThemeDef> nsTheme = DefDescriptorImpl.getInstance(
-                String.format("%s:%sTheme", dummy.getNamespace(), dummy.getNamespace()), ThemeDef.class);
-        addSourceAutoCleanup(nsTheme, "<aura:theme></aura:theme>");
-
-        String src = "<aura:application/>";
-        DefDescriptor<ApplicationDef> desc = DefDescriptorImpl.getInstance(
-                String.format("%s:%s", dummy.getNamespace(), getAuraTestingUtil().getNonce(getName())),
-                ApplicationDef.class);
-        addSourceAutoCleanup(desc, src);
-        assertEquals(nsTheme, desc.getDef().getOverrideThemeDescriptor());
-    }
-
-    /** an empty value for the theme attr means that you don't want any theme, even the implicit one */
-    public void testThemeAttrIsEmptyString() throws QuickFixException {
-        DefDescriptor<ThemeDef> dummy = addSourceAutoCleanup(ThemeDef.class, "<aura:theme></aura:theme>");
-
-        DefDescriptor<ThemeDef> nsTheme = DefDescriptorImpl.getInstance(
-                String.format("%s:%sTheme", dummy.getNamespace(), dummy.getNamespace()), ThemeDef.class);
-        addSourceAutoCleanup(nsTheme, "<aura:theme></aura:theme>");
-
-        String src = "<aura:application overrideTheme=''/>";
-        DefDescriptor<ApplicationDef> desc = DefDescriptorImpl.getInstance(
-                String.format("%s:%s", dummy.getNamespace(), getAuraTestingUtil().getNonce(getName())),
-                ApplicationDef.class);
-        addSourceAutoCleanup(desc, src);
-        assertNull(desc.getDef().getOverrideThemeDescriptor());
-    }
-
-    /** verify theme descriptor is added to dependency set */
-    public void testThemeAddedToDeps() throws QuickFixException {
-        DefDescriptor<ThemeDef> theme = addSourceAutoCleanup(ThemeDef.class, "<aura:theme></aura:theme>");
-        String src = String.format("<aura:application overrideTheme=\"%s\"/>", theme.getDescriptorName());
-        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, src);
-
-        Set<DefDescriptor<?>> deps = Sets.newHashSet();
-        desc.getDef().appendDependencies(deps);
-        assertTrue(deps.contains(theme));
-    }
-
-    /** verify theme descriptor ref is validated */
-    public void testInvalidThemeRef() throws QuickFixException {
-        String src = String.format("<aura:application overrideTheme=\"%s\"/>", "wall:maria");
-        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, src);
-
-        try {
-            desc.getDef().validateReferences();
-            fail("expected to get an exception");
-        } catch (Exception e) {
-            checkExceptionContains(e, DefinitionNotFoundException.class, "No THEME");
-        }
-    }
-
-    /** however the application's bundle theme can be the override theme */
-    public void testOverrideThemeCantBeLocalTheme() throws QuickFixException {
-        DefDescriptor<StyleDef> styleDesc = addSourceAutoCleanup(StyleDef.class, ".THIS{}");
-
-        String fmt = String.format("%s:%s", styleDesc.getNamespace(), styleDesc.getName());
-        DefDescriptor<ThemeDef> themeDesc = DefDescriptorImpl.getInstance(fmt, ThemeDef.class);
-        addSourceAutoCleanup(themeDesc, "<aura:theme/>");
-
-        String src = String.format("<aura:application overrideTheme=\"%s\"/>", themeDesc.getDescriptorName());
-        DefDescriptor<ApplicationDef> desc = addSourceAutoCleanup(ApplicationDef.class, src);
-
-        try {
-            desc.getDef().validateReferences();
-            fail("expected to get an exception");
-        } catch (Exception e) {
-            checkExceptionContains(e, InvalidDefinitionException.class, "local theme");
-        }
-    }
-
-    /** verify that the override theme cannot be a local theme */
-    public void testOverrideThemeIsBundleTheme() throws QuickFixException {
-        DefDescriptor<StyleDef> styleDesc = addSourceAutoCleanup(StyleDef.class, ".THIS{}");
-
-        String fmt = String.format("%s:%s", styleDesc.getNamespace(), styleDesc.getName());
-        DefDescriptor<ThemeDef> themeDesc = DefDescriptorImpl.getInstance(fmt, ThemeDef.class);
-        addSourceAutoCleanup(themeDesc, "<aura:theme/>");
-
-        DefDescriptor<ApplicationDef> appDesc = DefDescriptorImpl.getInstance(fmt, ApplicationDef.class);
-        addSourceAutoCleanup(appDesc, "<aura:application/>");
-
-        assertTrue(themeDesc.getDef().isLocalTheme());
-        assertSame(appDesc.getDef().getLocalThemeDescriptor(), appDesc.getDef().getOverrideThemeDescriptor());
-        appDesc.getDef().validateReferences(); // no error
     }
 }

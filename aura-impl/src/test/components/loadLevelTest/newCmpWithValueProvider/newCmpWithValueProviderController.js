@@ -53,7 +53,6 @@
                      };
         var avp = $A.expressionService.createPassthroughValue({}, cmp)
         helper.createComponentAndPushToBody(cmp,config, avp);
-        return avp;
     },
     /**
      * Create a component whose definition is not available at the client.
@@ -69,11 +68,12 @@
         //Specify current component's attribute as value for new cmp's attribute
         var config = {componentDef:"markup://loadLevelTest:displayNumber",
                       attributes:{
-                          values:{
+                    	  values:{
                               number:expr
                           }
                       }
-                      , localId:"num_Id"
+                      /**TODO W-1318095: Cannot specify localId for defs fetched from server
+                      , localId:"num_Id"*/
                      };
 
         //Specify current component as value provider
@@ -82,34 +82,6 @@
         //Test Code, the line below will work fine since it is not specifiying any attributes.
         //helper.createComponentAndPushToBody(cmp, "markup://loadLevelTest:displayNumber");
     },
-
-    /**
-     * Test server dependent client created component with attributes containing PropertyReferenceValue in MapValue
-     */
-    createCmpWithMapValuePropRefValueFromServer : function(cmp, evt,helper){
-        var path = [];
-        path.push('v');
-        path.push('stringAttribute');
-        var expr = $A.expressionService.create(null, {"exprType": "PROPERTY", "path": path});
-
-        var config = {
-            componentDef:"markup://loadLevelTest:displayMap",
-            attributes:{
-                values:{
-                    map: {
-                        map2: {
-                            propRef: expr
-                        },
-                        propRef: expr
-                    }
-                }
-            },
-            localId:"map_Id"
-        };
-
-        helper.createComponentAndPushToBody(cmp, config, cmp);
-    },
-
     /**
      * Create a new component whose definition was already preloaded and
      * use blank object as value provider.

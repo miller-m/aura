@@ -15,7 +15,6 @@
  */
 ({
 	setUp : function(cmp) {
-        document.__testLogger = "initialString";
 		var ready = false;
 		$A.run(function() {
 			$A.test.callServerAction($A.test.getAction(cmp, "c.execute", {
@@ -30,35 +29,29 @@
 	},
 
 	log : function(cmp, msg) {
-		cmp.getValue("v.log").push(msg);
+		cmp.getAttributes().getValue("log").push(msg);
 	},
 
 	waitForLog : function(cmp, index, content) {
-        var actual;
-        $A.test.addWaitFor(false, function() {
-            actual = cmp.getValue("v.log").getValue(index);
-            if (actual !== undefined) {
-                actual = actual.unwrap();
-            }
-            return actual === undefined;
-        }, function() {
-            $A.test.assertEquals(content, actual, "mismatch on log entry "+index);
-        });
-    },
+		$A.test.addWaitFor(content, function() {
+			var val = cmp.getAttributes().getValue("log").getValue(index);
+			return val === undefined ? val : val.unwrap();
+		});
+	},
 
-	getAction : function(cmp, actionName, commands, callback, background, abortable, allAboardCallback) {
+	getAction : function(cmp, actionName, commands, callback, background, abortable) {
+		console.log(commands);
 		var a = $A.test.getAction(cmp, actionName, {
 			"commands" : commands
 		}, callback);
 		if (background) {
 			a.setBackground();
+			console.log("background: " + a.isBackground());
 		}
 		if (abortable) {
 			a.setAbortable();
+			console.log("abortable: " + a.isAbortable());
 		}
-        if (allAboardCallback) {
-            a.setAllAboardCallback(this, allAboardCallback);
-        }
 		return a;
 	},
 
@@ -74,191 +67,6 @@
 			this.waitForLog(cmp, 2, "log2");
 		} ]
 	},
-
-    testMultipleCabooseActions : {
-        test : [
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back1;READ;", function(a) {
-                        that.log(cmp, "back1:" + a.getReturnValue());
-                    }));
-
-                    // caboose action should not be run until another non-caboose foreground action runs
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose1;READ;", function(a) {
-                        that.log(cmp, "caboose1:" + a.getReturnValue());
-                    }));
-                });
-                // verify only background action ran
-                this.waitForLog(cmp, 0, "back1:back1");
-            },
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back2;READ;", function(a) {
-                        that.log(cmp, "back2:" + a.getReturnValue());
-                    }));
-
-                    // queue up a couple more caboose actions
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose2;READ;", function(a) {
-                        that.log(cmp, "caboose2:" + a.getReturnValue());
-                    }));
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose3;READ;", function(a) {
-                        that.log(cmp, "caboose3:" + a.getReturnValue());
-                    }));
-                });
-                // verify only background action ran (still)
-                this.waitForLog(cmp, 1, "back2:back2");
-            },
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.execute", "APPEND fore1;READ;", function(a) {
-                        that.log(cmp, "fore1:" + a.getReturnValue());
-                    }));
-                });
-                // new foreground action should flush out all pending caboose actions
-                this.waitForLog(cmp, 2, "caboose1:caboose1");
-                this.waitForLog(cmp, 3, "caboose2:caboose2");
-                this.waitForLog(cmp, 4, "caboose3:caboose3");
-                this.waitForLog(cmp, 5, "fore1:fore1");
-            }
-        ]
-    },
-
-    /**
-     * Verify a pending caboose action is not ran when a client action is ran. Caboose actions should wait until
-     * another foreground action is sent to the server.
-     */
-    testCabooseWithClientAction : {
-        test : [
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back1;READ;", function(a) {
-                        that.log(cmp, "back1:" + a.getReturnValue());
-                    }));
-
-                    // queue up caboose action
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose1;READ;", function(a) {
-                        that.log(cmp, "caboose1:" + a.getReturnValue());
-                    }));
-                });
-                // verify only background action ran
-                this.waitForLog(cmp, 0, "back1:back1");
-            },
-            function(cmp) {
-                var that = this;
-                $A.enqueueAction(cmp.get("c.client"));
-                this.log(cmp, "log1");
-
-                // verify client actions ran but did not cause caboose action to run
-                this.waitForLog(cmp, 1, "log1");
-                this.waitForLog(cmp, 2, "client");
-            }
-        ]
-    },
-
-    testBackgroundCabooseAction : {
-        test : [
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND cabooseAndBack1;READ;", function(a) {
-                        that.log(cmp, "cabooseAndBack1:" + a.getReturnValue());
-                    }, true));
-                });
-                $A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back1;READ;", function(a) {
-                        that.log(cmp, "back1:" + a.getReturnValue());
-                    }));
-                // verify background action ran, even though it is marked as caboose
-                this.waitForLog(cmp, 0, "cabooseAndBack1:cabooseAndBack1");
-            }
-        ]
-    },
-
-    /**
-     * The "allAboardCallback" should be called before the XHR containing the associated action is sent to the server.
-     * Note that since the caboose actions will be sent in the same XHR request as the regular foreground action, all
-     * 3 allAboard callbacks will be called prior to any of the completed action callbacks.
-     */
-    testMultipleAllAboardCallbacks : {
-        test : [
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back1;READ;", function(a) {
-                        that.log(cmp, "back1:" + a.getReturnValue());
-                    }));
-
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose1;READ;", function(a) {
-                        that.log(cmp, "caboose1:" + a.getReturnValue());
-                    }, false, false, function() {
-                        this.log(cmp, "allAboardCaboose1");
-                    }));
-                    $A.enqueueAction(that.getAction(cmp, "c.executeCaboose", "APPEND caboose2;READ;", function(a) {
-                        that.log(cmp, "caboose2:" + a.getReturnValue());
-                    }, false, false, function() {
-                        this.log(cmp, "allAboardCaboose2");
-                    }));
-                });
-                // only background action should have run
-                this.waitForLog(cmp, 0, "back1:back1");
-            },
-            function(cmp){
-                var that = this;
-                $A.run(function(){
-                    $A.enqueueAction(that.getAction(cmp, "c.execute", "APPEND fore1;READ;", function(a){
-                        that.log(cmp, "fore1:" + a.getReturnValue());
-                    }, false, false, function(){
-                        this.log(cmp, "allAboardFore");
-                    }));
-                });
-                // verify allAboardCallback's are called before their associated actions complete
-                this.waitForLog(cmp, 1, "allAboardCaboose1");
-                this.waitForLog(cmp, 2, "allAboardCaboose2");
-                this.waitForLog(cmp, 3, "allAboardFore");
-                this.waitForLog(cmp, 4, "caboose1:caboose1");
-                this.waitForLog(cmp, 5, "caboose2:caboose2");
-                this.waitForLog(cmp, 6, "fore1:fore1");
-            }
-        ]
-    },
-
-    /**
-     * This test emulates the log+flush pattern that can be used with a combination of caboose actions and allAboard
-     * callbacks. This pattern lets the user queue a caboose action and use allAboardCallback to set a param (in this
-     * case fake log data) to be attached to the action right before the XHR is sent to the server.
-     */
-    testCabooseAllAboardCallbackSetsParam : {
-        test : [
-            function(cmp) {
-                var that = this;
-                $A.run(function() {
-                    var a;
-                    a = that.getAction(cmp, "c.executeCaboose", "APPEND caboose1;READ;", function(a) {
-                        that.log(cmp, "caboose1:" + a.getReturnValue());
-                    }, false, false, function() {
-                        this.log(cmp, "allAboardCallback");
-                        a.setParam("commands", "APPEND " + document.__testLogger + ";READ;");
-                    });
-                    $A.enqueueAction(a);
-                });
-            },
-            function(cmp) {
-                var that = this;
-                document.__testLogger = document.__testLogger + ",updatedString";
-                $A.run(function() {
-                    $A.enqueueAction(that.getAction(cmp, "c.execute", "APPEND fore1;READ;", function(a){
-                        that.log(cmp, "fore1:" + a.getReturnValue());
-                    }));
-                });
-                this.waitForLog(cmp, 0, "allAboardCallback");
-                this.waitForLog(cmp, 1, "caboose1:initialString,updatedString");
-                this.waitForLog(cmp, 2, "fore1:fore1");
-            }
-        ]
-    },
 
 	/* currently only 1 background action can be in-flight */
 	testMaxNumBackgroundServerAction : {
@@ -683,7 +491,7 @@
 				$A.enqueueAction(a);
 			});
 			$A.test.addWaitFor(true, function() {
-				var val = cmp.getValue("v.log").getValue(0);
+				var val = cmp.getAttributes().getValue("log").getValue(0);
 				if (val) {
 					val = val.unwrap();
 					if (val.indexOf("prime:false:") == 0) {
@@ -719,9 +527,9 @@
 			this.waitForLog(cmp, 2, "background:true:" + cmp._initialValue);
 
 			// both callbacks with refreshed value executed
-			// ordering is not guaranteed
+			// ordering of actions is guaranteed, but ordering of callback handling is not
 			$A.test.addWaitFor(true, function() {
-				var logs = cmp.getValue("v.log");
+				var logs = cmp.getAttributes().getValue("log");
 				var val1 = logs.getValue(3);
 				var val2 = logs.getValue(4);
 				if (!val1 || !val2) {
@@ -735,7 +543,29 @@
 				val1 = val1.unwrap().substring(0, len);
 				val2 = val2.unwrap().substring(0, len);
 
-				return ((val1 == expected1 && val2 == expected2) || (val1 == expected2 && val2 == expected1));
+				if ((val1 == expected1 && val2 == expected2) || (val1 == expected2 && val2 == expected1)) {
+					cmp._initialValue = val2.substring(len);
+					return true;
+				}
+				return false;
+			});
+		}, function(cmp) {
+			var that = this;
+			$A.run(function() {
+				// check last stored value was last action returned
+				var a = that.getAction(cmp, "c.execute", "STAMP;SLEEP 1000;READ;", function(a) {
+					that.log(cmp, "check:" + a.isFromStorage() + ":" + a.getReturnValue());
+				});
+				a.setStorable();
+				$A.enqueueAction(a);
+			});
+			// check stored value
+			this.waitForLog(cmp, 5, "check:true:" + cmp._initialValue);
+			// here's the refresh
+			var expected = "check:false:";
+			$A.test.addWaitFor(expected, function() {
+				var val = cmp.getAttributes().getValue("log").getValue(6);
+				return val && val.unwrap().substring(0, expected.length);
 			});
 		} ]
 	},
@@ -789,9 +619,8 @@
 	},
 
 	/*
-	 * W-1755876: currently failing because the aborted in-flight action is still resulting in the storage of the returned value
+	 * currently failing because the aborted in-flight action is still resulting in the storage of the returned value
 	 * (seen as the replay value in the following storable call)
-	 * 
 	 */
 	_testAbortInFlightStorable : {
 		test : [ function(cmp) {
@@ -837,7 +666,7 @@
 		} ]
 	},
 
-	testRunActionsForcesQueue : {
+	testRunActionsBypassesQueue : {
 		test : [ function(cmp) {
 			var that = this;
 			// queue up foreground action
@@ -845,6 +674,7 @@
 				that.log(cmp, "fore1:" + a.getReturnValue());
 			}));
 
+			// runActions will bypass queue
 			$A.clientService.runActions([ that.getAction(cmp, "c.execute", "APPEND run1;READ;APPEND afterRun1;",
 					function(a) {
 						that.log(cmp, "run1:" + a.getReturnValue());
@@ -852,18 +682,48 @@
 				that.log(this, "run1 callback");
 			});
 
-			// queue up foreground action
-            $A.run(function() {
-                $A.enqueueAction(that.getAction(cmp, "c.execute", "APPEND fore2;READ;", function(a) {
-                    that.log(cmp, "fore2:" + a.getReturnValue());
-                }));
-            });
-
-			this.waitForLog(cmp, 0, "fore1:fore1");
-			this.waitForLog(cmp, 1, "run1:run1");
-			this.waitForLog(cmp, 2, "run1 callback");
-			this.waitForLog(cmp, 3, "fore2:afterRun1,fore2");
+			this.waitForLog(cmp, 0, "run1:run1");
+			this.waitForLog(cmp, 1, "run1 callback");
+			this.waitForLog(cmp, 2, "fore1:afterRun1,fore1");
 		} ]
+	},
+
+	testRunActionsForegroundedIfBypassing : {
+		test : [
+				function(cmp) {
+					var that = this;
+					// run set of only background actions (need to reach in-flight foreground max)
+					$A.clientService.runActions([ that.getAction(cmp, "c.executeBackground",
+							"WAIT run1;APPEND run1;READ;", function(a) {
+								that.log(cmp, "run1:" + a.getReturnValue());
+							}) ], cmp, function(a) {
+						that.log(this, "run1 callback");
+					});
+
+					$A.run(function() {
+						// try enqueuing another background action
+						$A.enqueueAction(that.getAction(cmp, "c.executeBackground", "APPEND back1;READ;", function(a) {
+							that.log(cmp, "back1:" + a.getReturnValue());
+						}));
+
+						// try enqueuing a foreground action
+						$A.enqueueAction(that.getAction(cmp, "c.execute", "APPEND fore1;READ;", function(a) {
+							that.log(cmp, "fore1:" + a.getReturnValue());
+						}));
+					});
+					// "queued" background action actually passes through since runActions is always foreground
+					// "queued" foreground action is queued
+					this.waitForLog(cmp, 0, "back1:back1");
+				}, function(cmp) {
+					var that = this;
+					$A.run(function() {
+						// release pending actions
+						$A.enqueueAction(that.getAction(cmp, "c.executeBackground", "RESUME run1;"));
+					});
+					this.waitForLog(cmp, 1, "run1:run1");
+					this.waitForLog(cmp, 2, "run1 callback");
+					this.waitForLog(cmp, 3, "fore1:fore1");
+				} ]
 	},
 
 	testRunActionsWithoutBypass : {
@@ -966,7 +826,7 @@
 					$A.run(function() {
 						// release in-flight actions
 						$A.enqueueAction(that.getAction(cmp, "c.executeBackground",
-								"RESUME run1;SLEEP 500;APPEND back2;READ;", function(a) {
+								"RESUME run1;SLEEP 100;APPEND back2;READ;", function(a) {
 									that.log(cmp, "back2:" + a.getReturnValue());
 								}));
 					});

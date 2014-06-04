@@ -1,4 +1,6 @@
 {
   "serId":1,
-  "value":"markup://aura:test"
+  "value":{
+    "descriptor":"markup://aura:test"
+  }
 }

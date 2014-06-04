@@ -76,7 +76,7 @@
     	var concreteParentCmp = parent.getConcreteComponent();
         if (concreteParentCmp) {
             if (concreteParentCmp.get("v.visible") === true) {
-                concreteParentCmp.set("v.visible", false);
+                concreteParentCmp.setValue("v.visible", false);
                 if (component.get("v.disabled") === true) {
                     // for disabled menu item, no Aura event gets fired, so we have to directly deal with DOM.
                     var devCmp = parent.find("menu");
@@ -109,11 +109,10 @@
      */
     handleTabkeydown: function(component, event) {
         var parent = this.getParentComponent(component);
-		var closeOnTab = parent.get('v.closeOnTabKey');
         var concreteParentCmp = parent.getConcreteComponent();
-        if (concreteParentCmp && closeOnTab) {
+        if (concreteParentCmp) {
             if (concreteParentCmp.get("v.visible") === true) {
-                concreteParentCmp.set("v.visible", false);
+                concreteParentCmp.setValue("v.visible", false);
                 if (component.get("v.disabled") === true) {
                     // for disabled menu item, no Aura event gets fired, so we have to directly deal with DOM.
                     var devCmp = parent.find("menu");
@@ -133,7 +132,7 @@
     setDisabled : function(component) {
     	var concreteCmp = component.getConcreteComponent();
         var linkCmp = concreteCmp.find("link");
-        var elem = linkCmp ? linkCmp.getElement() : null;
+        var elem = linkCmp.getElement();
         if (elem) {
             var disabled = concreteCmp.get("v.disabled");
             if (disabled === true) {
@@ -149,7 +148,7 @@
     setFocus: function(component) {
         var concreteCmp = component.getConcreteComponent();
         var linkCmp = concreteCmp.find("link");
-        var elem = linkCmp ? linkCmp.getElement() : null;
+        var elem = linkCmp.getElement();
         if (elem && elem.focus) {
             elem.focus();
         }
