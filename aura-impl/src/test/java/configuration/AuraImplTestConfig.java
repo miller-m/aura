@@ -25,6 +25,7 @@ import org.auraframework.impl.context.TestLoggingAdapterImpl;
 import org.auraframework.impl.util.AuraImplFiles;
 import org.auraframework.test.TestContextAdapter;
 import org.auraframework.test.TestInventory;
+import org.auraframework.test.AuraTestingUtil;
 import org.auraframework.test.adapter.TestContextAdapterImpl;
 import org.auraframework.util.ServiceLoaderImpl.AuraConfiguration;
 import org.auraframework.util.ServiceLoaderImpl.Impl;
@@ -56,7 +57,6 @@ public class AuraImplTestConfig {
         return new AuraTestingUtil();
     }
     
-
     @Impl
     @PrimaryImpl
     public static LoggingAdapter auraImplTestLoggingAdapter() {
