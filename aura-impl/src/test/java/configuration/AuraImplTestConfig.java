@@ -50,6 +50,12 @@ public class AuraImplTestConfig {
     public static ConfigAdapter auraImplTestConfigAdapter() {
         return new MockConfigAdapterImpl();
     }
+    
+    @Impl
+    public static AuraTestingUtil auraImplTestUtilProvider() {
+        return new AuraTestingUtil();
+    }
+    
 
     @Impl
     @PrimaryImpl
