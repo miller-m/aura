@@ -35,7 +35,12 @@ public class AuraRewriteFilterHttpTest extends AuraHttpTestCase {
     public void testDoFilterOfValidURLs() throws Exception {
         System.out.println("HEY A TEST IS BEING RUN!!!!!");
         for(StackTraceElement item: Thread.currentThread().getStackTrace()) {
+            System.out.println("here is a class name");
+            System.out.println(item.getClassName());
+            System.out.println("here is a method name");
             System.out.println(item.getMethodName());
+            System.out.println("here is a file name");
+            System.out.println(item.getFileName());
         }
         assertUrlResponse("Didn't forward url with namespace and component name.", "/aura/text.cmp", HttpStatus.SC_OK);
         assertUrlResponse("Didn't forward url with namespace and application name.", "/test/fakeApplication.app",
