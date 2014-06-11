@@ -33,6 +33,9 @@ public class AuraRewriteFilterHttpTest extends AuraHttpTestCase {
 
     @TestLabels("auraSanity")
     public void testDoFilterOfValidURLs() throws Exception {
+        for(StackTraceElement item: Thread.currentThread().getStackTrace()) {
+            System.out.println(item.getMethodName());
+        }
         assertUrlResponse("Didn't forward url with namespace and component name.", "/aura/text.cmp", HttpStatus.SC_OK);
         assertUrlResponse("Didn't forward url with namespace and application name.", "/test/fakeApplication.app",
                 HttpStatus.SC_OK);
