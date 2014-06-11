@@ -55,6 +55,7 @@ public class AuraIntegrationTests extends TestSuite {
 
     @Override
     public void runTest(Test test, TestResult result) {
+        System.out.println(Thread.currentThread().getStackTrace());
         if (test instanceof TestSuite) {
             for (Enumeration<Test> t = ((TestSuite) test).tests(); t.hasMoreElements();) {
                 runTest(t.nextElement(), result);
