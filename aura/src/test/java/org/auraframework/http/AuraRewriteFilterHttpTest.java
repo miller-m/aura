@@ -33,6 +33,7 @@ public class AuraRewriteFilterHttpTest extends AuraHttpTestCase {
 
     @TestLabels("auraSanity")
     public void testDoFilterOfValidURLs() throws Exception {
+        System.out.println("HEY A TEST IS BEING RUN!!!!!");
         for(StackTraceElement item: Thread.currentThread().getStackTrace()) {
             System.out.println(item.getMethodName());
         }
