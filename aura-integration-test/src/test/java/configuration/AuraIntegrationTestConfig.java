@@ -36,6 +36,14 @@ import org.openqa.selenium.net.PortProber;
 public class AuraIntegrationTestConfig {
     @Impl
     public static TestServletConfig auraJettyServletTestInfo() throws Exception {
+        for(StackTraceElement item: Thread.currentThread().getStackTrace()) {
+            System.out.println("here is a class name");
+            System.out.println(item.getClassName());
+            System.out.println("here is a method name");
+            System.out.println(item.getMethodName());
+            System.out.println("here is a file name");
+            System.out.println(item.getFileName());
+        }
         return new JettyTestServletConfig();
     }
 
