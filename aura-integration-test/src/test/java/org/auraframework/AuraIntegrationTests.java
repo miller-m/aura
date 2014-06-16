@@ -50,7 +50,7 @@ import com.google.common.collect.Lists;
  * 
  * If the "runPerfTests" system property is set, it will run the tests that are annotated with @PerfTest
  */
-public class AuraIntegrationTests extends TestSuite {
+
 public class AuraIntegrationTests extends TestSuite {
     public static final boolean TEST_SHUFFLE = Boolean.parseBoolean(System.getProperty("testShuffle", "false"));
     public static final int TEST_ITERATIONS;
