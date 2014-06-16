@@ -51,9 +51,12 @@ import com.google.common.collect.Lists;
  * If the "runPerfTests" system property is set, it will run the tests that are annotated with @PerfTest
  */
 public class AuraIntegrationTests extends TestSuite {
+public class AuraIntegrationTests extends TestSuite {
     public static final boolean TEST_SHUFFLE = Boolean.parseBoolean(System.getProperty("testShuffle", "false"));
     public static final int TEST_ITERATIONS;
     private static final Logger logger = Logger.getLogger(AuraIntegrationTests.class.getName());
+    private Set<TestInventory> inventories;
+
 
     private final String nameFragment;
     private static final boolean RUN_PERF_TESTS = System.getProperty("runPerfTests") != null;
@@ -78,13 +81,6 @@ public class AuraIntegrationTests extends TestSuite {
         } else {
             nameFragment = null;
         }
-    }
-
-    /**
-     * Run integration tests in parallel.
-     */
-    @Override
-    public void run(final TestResult masterResult) {
         logger.info("Building test inventories");
         if (nameFragment != null) {
             logger.info("Filtering by test names containing: " + nameFragment);
@@ -92,7 +88,17 @@ public class AuraIntegrationTests extends TestSuite {
         if (RUN_PERF_TESTS) {
             logger.info("Filtering only test annotated with @PerfTest");
         }
-        Set<TestInventory> inventories = ServiceLocator.get().getAll(TestInventory.class);
+        inventories = ServiceLocator.get().getAll(TestInventory.class);
+        TestResult result = new TestResult();
+        this.run(result);
+    }
+
+    /**
+* Run integration tests in parallel.
+*/
+    @Override
+    public void run(final TestResult masterResult) {
+        System.out.println("Running run");
         List<Callable<TestResult>> queue = Lists.newLinkedList();
         List<Callable<TestResult>> hostileQueue = Lists.newLinkedList();
         for (TestInventory inventory : inventories) {
@@ -121,6 +127,8 @@ public class AuraIntegrationTests extends TestSuite {
             }
         }
     }
+
+
 
     private void executeIterations(ExecutorService executor, List<Callable<TestResult>> tests, String testType)
             throws InterruptedException {
