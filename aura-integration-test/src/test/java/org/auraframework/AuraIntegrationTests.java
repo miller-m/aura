@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2013 salesforce.com, inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2013 salesforce.com, inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.auraframework;
 
 import java.util.Collection;
@@ -34,26 +34,29 @@ import org.auraframework.test.TestExecutor;
 import org.auraframework.test.TestExecutor.TestRun;
 import org.auraframework.test.TestInventory;
 import org.auraframework.test.TestInventory.Type;
-import org.auraframework.test.perf.PerfUtil;
 import org.auraframework.test.WebDriverProvider;
 import org.auraframework.throwable.AuraRuntimeException;
 import org.auraframework.util.AuraUtil;
 import org.auraframework.util.ServiceLocator;
+import org.auraframework.util.test.perf.PerfUtil;
 
 import com.google.common.collect.Lists;
 
 /**
- * Run all integration tests.
- * 
- * If the "testNameContains" system property is set, filter tests to run only those tests containing the provided string
- * (case-insensitive).
- * 
- * If the "runPerfTests" system property is set, it will run the tests that are annotated with @PerfTest
- */
+* Run all integration tests.
+*
+* If the "testNameContains" system property is set, filter tests to run only those tests containing the provided string
+* (case-insensitive).
+*
+* If the "runPerfTests" system property is set, it will run the tests that are annotated with @PerfTest
+*/
+
 public class AuraIntegrationTests extends TestSuite {
     public static final boolean TEST_SHUFFLE = Boolean.parseBoolean(System.getProperty("testShuffle", "false"));
     public static final int TEST_ITERATIONS;
     private static final Logger logger = Logger.getLogger(AuraIntegrationTests.class.getName());
+    private Set<TestInventory> inventories;
+
 
     private final String nameFragment;
     private static final boolean RUN_PERF_TESTS = System.getProperty("runPerfTests") != null;
@@ -78,13 +81,6 @@ public class AuraIntegrationTests extends TestSuite {
         } else {
             nameFragment = null;
         }
-    }
-
-    /**
-     * Run integration tests in parallel.
-     */
-    @Override
-    public void run(final TestResult masterResult) {
         logger.info("Building test inventories");
         if (nameFragment != null) {
             logger.info("Filtering by test names containing: " + nameFragment);
@@ -92,7 +88,17 @@ public class AuraIntegrationTests extends TestSuite {
         if (RUN_PERF_TESTS) {
             logger.info("Filtering only test annotated with @PerfTest");
         }
-        Set<TestInventory> inventories = ServiceLocator.get().getAll(TestInventory.class);
+        inventories = ServiceLocator.get().getAll(TestInventory.class);
+        TestResult result = new TestResult();
+        this.run(result);
+    }
+
+    /**
+* Run integration tests in parallel.
+*/
+    @Override
+    public void run(final TestResult masterResult) {
+        System.out.println("Running run");
         List<Callable<TestResult>> queue = Lists.newLinkedList();
         List<Callable<TestResult>> hostileQueue = Lists.newLinkedList();
         for (TestInventory inventory : inventories) {
@@ -121,6 +127,8 @@ public class AuraIntegrationTests extends TestSuite {
             }
         }
     }
+
+
 
     private void executeIterations(ExecutorService executor, List<Callable<TestResult>> tests, String testType)
             throws InterruptedException {
