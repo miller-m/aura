@@ -93,7 +93,7 @@
             <id>repo.auraframework.org-chromedriver</id>
             <url>http://repo.auraframework.org/chromedriver</url>
         </repository>
-        <repository>
+        
         
     </repositories>
     <pluginRepositories>
