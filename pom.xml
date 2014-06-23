@@ -847,7 +847,7 @@
                 
     <plugin>
         <groupId>com.github.tntim96</groupId>
-        <artifactId>jscover-file-maven-plugin</artifactId>
+        <artifactId>jscover-server-maven-plugin</artifactId>
         <version>1.0-SNAPSHOT</version>
         <configuration>
             <srcDir>src</srcDir>
