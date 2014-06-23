@@ -901,7 +901,7 @@
             <reportCoberturaXML>true</reportCoberturaXML>
             <reportLCOV>true</reportLCOV>
              <!--<webDriverClassName>org.openqa.selenium.firefox.FirefoxDriver</webDriverClassName>
-            <!--<webDriverClassName>org.openqa.selenium.htmlunit.HtmlUnitDriver</webDriverClassName>-->
+            <webDriverClassName>org.openqa.selenium.htmlunit.HtmlUnitDriver</webDriverClassName>-->
             
             <webDriverClassName>org.openqa.selenium.chrome.ChromeDriver</webDriverClassName><!--
             <systemProperties>
