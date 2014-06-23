@@ -875,11 +875,11 @@
              <!--<webDriverClassName>org.openqa.selenium.firefox.FirefoxDriver</webDriverClassName>
             <webDriverClassName>org.openqa.selenium.htmlunit.HtmlUnitDriver</webDriverClassName>-->
             
-            <webDriverClassName>org.openqa.selenium.chrome.ChromeDriver</webDriverClassName><!--
+            <webDriverClassName>org.openqa.selenium.chrome.ChromeDriver</webDriverClassName>
             <systemProperties>
                 <property>
                     <name>webdriver.chrome.driver</name>
-                    <value>C:/java/chromedriver_win32_2.4/chromedriver.exe</value>
+                    <value>/var/lib/jenkins/tools/chromedriver/chromedriver</value>
                 </property>
             </systemProperties>
             -->
