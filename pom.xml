@@ -53,6 +53,16 @@
             <url>http://repo.jfrog.org/artifactory/libs-releases/</url>
         </repository>
         <repository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <!-- Testing snapshot development -->
+        <repository>
+            <id>Sonatype repository</id>
+            <name>Sonatype's Maven repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
 	      <id>phloc.com</id>
 	      <url>http://repo.phloc.com/maven2</url>
         </repository>
