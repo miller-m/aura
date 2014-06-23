@@ -105,6 +105,16 @@
         </repository>
     </repositories>
     <pluginRepositories>
+    	<pluginRepository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2/</url>
+        </pluginRepository>
+        <!-- Testing snapshot development -->
+        <pluginRepository>
+            <id>Sonatype repository</id>
+            <name>Sonatype's Maven repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </pluginRepository>
         <pluginRepository>
             <id>jsdoctk2</id>
             <url>http://jsdoctk-plugin.googlecode.com/svn/repo</url>
