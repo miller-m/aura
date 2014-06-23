@@ -105,16 +105,7 @@
         </repository>
     </repositories>
     <pluginRepositories>
-    	<pluginRepository>
-            <id>central</id>
-            <url>http://repo1.maven.org/maven2/</url>
-        </pluginRepository>
-        <!-- Testing snapshot development -->
-        <pluginRepository>
-            <id>Sonatype repository</id>
-            <name>Sonatype's Maven repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </pluginRepository>
+
         <pluginRepository>
             <id>jsdoctk2</id>
             <url>http://jsdoctk-plugin.googlecode.com/svn/repo</url>
@@ -861,38 +852,7 @@
                         </instrumentation>
                     </configuration>
                 </plugin>
-                <plugin>
-        <groupId>com.github.tntim96</groupId>
-        <artifactId>jscover-server-maven-plugin</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
-        <configuration>
-            <testDirectory>./aura-impl/src/test</testDirectory>
-            <testIncludes>qunit-*.html</testIncludes>
-            <testType>QUnit</testType>
-            <!--
-            <testType>JasmineHtmlReporter</testType>
-            <testType>JasmineTrivialReporter</testType>
-            -->
-            <lineCoverageMinimum>20</lineCoverageMinimum>
-            <instrumentPathArgs>
-                <arg>--no-instrument=target</arg>
-            </instrumentPathArgs>
-            <includeUnloadedJS>true</includeUnloadedJS>
-            <reportCoberturaXML>true</reportCoberturaXML>
-            <reportLCOV>true</reportLCOV>
-            <!--<webDriverClassName>org.openqa.selenium.firefox.FirefoxDriver</webDriverClassName>-->
-            <!--<webDriverClassName>org.openqa.selenium.htmlunit.HtmlUnitDriver</webDriverClassName>-->
-            <!--
-            <webDriverClassName>org.openqa.selenium.chrome.ChromeDriver</webDriverClassName>
-            <systemProperties>
-                <property>
-                    <name>webdriver.chrome.driver</name>
-                    <value>C:/java/chromedriver_win32_2.0/chromedriver.exe</value>
-                </property>
-            </systemProperties>
-            -->
-        </configuration>
-    </plugin>
+                
     <plugin>
         <groupId>com.github.tntim96</groupId>
         <artifactId>jscover-file-maven-plugin</artifactId>
