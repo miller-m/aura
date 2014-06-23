@@ -850,7 +850,7 @@
         <artifactId>jscover-file-maven-plugin</artifactId>
         <version>1.0.5</version>
         <configuration>
-            <srcDir>*</srcDir>
+            <srcDir>org</srcDir>
             <testDirectory>aura-integration-tests</testDirectory>
             <testIncludes>*</testIncludes>
             <testType></testType>
