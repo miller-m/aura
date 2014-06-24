@@ -879,7 +879,7 @@
             <systemProperties>
                 <property>
                     <name>webdriver.chrome.driver</name>
-                    <value>/home/ubuntu/workspace/lumen_coverage/lumen-integration-test/bin/chromedriver</value>
+                    <value>/home/ubuntu/.m2/repository/com/google/code/chromedriver</value>
                 </property>
             </systemProperties>
             -->
