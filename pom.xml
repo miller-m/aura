@@ -879,7 +879,7 @@
             <systemProperties>
                 <property>
                     <name>webdriver.chrome.driver</name>
-                    <value>/home/ubuntu/.m2/repository/com/google/code/chromedriver</value>
+                    <value>/home/ubuntu/.m2/repository/com/google/code/chromedriver/21.0.1180.4/chromedriver</value>
                 </property>
             </systemProperties>
             -->
